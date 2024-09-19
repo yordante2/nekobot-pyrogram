@@ -102,7 +102,7 @@ def handle_message(client, message):
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
-        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+        message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
     
     elif text.startswith("/compress"):
         if bot_in_use:
