@@ -99,53 +99,35 @@ def handle_message(client, message):
                 message.reply("Usuario no encontrado en la lista de baneados.")
         else:
             message.reply("No eres admin")
-    elif message.text.startswith(("compress", ".compress", "/compress")):
-        if not message.reply_to_message or not message.reply_to_message.document:
-            message.reply_text("Debe usar el comando respondiendo a un archivo")
-            return
-
-        global bot_in_use
+    elif text.startswith("/setsize"):
+        valor = text.split(" ")[1]
+        user_comp[username] = int(valor)
+        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+    
+    elif text.startswith("/compress"):
         if bot_in_use:
-            message.reply_text("El bot está en uso")
-            return
-
-        bot_in_use = True
-
-        try:
-            # Descargar el archivo
-            file_id = message.reply_to_message.document.file_id
-            file_path = client.download_media(file_id, file_name="compress/")
-            
-            # Crear carpeta si no existe
-            if not os.path.exists("compress"):
-                os.makedirs("compress")
-
-            # Comprimir el archivo
-            compressed_files = compressfile(file_path, compression_size)
-
-            # Enviar las partes comprimidas al chat
-            for part in compressed_files:
-                client.send_document(chat_id, part)
-
-            # Limpiar la carpeta compress
-            for file in os.listdir("compress"):
-                file_path = os.path.join("compress", file)
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-        except Exception as e:
-            message.reply_text("Error")
-        finally:
+           await message.reply("El bot está en uso actualmente, espere un poco")
+           return
+        replied_message = message.reply_to_message
+        if replied_message:
+            bot_in_use = True
+            os.system("rm -rf ./server/*")
+            await message.reply("Descargando el archivo para comprimirlo...", "server")
+            file_path = await client.download_media(replied_message.document.file_id)
+            await message.reply("Comprimiendo archivo...")
+            try:
+                sizd = user_comp[username]
+            except KeyError:
+                sizd = 10
+            parts = compressfile(file_path, sizd)
+            await message.reply("Enviando archivos...")
+            for part in parts:
+                try:
+                    await client.send_document(chat_id=message.chat.id, document=part)
+                except:
+                    pass
+            await message.reply("Completado")
             bot_in_use = False
-
-    elif message.text.startswith(("setsize", ".setsize", "/setsize")):
-        try:
-            new_size = int(message.text.split()[1])
-            compression_size = new_size
-            message.reply_text(f"Tamaño de compresión establecido a {new_size} MB")
-        except (IndexError, ValueError):
-            message.reply_text("Uso: setsize <tamaño en MB>")
-
-
 
 
 app.run()
