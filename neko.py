@@ -1,10 +1,13 @@
 import os
 from pyrogram import Client, filters
 import zipfile
+
+# Configuracion del bot
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('TOKEN')
 
+# Administradores y Usuarios del bot
 admin_users = list(map(int, os.getenv('ADMINS').split(',')))
 users = list(map(int, os.getenv('USERS').split(',')))
 temp_users = []
@@ -15,6 +18,8 @@ allowed_users = admin_users + users + temp_users + temp_chats
 app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
 compression_size = 10  # Tamaño de compresión por defecto en MB
+
+bot_in_use = False
 
 @app.on_message(filters.text)
 def handle_message(client, message):
@@ -140,4 +145,3 @@ def compressfile(filename, sizd):
     
 
 app.run()
-          
