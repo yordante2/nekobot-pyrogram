@@ -21,6 +21,21 @@ compression_size = 10  # Tamaño de compresión por defecto en MB
 
 bot_in_use = False
 
+
+def compressfile(filename, sizd):
+    maxsize = 1024 * 1024 * sizd
+    mult_file = zipfile.MultiFile(filename + '.7z', maxsize)
+    zip = zipfile.ZipFile(mult_file, mode='w', compression=zipfile.ZIP_DEFLATED)
+    zip.write(filename)
+    zip.close()
+    mult_file.close()
+    files = []
+    for part in zipfile.files:
+        files.append(part)
+    return files
+
+
+
 @app.on_message(filters.text)
 def handle_message(client, message):
     chat_id = message.chat.id
@@ -131,17 +146,7 @@ def handle_message(client, message):
         except (IndexError, ValueError):
             message.reply_text("Uso: setsize <tamaño en MB>")
 
-def compressfile(filename, sizd):
-    maxsize = 1024 * 1024 * sizd
-    mult_file = zipfile.MultiFile(filename + '.7z', maxsize)
-    zip = zipfile.ZipFile(mult_file, mode='w', compression=zipfile.ZIP_DEFLATED)
-    zip.write(filename)
-    zip.close()
-    mult_file.close()
-    files = []
-    for part in zipfile.files:
-        files.append(part)
-    return files
-    
+
+
 
 app.run()
