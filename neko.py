@@ -38,6 +38,8 @@ def compressfile(filename, sizd):
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
+    text = message.text
+    username = message.from_user.username
     chat_id = message.chat.id
     user_id = message.from_user.id
 
