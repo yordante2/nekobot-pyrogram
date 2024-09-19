@@ -139,7 +139,6 @@ def handle_message(client, message):
 
     elif message.text.startswith(("setsize", ".setsize", "/setsize")):
         try:
-            global compression_size
             new_size = int(message.text.split()[1])
             compression_size = new_size
             message.reply_text(f"Tamaño de compresión establecido a {new_size} MB")
