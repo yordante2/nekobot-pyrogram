@@ -118,7 +118,7 @@ async def handle_message(client, message):
             os.system("rm -rf ./server/*")
             await message.reply("Descargando el archivo para comprimirlo...", "server")
             #file_path = await client.download_media(replied_message.document.file_id)
-            file_path = await context.bot.get_file((message.document or message.photo[-1] or message.video or message.audio or message.voice).file_id)
+            file_path = await client.download_media((message.document or message.photo[-1] or message.video or message.audio or message.voice).file_id)
             await message.reply("Comprimiendo archivo...")
             try:
                 sizd = user_comp[username]
