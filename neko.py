@@ -47,48 +47,49 @@ async def handle_message(client, message):
         return
 
     if message.text.startswith(('start', '.start', '/start')):
-        message.reply("Funcionando")
+        await message.reply("Funcionando")
     elif message.text.startswith('/adduser'):
         if user_id in admin_users:
             new_user_id = int(message.text.split()[1])
             temp_users.append(new_user_id)
             allowed_users.append(new_user_id)
-            message.reply(f"Usuario {new_user_id} añadido temporalmente.")
+            await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
         else:
-            message.reply("No eres admin")
+            await message.reply("No eres admin")
     elif message.text.startswith('/remuser'):
         if user_id in admin_users:
             rem_user_id = int(message.text.split()[1])
             if rem_user_id in temp_users:
                 temp_users.remove(rem_user_id)
                 allowed_users.remove(rem_user_id)
-                message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
+                await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
             else:
-                message.reply("Usuario no encontrado en la lista temporal.")
+                await message.reply("Usuario no encontrado en la lista temporal.")
         else:
-            message.reply("No eres admin")
+            await message.reply("No eres admin")
     elif message.text.startswith('/addchat'):
         if user_id in admin_users:
             temp_chats.append(chat_id)
             allowed_users.append(chat_id)
-            message.reply(f"Chat {chat_id} añadido temporalmente.")
+            await message.reply(f"Chat {chat_id} añadido temporalmente.")
         else:
-            message.reply("No eres admin")
+            await message.reply("No eres admin")
     elif message.text.startswith('/remchat'):
         if user_id in admin_users:
             if chat_id in temp_chats:
                 temp_chats.remove(chat_id)
                 allowed_users.remove(chat_id)
-                message.reply(f"Chat {chat_id} eliminado temporalmente.")
+                await message.reply(f"Chat {chat_id} eliminado temporalmente.")
             else:
-                message.reply("Chat no encontrado en la lista temporal.")
+                await message.reply("Chat no encontrado en la lista temporal.")
         else:
-            message.reply("No eres admin")
+            await message.reply("No eres admin")
     elif message.text.startswith('/banuser'):
         if user_id in admin_users:
             ban_user_id = int(message.text.split()[1])
-            ban_users.append(ban_user_id)
-            message.reply(f"Usuario {ban_user_id} baneado.")
+            if ban_user_id not in admin_users:
+                ban_users.append(ban_user_id)
+                await message.reply(f"Usuario {ban_user_id} baneado.")
         else:
             message.reply("No eres admin")
     elif message.text.startswith('/debanuser'):
@@ -96,15 +97,15 @@ async def handle_message(client, message):
             deban_user_id = int(message.text.split()[1])
             if deban_user_id in ban_users:
                 ban_users.remove(deban_user_id)
-                message.reply(f"Usuario {deban_user_id} desbaneado.")
+                await message.reply(f"Usuario {deban_user_id} desbaneado.")
             else:
-                message.reply("Usuario no encontrado en la lista de baneados.")
+                await message.reply("Usuario no encontrado en la lista de baneados.")
         else:
-            message.reply("No eres admin")
+            await message.reply("No eres admin")
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
-        message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
     
     elif text.startswith("/compress"):
         if bot_in_use:
