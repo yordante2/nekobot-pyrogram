@@ -121,7 +121,7 @@ async def handle_message(client, message):
             
             await message.reply("Comprimiendo el archivo...")
 
-            sizd = user_comp.get(sender, 10)
+            sizd = user_comp.get(username, 10)
 
             # Comprimir archivo
             parts = compressfile(file_path, sizd)
