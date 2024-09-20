@@ -1,6 +1,7 @@
 import os
 from pyrogram import Client, filters
 import zipfile
+import shutil
 
 # Configuracion del bot
 api_id = os.getenv('API_ID')
@@ -132,7 +133,8 @@ async def handle_message(client, message):
             await message.reply("Descargando el archivo para comprimirlo...")
 
             # Descargar archivo
-            file_path = await client.download_media(message.reply_to_message, file_name="server")
+            #file_path = await client.download_media(message.reply_to_message, file_name="server")
+            file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
             
             await message.reply("Comprimiendo el archivo...")
 
