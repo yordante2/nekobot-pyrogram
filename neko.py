@@ -111,6 +111,7 @@ async def handle_message(client, message):
         await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
     
     elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.media:
+        global bot_in_use
         if bot_in_use:
             await message.reply("El comando está en uso actualmente, espere un poco")
             return
