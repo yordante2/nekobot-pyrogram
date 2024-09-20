@@ -22,17 +22,20 @@ compression_size = 10  # Tamaño de compresión por defecto en MB
 bot_in_use = False
 
 
-def compressfile(filename, sizd):
-    maxsize = 1024 * 1024 * sizd
-    mult_file = zipfile.MultiFile(filename + '.7z', maxsize)
-    zip = zipfile.ZipFile(mult_file, mode='w', compression=zipfile.ZIP_DEFLATED)
-    zip.write(filename)
-    zip.close()
-    mult_file.close()
-    files = []
-    for part in zipfile.files:
-        files.append(part)
-    return files
+def compressfile(file_path, part_size):
+    parts = []
+    with open(file_path, 'rb') as f:
+        part_num = 1
+        while True:
+            part_data = f.read(part_size * 1024 * 1024)
+            if not part_data:
+                break
+            part_file = f"{file_path}.part{part_num}"
+            with open(part_file, 'wb') as part:
+                part.write(part_data)
+            parts.append(part_file)
+            part_num += 1
+    return parts
 
 
 
@@ -107,32 +110,44 @@ async def handle_message(client, message):
         user_comp[username] = int(valor)
         await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
     
-    elif text.startswith("/compress"):
-        global bot_in_use
+    elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.media:
         if bot_in_use:
-           await message.reply("El bot está en uso actualmente, espere un poco")
-           return
-        replied_message = message.reply_to_message
-        if replied_message:
+            await message.reply("El comando está en uso actualmente, espere un poco")
+            return
+
+        try:
             bot_in_use = True
             os.system("rm -rf ./server/*")
-            await message.reply("Descargando el archivo para comprimirlo...", "server")
-            #file_path = await client.download_media(replied_message.document.file_id)
-            file_path = await client.download_media((message.document or message.photo[-1] or message.video or message.audio or message.voice).file_id)
-            await message.reply("Comprimiendo archivo...")
-            try:
-                sizd = user_comp[username]
-            except KeyError:
-                sizd = 10
+            await message.reply("Descargando el archivo para comprimirlo...")
+
+            # Descargar archivo
+            file_path = await client.download_media(message.reply_to_message, file_name="server")
+            
+            await message.reply("Comprimiendo el archivo...")
+
+            sizd = user_comp.get(sender, 10)
+
+            # Comprimir archivo
             parts = compressfile(file_path, sizd)
-            await message.reply("Enviando archivos...")
+            await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+
+            # Enviar partes
             for part in parts:
                 try:
-                    await client.send_document(chat_id=message.chat.id, document=part)
+                    await client.send_document(message.chat.id, part)
                 except:
                     pass
-            await message.reply("Completado")
+
+            await message.reply("Esas son todas las partes")
+            shutil.rmtree('server')
+            os.mkdir('server')
+
             bot_in_use = False
+        except Exception as e:
+            await message.reply(f'Error: {str(e)}')
+        finally:
+            bot_in_use = False
+
 
 
 app.run()
