@@ -38,6 +38,7 @@ def compressfile(file_path, part_size):
     return parts
 
 
+user_comp = {}
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
@@ -148,6 +149,12 @@ async def handle_message(client, message):
             await message.reply(f'Error: {str(e)}')
         finally:
             bot_in_use = False
+
+    elif text.startswith("/setsize"):
+        valor = text.split(" ")[1]
+        user_comp[username] = int(valor)
+        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+
 
 
 
