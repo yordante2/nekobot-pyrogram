@@ -22,6 +22,21 @@ compression_size = 10  # Tamaño de compresión por defecto en MB
 bot_in_use = False
 
 
+#def compressfile(file_path, part_size):
+    parts = []
+    #with open(file_path, 'rb') as f:
+        part_num = 1
+        #while True:
+            part_data = f.read(part_size * 1024 * 1024)
+            #if not part_data:
+                #break
+            part_file = f"{file_path}.part{part_num}"
+            #with open(part_file, 'wb') as part:
+                part.write(part_data)
+            parts.append(part_file)
+            part_num += 1
+    #return parts
+
 def compressfile(file_path, part_size):
     parts = []
     with open(file_path, 'rb') as f:
@@ -30,13 +45,13 @@ def compressfile(file_path, part_size):
             part_data = f.read(part_size * 1024 * 1024)
             if not part_data:
                 break
-            part_file = f"{file_path}.part{part_num}"
+            part_file = f"{file_path}.7z.{part_num:03d}"
             with open(part_file, 'wb') as part:
                 part.write(part_data)
             parts.append(part_file)
             part_num += 1
     return parts
-
+    
 
 user_comp = {}
 
