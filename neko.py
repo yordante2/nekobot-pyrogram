@@ -125,7 +125,7 @@ async def handle_message(client, message):
                 await message.reply("Usuario no encontrado en la lista de baneados.")
         else:
             await message.reply("No eres admin")
-    elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.media:
+    elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.document:
         global bot_in_use
         if bot_in_use:
             await message.reply("El comando está en uso actualmente, espere un poco")
