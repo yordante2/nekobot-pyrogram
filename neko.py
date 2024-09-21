@@ -2,7 +2,9 @@ import os
 from pyrogram import Client, filters
 import zipfile
 import shutil
-import time
+import random
+import string
+
 
 # Configuracion del bot
 api_id = os.getenv('API_ID')
@@ -112,7 +114,7 @@ async def handle_message(client, message):
                 ban_users.append(ban_user_id)
                 await message.reply(f"Usuario {ban_user_id} baneado.")
         else:
-            await message.reply("No eres admin")
+            message.reply("No eres admin")
     elif message.text.startswith('/debanuser'):
         if user_id in admin_users:
             deban_user_id = int(message.text.split()[1])
@@ -123,7 +125,6 @@ async def handle_message(client, message):
                 await message.reply("Usuario no encontrado en la lista de baneados.")
         else:
             await message.reply("No eres admin")
-
     elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.media:
         global bot_in_use
         if bot_in_use:
@@ -134,26 +135,34 @@ async def handle_message(client, message):
             os.system("rm -rf ./server/*")
             await message.reply("Descargando el archivo para comprimirlo...")
 
-            # Verificar el nombre del archivo
-            if message.reply_to_message.document and message.reply_to_message.document.file_name:
-                file_name = os.path.basename(message.reply_to_message.document.file_name)[:60]
-            else:
-                file_name = f"{int(time.time())}"
-
             # Descargar archivo
-            try:
-                file_path = await client.download_media(message.reply_to_message, file_name=file_name)
-            except Exception as e:
-                await message.reply(f"Error al descargar el archivo: {str(e)}")
-                bot_in_use = False
-                return
-
+            #file_path = await client.download_media(message.reply_to_message, file_name="server")
+            #file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
+            file_path = await client.download_media(message.reply_to_message, file_name=(os.path.basename(message.reply_to_message.document.file_name)[:60] if message.reply_to_message.document.file_name else f"{''.join(random.choices(string.ascii_letters + string.digits, k=20))}"))        
             await message.reply("Comprimiendo el archivo...")
-            # Aquí iría el código para comprimir el archivo
 
+            sizd = user_comp.get(username, 10)
+
+            # Comprimir archivo
+            parts = compressfile(file_path, sizd)
+            await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+
+            # Enviar partes
+            for part in parts:
+                try:
+                    await client.send_document(message.chat.id, part)
+                except:
+                    pass
+
+            await message.reply("Esas son todas las partes")
+            shutil.rmtree('server')
+            os.mkdir('server')
+
+            bot_in_use = False
+        except Exception as e:
+            await message.reply(f'Error: {str(e)}')
         finally:
             bot_in_use = False
-
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
