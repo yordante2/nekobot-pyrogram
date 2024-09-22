@@ -471,7 +471,9 @@ async def handle_message(client, message):
 
             # Send the CBZ file to the chat
             await client.send_document(chat_id, zip_filename)
-            bot_in_use = False
-            
+            bot_in_use = False 
 
-    elif message.text.
+
+
+app.run()
+
