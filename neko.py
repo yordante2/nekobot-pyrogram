@@ -405,7 +405,7 @@ async def handle_message(client, message):
             return s.strip()
             codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
 
-            elif text.startswith(('/nh', '.nh', 'nh')):
+    elif message.text.startswith(('/nh', '.nh', 'nh')):
         codes = text.split()[1].split(',')
         for code in codes:
             code = sanitize_input(code)
