@@ -346,7 +346,7 @@ async def handle_message(client, message):
         codes = text.split()[1].split(',')
         for code in codes:
             await message.reply(f"Descargando {code}")
-            url = f"https://www.3hentai.net/d/{code}/"
+            url = f"https://es.3hentai.net/d/{code}/"
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
             response = requests.get(url, headers=headers)
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -357,7 +357,7 @@ async def handle_message(client, message):
             while True:
                 found_image = False
                 for ext in image_extensions:
-                    img_url = f"https://www.3hentai.net/d/{code}/{i}/{i}.{ext}"
+                    img_url = f"https://es.3hentai.net/d/{code}/{i}/{i}.{ext}"
                     img_response = requests.get(img_url, headers=headers)
                     if img_response.status_code == 200:
                         img_data = img_response.content
@@ -381,7 +381,7 @@ async def handle_message(client, message):
         codes = text.split()[1].split(',')
         for code in codes:
             await message.reply(f"Descargando {code}")
-            url = f"https://www.3hentai.net/d/{code}/"
+            url = f"https://es.3hentai.net/d/{code}/"
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
             response = requests.get(url, headers=headers)
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -389,7 +389,7 @@ async def handle_message(client, message):
             os.makedirs(f'hdltemp/{page_name}', exist_ok=True)
 
             for ext in image_extensions:
-                img_url = f"https://www.3hentai.net/d/{code}/1/1.{ext}"
+                img_url = f"https://es.3hentai.net/d/{code}/1/1.{ext}"
                 img_response = requests.get(img_url, headers=headers)
                 if img_response.status_code == 200:
                     img_data = img_response.content
