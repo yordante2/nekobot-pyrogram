@@ -62,6 +62,7 @@ def compressfile(file_path, part_size):
             parts.append(part_file)
             part_num += 1
     return parts
+
     
 
 user_comp = {}
@@ -395,8 +396,13 @@ async def handle_message(client, message):
                 await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}")
             else:
                 await message.reply(f"No se encontró ninguna imagen para el código {code}")
+                bot_in_use = False
 
-        bot_in_use = False
+        def clean_string(s):
+            return s.strip()
+            codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
+
+        
     elif message.text.startswith("/nh"):
         async def download_images(event):
             global bot_in_use
