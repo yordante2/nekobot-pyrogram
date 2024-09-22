@@ -281,79 +281,128 @@ async def handle_message(client, message):
         os.remove(new_file_path)
         shutil.rmtree('temprename')
         os.mkdir('temprename')
-    elif message.text.startswith('/h3dl'):
-        if bot_in_use:
-            await message.reply("El bot está en uso, espere un poco")
-            return
+    elif message.text.startswith("/coverh3") or message.text.startswith(".coverh3"):
         bot_in_use = True
+        sender = message.from_user
+        username = sender.id
         codes = message.text.split()[1].split(',')
-        await download_images(client, message, codes, all_images=True)
-        bot_in_use = False
 
-    elif message.text.startswith('/coverh3'):
-        if bot_in_use:
-            await message.reply("El bot está en uso, espere un poco")
-            return
-        bot_in_use = True
-        codes = message.text.split()[1].split(',')
-        await download_images(client, message, codes, all_images=False)
-        bot_in_use = False
-
-async def download_images(client, message, codes, all_images):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    base_url = "https://es.3hentai.net/d/"
-    temp_dir = "hdltemp"
-    image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
-
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)
-
-    for code in codes:
-        code_url = base_url + code + "/"
-        response = requests.get(code_url)
-        if response.status_code == 404:
-            await message.reply("Error, no se encontró la pagina")
+        if not codes:
+            await message.reply("No puedes enviar el comando vacío")
             bot_in_use = False
             return
-        page = requests.get(code_url, headers=headers)
-        soup = BeautifulSoup(page.content, 'html.parser')
-        page_title = ''.join(e for e in code if e.isalnum() or e in '[]')
-        page_dir = os.path.join(temp_dir, page_title)
 
-        if not os.path.exists(page_dir):
-            os.makedirs(page_dir)
+        for code in codes:
+            code = clean_string(code.strip())
 
-        image_num = 1
-        while True:
-            found_image = False
-            for ext in image_extensions:
-                image_url = base_url + code + f"/{image_num}.{ext}"
-                image_page = requests.get(image_url, headers=headers)
-                if image_page.status_code == 200:
-                    image_path = os.path.join(page_dir, f"{image_num}.{ext}")
-                    with open(image_path, 'wb') as f:
-                        f.write(image_page.content)
-                    found_image = True
-                    break
-            if not found_image:
-                break
-            if not all_images:
-                await client.send_photo(message.chat.id, image_path, caption=f"{code} - {page_title}")
-                break
-            image_num += 1
+            # Check the first page to get the name
+            url = f"https://es.3hentai.net/d/{code}/"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
 
-        zip_filename = f"{page_title}.cbz"
-        with ZipFile(zip_filename, 'w') as zipf:
-            for root, dirs, files in os.walk(temp_dir):
-                for file in files:
-                    zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), temp_dir))
+            try:
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                await message.reply(f"El código {code} es erróneo: {str(e)}")
+                continue
 
-        await client.send_document(message.chat.id, zip_filename)
-        shutil.rmtree(temp_dir)
-        os.remove(zip_filename)
-                    
+            soup = BeautifulSoup(response.content, 'html.parser')
+            title_tag = soup.find('title')
+            if title_tag:
+                page_name = clean_string(title_tag.text.strip())
+            else:
+                page_name = clean_string(code) + code
+
+            # Find the first image
+            img_url = f"https://es.3hentai.net/d/{code}/1/"
+            try:
+                response = requests.get(img_url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                await message.reply(f"Error al acceder a la página de la imagen: {str(e)}")
+                continue
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+            if img_tag:
+                img_url = img_tag['src']
+                img_extension = os.path.splitext(img_url)[1]
+                img_data = requests.get(img_url, headers=headers).content
+
+                img_filename = f"1{img_extension}"
+                with open(img_filename, 'wb') as img_file:
+                    img_file.write(img_data)
+
+                await client.send_document(message.chat.id, img_filename, caption=page_name)
+            else:
+                await message.reply(f"No se encontró ninguna imagen para el código {code}")
+
+        bot_in_use = False
+    elif message.text.startswith("/nh") or message.text.startswith(".nh"):
+        bot_in_use = True
+        sender = message.from_user
+        username = sender.id
+        codes = message.text.split()[1].split(',')
+
+        if not codes:
+            await message.reply("No puedes enviar el comando vacío")
+            bot_in_use = False
+            return
+
+        for code in codes:
+            code = clean_string(code.strip())
+
+            # Check the first page to get the name
+            url = f"https://nhentai.net/g/{code}/"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+
+            try:
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                await message.reply(f"El código {code} es erróneo: {str(e)}")
+                continue
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            title_tag = soup.find('title')
+            if title_tag:
+                page_name = clean_string(title_tag.text.strip())
+            else:
+                page_name = clean_string(code) + code
+
+            # Find the first image
+            img_url = f"https://nhentai.net/g/{code}/1/"
+            try:
+                response = requests.get(img_url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                await message.reply(f"Error al acceder a la página de la imagen: {str(e)}")
+                continue
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+            if img_tag:
+                img_url = img_tag['src']
+                img_extension = os.path.splitext(img_url)[1]
+                img_data = requests.get(img_url, headers=headers).content
+
+                img_filename = f"1{img_extension}"
+                with open(img_filename, 'wb') as img_file:
+                    img_file.write(img_data)
+
+                await client.send_document(message.chat.id, img_filename, caption=f"{code} {page_name}")
+            else:
+                await message.reply(f"No se encontró ninguna imagen para el código {code}")
+
+        bot_in_use = False
+
+def clean_string(s):
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
+        
 
 
 
