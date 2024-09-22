@@ -9,6 +9,7 @@ from email.message import EmailMessage
 from pyrogram import Client, filters
 import requests
 from bs4 import BeautifulSoup
+import re
 
 # Configuracion del bot
 api_id = os.getenv('API_ID')
