@@ -398,6 +398,7 @@ async def handle_message(client, message):
 
         bot_in_use = False
         
+        
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
         
