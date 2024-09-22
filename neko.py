@@ -281,126 +281,74 @@ async def handle_message(client, message):
         os.remove(new_file_path)
         shutil.rmtree('temprename')
         os.mkdir('temprename')
+    elif message.text.startswith('/h3dl'):
+        if bot_in_use:
+            await message.reply("El bot está en uso, espere un poco")
+            return
+        bot_in_use = True
+        codes = message.text.split()[1].split(',')
+        await download_images(client, message, codes, all_images=True)
+        bot_in_use = False
 
-    elif text.startswith("/nh"):
-        # Código para el comando /nh
-        codes = text.split()[1].split(',')
-        for code in codes:
-            await message.reply(f"Descargando {code}")
-            url = f"https://nhentai.net/{code}/"
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-            response = requests.get(url, headers=headers)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            page_name = ''.join(e for e in soup.title.string if e.isalnum() or e in '[]')
-            os.makedirs(f'hdltemp/{page_name}', exist_ok=True)
+    elif message.text.startswith('/coverh3'):
+        if bot_in_use:
+            await message.reply("El bot está en uso, espere un poco")
+            return
+        bot_in_use = True
+        codes = message.text.split()[1].split(',')
+        await download_images(client, message, codes, all_images=False)
+        bot_in_use = False
 
-            i = 1
-            while True:
-                found_image = False
-                for ext in image_extensions:
-                    img_url = f"https://nhentai.net/g/{code}/{i}.{ext}"
-                    img_response = requests.get(img_url, headers=headers)
-                    if img_response.status_code == 200:
-                        img_data = img_response.content
-                        with open(f'hdltemp/{page_name}/{i}.{ext}', 'wb') as handler:
-                            handler.write(img_data)
-                        found_image = True
-                        break
-                if not found_image:
-                    break
-                i += 1
+async def download_images(client, message, codes, all_images):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    base_url = "https:/es.hentai.net/d/"
+    temp_dir = "hdltemp"
+    image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
-            shutil.make_archive(f'hdltemp/{page_name}', 'zip', f'hdltemp/{page_name}')
-            os.rename(f'hdltemp/{page_name}.zip', f'hdltemp/{page_name}.cbz')
-            await client.send_document(message.chat.id, f'hdltemp/{page_name}.cbz')
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
 
-        shutil.rmtree('hdltemp')
-        await message.reply("Proceso completado")
+    for code in codes:
+        code_url = base_url + code + "/"
+        page = requests.get(code_url, headers=headers)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        page_title = ''.join(e for e in code if e.isalnum() or e in '[]')
+        page_dir = os.path.join(temp_dir, page_title)
 
-    elif text.startswith("/covernh"):
-        # Código para el comando /covernh
-        codes = text.split()[1].split(',')
-        for code in codes:
-            await message.reply(f"Descargando {code}")
-            url = f"https://nhentai.net/g/{code}/"
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-            response = requests.get(url, headers=headers)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            page_name = ''.join(e for e in soup.title.string if e.isalnum() or e in '[]')
-            os.makedirs(f'hdltemp/{page_name}', exist_ok=True)
+        if not os.path.exists(page_dir):
+            os.makedirs(page_dir)
 
+        image_num = 1
+        while True:
+            found_image = False
             for ext in image_extensions:
-                img_url = f"https://nhentai.net/g/{code}/1/1.{ext}"
-                img_response = requests.get(img_url, headers=headers)
-                if img_response.status_code == 200:
-                    img_data = img_response.content
-                    with open(f'hdltemp/{page_name}/1.{ext}', 'wb') as handler:
-                        handler.write(img_data)
-                    await message.reply_photo(photo=f'hdltemp/{page_name}/1.{ext}', caption=f"{code} - {page_name}")
+                image_url = base_url + code + f"/{image_num}.{ext}"
+                image_page = requests.get(image_url, headers=headers)
+                if image_page.status_code == 200:
+                    image_path = os.path.join(page_dir, f"{image_num}.{ext}")
+                    with open(image_path, 'wb') as f:
+                        f.write(image_page.content)
+                    found_image = True
                     break
+            if not found_image:
+                break
+            if not all_images:
+                await client.send_photo(message.chat.id, image_path, caption=f"{code} - {page_title}")
+                break
+            image_num += 1
 
-        shutil.rmtree('hdltemp')
-        await message.reply("Proceso completado")
-    elif text.startswith("/h3dl"):
-        # Código para el comando /nh
-        codes = text.split()[1].split(',')
-        for code in codes:
-            await message.reply(f"Descargando {code}")
-            url = f"https://es.3hentai.net/d/{code}/"
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-            response = requests.get(url, headers=headers)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            page_name = ''.join(e for e in soup.title.string if e.isalnum() or e in '[]')
-            os.makedirs(f'hdltemp/{page_name}', exist_ok=True)
+        zip_filename = f"{page_title}.cbz"
+        with ZipFile(zip_filename, 'w') as zipf:
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), temp_dir))
 
-            i = 1
-            while True:
-                found_image = False
-                for ext in image_extensions:
-                    img_url = f"https://es.3hentai.net/d/{code}/{i}.{ext}"
-                    img_response = requests.get(img_url, headers=headers)
-                    if img_response.status_code == 200:
-                        img_data = img_response.content
-                        with open(f'hdltemp/{page_name}/{i}.{ext}', 'wb') as handler:
-                            handler.write(img_data)
-                        found_image = True
-                        break
-                if not found_image:
-                    break
-                i += 1
-
-            shutil.make_archive(f'hdltemp/{page_name}', 'zip', f'hdltemp/{page_name}')
-            os.rename(f'hdltemp/{page_name}.zip', f'hdltemp/{page_name}.cbz')
-            await client.send_document(message.chat.id, f'hdltemp/{page_name}.cbz')
-
-        shutil.rmtree('hdltemp')
-        await message.reply("Proceso completado")
-
-    elif text.startswith("/coverh3"):
-        # Código para el comando /covernh
-        codes = text.split()[1].split(',')
-        for code in codes:
-            await message.reply(f"Descargando {code}")
-            url = f"https://es.3hentai.net/d/{code}/"
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-            response = requests.get(url, headers=headers)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            page_name = ''.join(e for e in soup.title.string if e.isalnum() or e in '[]')
-            os.makedirs(f'hdltemp/{page_name}', exist_ok=True)
-
-            for ext in image_extensions:
-                img_url = f"https://es.3hentai.net/d/{code}/1.{ext}"
-                img_response = requests.get(img_url, headers=headers)
-                if img_response.status_code == 200:
-                    img_data = img_response.content
-                    with open(f'hdltemp/{page_name}/1.{ext}', 'wb') as handler:
-                        handler.write(img_data)
-                    await message.reply_photo(photo=f'hdltemp/{page_name}/1.{ext}', caption=f"{code} - {page_name}")
-                    break
-
-        shutil.rmtree('hdltemp')
-        await message.reply("Proceso completado")
-
+        await client.send_document(message.chat.id, zip_filename)
+        shutil.rmtree(temp_dir)
+        os.remove(zip_filename)
+                    
 
 
 
