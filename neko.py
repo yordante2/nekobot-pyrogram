@@ -243,8 +243,22 @@ async def handle_message(client, message):
         new_name = command[1]
         media = message.reply_to_message
 
+        # Determinar el tipo de medio y obtener el file_id correspondiente
+        if media.photo:
+            file_id = media.photo.file_id
+        elif media.video:
+            file_id = media.video.file_id
+        elif media.document:
+            file_id = media.document.file_id
+        elif media.audio:
+            file_id = media.audio.file_id
+        else:
+            await message.reply("Tipo de archivo no soportado")
+            bot_in_use = False
+            return
+
         # Descargar el archivo
-        file_path = await client.download_media(media, file_name=f"temprename/{media.file_unique_id}")
+        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
 
         # Obtener la extensión del archivo original
         file_extension = os.path.splitext(file_path)[1]
