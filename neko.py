@@ -219,6 +219,9 @@ async def handle_message(client, message):
                 await message.reply("Correo electrónico enviado correctamente.")
             except Exception as e:
                 await message.reply(f"Error al enviar el correo: {e}")
+            finally:
+                shutil.rmtree('mailtemp')
+                os.mkdir('mailtemp')
 
 
 
