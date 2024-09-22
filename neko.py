@@ -65,8 +65,10 @@ def compressfile(file_path, part_size):
     
 def sanitize_input(input_string):
     return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
-    
-    
+
+def clean_string(s):
+    return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
+
 
 user_comp = {}
 
