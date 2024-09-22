@@ -28,6 +28,7 @@ compression_size = 10  # Tamaño de compresión por defecto en MB
 
 bot_in_use = False
 
+user_emails = {}
 
 #def compressfile(file_path, part_size):
     #parts = []
