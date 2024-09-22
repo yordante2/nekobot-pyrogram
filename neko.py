@@ -303,7 +303,7 @@ async def download_images(client, message, codes, all_images):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    base_url = "https://es.hentai.net/d/"
+    base_url = "https://es.3hentai.net/d/"
     temp_dir = "hdltemp"
     image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
