@@ -289,7 +289,6 @@ async def handle_message(client, message):
         shutil.rmtree('temprename')
         os.mkdir('temprename')
     elif message.text.startswith("/covernh") or message.text.startswith(".covernh"):
-        global clean_string:
         bot_in_use = True
         sender = message.from_user
         username = sender.id
@@ -348,7 +347,6 @@ async def handle_message(client, message):
         bot_in_use = False
         
     elif message.text.startswith("/cover3h") or message.text.startswith(".cover3h"):
-        global clean_string:
         bot_in_use = True
         sender = message.from_user
         username = sender.id
