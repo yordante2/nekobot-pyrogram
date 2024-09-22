@@ -298,7 +298,7 @@ async def handle_message(client, message):
             while True:
                 found_image = False
                 for ext in image_extensions:
-                    img_url = f"https://nhentai.net/g/{code}/{i}/{i}.{ext}"
+                    img_url = f"https://nhentai.net/g/{code}/{i}.{ext}"
                     img_response = requests.get(img_url, headers=headers)
                     if img_response.status_code == 200:
                         img_data = img_response.content
@@ -357,7 +357,7 @@ async def handle_message(client, message):
             while True:
                 found_image = False
                 for ext in image_extensions:
-                    img_url = f"https://es.3hentai.net/d/{code}/{i}/{i}.{ext}"
+                    img_url = f"https://es.3hentai.net/d/{code}/{i}.{ext}"
                     img_response = requests.get(img_url, headers=headers)
                     if img_response.status_code == 200:
                         img_data = img_response.content
@@ -389,7 +389,7 @@ async def handle_message(client, message):
             os.makedirs(f'hdltemp/{page_name}', exist_ok=True)
 
             for ext in image_extensions:
-                img_url = f"https://es.3hentai.net/d/{code}/1/1.{ext}"
+                img_url = f"https://es.3hentai.net/d/{code}/1.{ext}"
                 img_response = requests.get(img_url, headers=headers)
                 if img_response.status_code == 200:
                     img_data = img_response.content
