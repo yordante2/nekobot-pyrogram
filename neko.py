@@ -62,7 +62,10 @@ def compressfile(file_path, part_size):
             parts.append(part_file)
             part_num += 1
     return parts
-
+    
+def sanitize_input(input_string):
+    return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
+    
     
 
 user_comp = {}
@@ -402,203 +405,73 @@ async def handle_message(client, message):
             return s.strip()
             codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
 
-        
-    elif message.text.startswith("/nh"):
-        async def download_images(event):
-            global bot_in_use
-            if bot_in_use:
-                await event.reply("El comando está en uso actualmente, espere un poco")
-                return
+            elif text.startswith(('/nh', '.nh', 'nh')):
+        codes = text.split()[1].split(',')
+        for code in codes:
+            code = sanitize_input(code)
+            url = f"https://nhentai.net/g/{code}/"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
 
-            bot_in_use = True
-            sender = await event.get_sender()
-            username = sender.id
-            codes = event.pattern_match.group(1).split(',')
-
-            if not codes:
-                await event.reply("No puedes enviar el comando vacío")
+            try:
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                await message.reply(f"El código {code} es erróneo: {str(e)}")
                 bot_in_use = False
-                return
+                continue
 
-            total_codes = len(codes)
-            for index, code in enumerate(codes, start=1):
-                code = clean_string(code.strip())
+            soup = BeautifulSoup(response.content, 'html.parser')
+            title_tag = soup.find('title')
+            if title_tag:
+                folder_name = os.path.join("h3dl", sanitize_input(title_tag.text.strip()))
+            else:
+                folder_name = os.path.join("h3dl", sanitize_input(code))
 
-                # Check the first page to get the name
-                url = f"https://nhentai.net/g/{code}/"
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-                }
+            os.makedirs(folder_name, exist_ok=True)
 
+            # Now proceed to download images
+            page_number = 1
+            images_downloaded = 0
+
+            while True:
+                page_url = f"https://nhentai.net/g/{code}/{page_number}/"
                 try:
-                    response = requests.get(url, headers=headers)
+                    response = requests.get(page_url, headers=headers)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
-                    await event.reply(f"El código {code} es erróneo: {str(e)}")
-                    continue
+                    if page_number == 1:
+                        await message.reply(f"Error al acceder a la página: {str(e)}")
+                    bot_in_use = False
+                    break
 
                 soup = BeautifulSoup(response.content, 'html.parser')
-                title_tag = soup.find('title')
-                if title_tag:
-                    folder_name = os.path.join("h3dl", clean_string(title_tag.text.strip()))
-                else:
-                    folder_name = os.path.join("h3dl", clean_string(code))
+                img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+                if not img_tag:
+                    break
 
-                os.makedirs(folder_name, exist_ok=True)
+                img_url = img_tag['src']
+                img_extension = os.path.splitext(img_url)[1]
+                img_data = requests.get(img_url, headers=headers).content
 
-                # Now proceed to download images
-                page_number = 1
-                images_downloaded = 0
+                img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
+                with open(img_filename, 'wb') as img_file:
+                    img_file.write(img_data)
 
-                while True:
-                    url = f"https://nhentai.net/g/{code}/{page_number}/"
-                    try:
-                        response = requests.get(url, headers=headers)
-                        response.raise_for_status()
-                    except requests.exceptions.RequestException as e:
-                        if page_number == 1:
-                            await event.reply(f"Error al acceder a la página: {str(e)}")
-                        break
+                images_downloaded += 1
+                page_number += 1
 
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
-                    if not img_tag:
-                        break
+            # Create the CBZ file
+            zip_filename = os.path.join(f"{folder_name}.cbz")
+            with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                for root, _, files in os.walk(folder_name):
+                    for file in files:
+                        zipf.write(os.path.join(root, file), arcname=file)
 
-                    img_url = img_tag['src']
-                    img_extension = os.path.splitext(img_url)[1]
-                    img_data = requests.get(img_url, headers=headers).content
-
-                    img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
-                    with open(img_filename, 'wb') as img_file:
-                        img_file.write(img_data)
-
-                    images_downloaded += 1
-                    page_number += 1
-
-                if images_downloaded == 0:
-                    await event.reply(f"No se encontraron imágenes para el código {code}")
-                    continue
-
-                zip_filename = os.path.join(f"{folder_name}.cbz")
-                with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                    for root, _, files in os.walk(folder_name):
-                        for file in files:
-                            zipf.write(os.path.join(root, file), arcname=os.path.join(os.path.basename(root), file))
-
-                await client.send_file(event.chat_id, zip_filename)
-                await event.reply(f"Archivo {code} descargado, enviando...")
-
-            await event.reply("Todos los archivos CBZ han sido enviados correctamente")
-            shutil.rmtree('h3dl')
-            os.mkdir('h3dl')
+            # Send the CBZ file to the chat
+            await client.send_document(chat_id, zip_filename)
             bot_in_use = False
+            
 
-        def clean_string(s):
-            return re.sub(r'[^a-zA-Z0-9\[\]]+', '', s)
-
-    elif message.text.startswith("/3h"):
-        async def download_images(event):
-            global bot_in_use
-            if bot_in_use:
-                await event.reply("El comando está en uso actualmente, espere un poco")
-                return
-
-            bot_in_use = True
-            sender = await event.get_sender()
-            username = sender.id
-            codes = event.pattern_match.group(1).split(',')
-
-            if not codes:
-                await event.reply("No puedes enviar el comando vacío")
-                bot_in_use = False
-                return
-
-            total_codes = len(codes)
-            for index, code in enumerate(codes, start=1):
-                code = clean_string(code.strip())
-
-                # Check the first page to get the name
-                url = f"https://es.3hentai.net/d/{code}/"
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-                }
-
-                try:
-                    response = requests.get(url, headers=headers)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as e:
-                    await event.reply(f"El código {code} es erróneo: {str(e)}")
-                    continue
-
-                soup = BeautifulSoup(response.content, 'html.parser')
-                title_tag = soup.find('title')
-                if title_tag:
-                    folder_name = os.path.join("h3dl", clean_string(title_tag.text.strip()))
-                else:
-                    folder_name = os.path.join("h3dl", clean_string(code))
-
-                os.makedirs(folder_name, exist_ok=True)
-
-                # Now proceed to download images
-                page_number = 1
-                images_downloaded = 0
-
-                while True:
-                    url = f"https://es.3hentai.net/d/{code}/{page_number}/"
-                    try:
-                        response = requests.get(url, headers=headers)
-                        response.raise_for_status()
-                    except requests.exceptions.RequestException as e:
-                        if page_number == 1:
-                            await event.reply(f"Error al acceder a la página: {str(e)}")
-                        break
-
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
-                    if not img_tag:
-                        break
-
-                    img_url = img_tag['src']
-                    img_extension = os.path.splitext(img_url)[1]
-                    img_data = requests.get(img_url, headers=headers).content
-
-                    img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
-                    with open(img_filename, 'wb') as img_file:
-                        img_file.write(img_data)
-
-                    images_downloaded += 1
-                    page_number += 1
-
-                if images_downloaded == 0:
-                    await event.reply(f"No se encontraron imágenes para el código {code}")
-                    continue
-
-                zip_filename = os.path.join(f"{folder_name}.cbz")
-                with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                    for root, _, files in os.walk(folder_name):
-                        for file in files:
-                            zipf.write(os.path.join(root, file), arcname=os.path.join(os.path.basename(root), file))
-
-                await client.send_file(event.chat_id, zip_filename)
-                await event.reply(f"Archivo {code} descargado, enviando...")
-
-            await event.reply("Todos los archivos CBZ han sido enviados correctamente")
-            shutil.rmtree('h3dl')
-            os.mkdir('h3dl')
-            bot_in_use = False
-
-        def clean_string(s):
-            return re.sub(r'[^a-zA-Z0-9\[\]]+', '', s)
-
-
-        
-def clean_string(s):
-    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
-        
-
-
-
-
-app.run()
-    
+    elif message.text.
