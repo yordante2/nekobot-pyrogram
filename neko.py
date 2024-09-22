@@ -312,6 +312,11 @@ async def download_images(client, message, codes, all_images):
 
     for code in codes:
         code_url = base_url + code + "/"
+        response = requests.get(code_url)
+        if response.status_code == 404:
+            await message.reply("Error, no se encontró la pagina")
+            bot_in_use = False
+            return
         page = requests.get(code_url, headers=headers)
         soup = BeautifulSoup(page.content, 'html.parser')
         page_title = ''.join(e for e in code if e.isalnum() or e in '[]')
