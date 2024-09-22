@@ -244,7 +244,7 @@ async def handle_message(client, message):
         media = message.reply_to_message
 
         # Descargar el archivo
-        file_path = await client.download_media(media, file_name=f"temprename/{media.file_id}")
+        file_path = await client.download_media(media, file_name=f"temprename/{media.file_unique_id}")
 
         # Obtener la extensión del archivo original
         file_extension = os.path.splitext(file_path)[1]
