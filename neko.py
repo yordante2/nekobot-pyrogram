@@ -10,6 +10,7 @@ from pyrogram import Client, filters
 import requests
 from bs4 import BeautifulSoup
 import re
+from moodleclient import upload_token
 
 # Configuracion del bot
 api_id = os.getenv('API_ID')
@@ -148,6 +149,18 @@ async def handle_message(client, message):
                 await message.reply("Usuario no encontrado en la lista de baneados.")
         else:
             await message.reply("No eres admin")
+
+    elif text.startswith("/up"):
+        replied_message = message.reply_to_message
+        if replied_message:
+            await message.reply("Descargando...")
+            file_path = await client.download_media(replied_message.document.file_id)
+            await message.reply("Subiendo a la nube...")
+            link = upload_token(file_path, os.getenv("NUBETOKEN"), "https://cursad.jovenclub.cu")
+            await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
+            
+            # Borrar el archivo después de subirlo
+            os.remove(file_path)
     elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.document:
         global bot_in_use
         if bot_in_use:
