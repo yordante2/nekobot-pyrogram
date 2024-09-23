@@ -64,10 +64,10 @@ def compressfile(file_path, part_size):
     return parts
     
 def sanitize_input(input_string):
-    return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 
 def clean_string(s):
-    return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 
 
 user_comp = {}
@@ -327,10 +327,10 @@ async def handle_message(client, message):
             soup = BeautifulSoup(response.content, 'html.parser')
             title_tag = soup.find('title')
             def clean_string(s):
-                return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
+                return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
             if title_tag:
                 #page_name = clean_string(title_tag.text.strip())
-                page_name = re.sub(r'[^a-zA-Z0-9\[\]]', '', title_tag.text.strip()) if title_tag else re.sub(r'[^a-zA-Z0-9\[\]]', '', "code") + "code"
+                page_name = re.sub(r'[^a-zA-Z0-9\[\] ]', '', title_tag.text.strip()) if title_tag else re.sub(r'[^a-zA-Z0-9\[\]]', '', "code") + "code"
                 
             else:
                 page_name = clean_string(code) + code
@@ -390,10 +390,10 @@ async def handle_message(client, message):
             soup = BeautifulSoup(response.content, 'html.parser')
             title_tag = soup.find('title')
             def clean_string(s):
-                return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
+                return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
             if title_tag:
                 #page_name = clean_string(title_tag.text.strip())
-                page_name = re.sub(r'[^a-zA-Z0-9\[\]]', '', title_tag.text.strip()) if title_tag else re.sub(r'[^a-zA-Z0-9\[\]]', '', "code") + "code"
+                page_name = re.sub(r'[^a-zA-Z0-9\[\] ]', '', title_tag.text.strip()) if title_tag else re.sub(r'[^a-zA-Z0-9\[\]]', '', "code") + "code"
                 
             else:
                 page_name = clean_string(code) + code
@@ -427,8 +427,8 @@ async def handle_message(client, message):
             return s.strip()
             codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
 
-    elif message.text.startswith(('/nh', '.nh', 'nh')):
-        codes = text.split()[1].split(',')
+    elif message.text.startswith(('/nh', '.nh', 'nh')): codes = message.text.split(maxsplit=1)[1].split(',') if ',' in message.text.split(maxsplit=1)[1] else [message.text.split(maxsplit=1)[1]]
+        #codes = text.split()[1].split(',')
         for code in codes:
             code = sanitize_input(code)
             url = f"https://nhentai.net/g/{code}/"
@@ -495,8 +495,8 @@ async def handle_message(client, message):
             await client.send_document(chat_id, zip_filename)
             bot_in_use = False 
 
-    elif message.text.startswith(('/3h', '.3h', '3h')):
-        codes = text.split()[1].split(',')
+    elif message.text.startswith(('/3h', '.3h', '3h')): codes = message.text.split(maxsplit=1)[1].split(',') if ',' in message.text.split(maxsplit=1)[1] else [message.text.split(maxsplit=1)[1]]
+        #codes = text.split()[1].split(',')
         for code in codes:
             code = sanitize_input(code)
             url = f"https://es.3hentai.net/d/{code}/"
