@@ -79,8 +79,18 @@ async def handle_message(client, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
 
-    if chat_id not in allowed_users or user_id in ban_users:
-        return
+    # Verificar si el user_id está en la lista de usuarios permitidos
+    if user_id in allowed_users:
+        # El usuario tiene acceso en todos los chats
+        pass
+    else:
+        # Verificar si el chat_id está en la lista de chats permitidos
+        if chat_id not in allowed_chats:
+            return  # No hacer nada si el chat no está permitido
+
+        # Verificar si el user_id está en la lista de usuarios bloqueados
+        if user_id in ban_users:
+            return
 
     if message.text.startswith(('start', '.start', '/start')):
         await message.reply("Funcionando")
