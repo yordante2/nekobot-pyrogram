@@ -85,7 +85,7 @@ async def handle_message(client, message):
         pass
     else:
         # Verificar si el chat_id está en la lista de chats permitidos
-        if chat_id not in allowed_chats:
+        if chat_id not in allowed_users:
             return  # No hacer nada si el chat no está permitido
 
         # Verificar si el user_id está en la lista de usuarios bloqueados
