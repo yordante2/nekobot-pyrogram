@@ -315,6 +315,8 @@ async def handle_message(client, message):
 
             soup = BeautifulSoup(response.content, 'html.parser')
             title_tag = soup.find('title')
+            def clean_string(s):
+                return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
             if title_tag:
                 page_name = clean_string(title_tag.text.strip())
             else:
@@ -373,6 +375,8 @@ async def handle_message(client, message):
 
             soup = BeautifulSoup(response.content, 'html.parser')
             title_tag = soup.find('title')
+            def clean_string(s):
+                return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
             if title_tag:
                 page_name = clean_string(title_tag.text.strip())
             else:
