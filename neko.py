@@ -102,7 +102,7 @@ async def handle_message(client, message):
             allowed_users.append(new_user_id)
             await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
         else:
-            await message.reply("No eres admin")
+            return
     elif message.text.startswith('/remuser'):
         if user_id in admin_users:
             rem_user_id = int(message.text.split()[1])
@@ -113,14 +113,12 @@ async def handle_message(client, message):
             else:
                 await message.reply("Usuario no encontrado en la lista temporal.")
         else:
-            await message.reply("No eres admin")
+            return
     elif message.text.startswith('/addchat'):
         if user_id in admin_users:
             temp_chats.append(chat_id)
             allowed_users.append(chat_id)
             await message.reply(f"Chat {chat_id} añadido temporalmente.")
-        else:
-            await message.reply("No eres admin")
     elif message.text.startswith('/remchat'):
         if user_id in admin_users:
             if chat_id in temp_chats:
@@ -129,16 +127,12 @@ async def handle_message(client, message):
                 await message.reply(f"Chat {chat_id} eliminado temporalmente.")
             else:
                 await message.reply("Chat no encontrado en la lista temporal.")
-        else:
-            await message.reply("No eres admin")
     elif message.text.startswith('/banuser'):
         if user_id in admin_users:
             ban_user_id = int(message.text.split()[1])
             if ban_user_id not in admin_users:
                 ban_users.append(ban_user_id)
                 await message.reply(f"Usuario {ban_user_id} baneado.")
-        else:
-            message.reply("No eres admin")
     elif message.text.startswith('/debanuser'):
         if user_id in admin_users:
             deban_user_id = int(message.text.split()[1])
@@ -147,16 +141,13 @@ async def handle_message(client, message):
                 await message.reply(f"Usuario {deban_user_id} desbaneado.")
             else:
                 await message.reply("Usuario no encontrado en la lista de baneados.")
-        else:
-            await message.reply("No eres admin")
-
     elif text.startswith("/up"):
         replied_message = message.reply_to_message
         if replied_message:
             await message.reply("Descargando...")
             file_path = await client.download_media(replied_message.document.file_id)
             await message.reply("Subiendo a la nube...")
-            link = upload_token(file_path, os.getenv("NUBETOKEN"), "https://aulavirtual.upec.cu")
+            link = upload_token(file_path, os.getenv("NUBETOKEN"), os.getenv("NUBELINK"))
             await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
             
             # Borrar el archivo después de subirlo
