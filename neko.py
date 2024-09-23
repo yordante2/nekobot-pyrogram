@@ -163,7 +163,7 @@ async def handle_message(client, message):
             #file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
             #file_path = await client.download_media(message.reply_to_message, file_name=(os.path.basename(message.reply_to_message.document.file_name)[:60] if message.reply_to_message.document.file_name else f"{''.join(random.choices(string.ascii_letters + string.digits, k=20))}"))    
             file_name = (
-                os.path.basename(message.reply_to_message.document.file_name)[:60]
+                os.path.basename(message.reply_to_message.document.file_name)[:59]
                 if message.reply_to_message.document.file_name
                 else  ''.join(random.choices(string.ascii_letters + string.digits, k=20))
             )
