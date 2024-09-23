@@ -562,7 +562,79 @@ async def handle_message(client, message):
             # Send the CBZ file to the chat
             await client.send_document(chat_id, zip_filename)
             bot_in_use = False 
-            
+
+    elif message.text.startswith(('/scan', '.scan', 'scan')):
+        if bot_in_use:
+            await message.reply("El bot está en uso actualmente, espere un poco")
+            return
+
+        bot_in_use = True
+        url = message.text.split(' ', 1)[1]
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
+        try:
+            response = requests.get(url, headers=headers)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            links = soup.find_all('a', href=True)
+
+            results = []
+            for link in links:
+                href = link['href']
+                if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
+                    page_name = link.get_text(strip=True)
+                    if page_name:
+                        results.append(f"{page_name}\n{href}\n")
+
+            # Process results to check and modify links
+            final_results = []
+            for result in results:
+                lines = result.split('\n')
+                if len(lines) > 1:
+                    href = lines[1]
+                    if not href.startswith('http'):
+                        base_url = '/'.join(url.split('/')[:3])
+                        href = f"{base_url}{href}"
+                    final_results.append(f"{lines[0]}\n{href}\n")
+
+            if final_results:
+                with open('results.txt', 'w') as f:
+                    f.write("\n".join(final_results))
+                await message.reply_document('results.txt')
+                os.remove('results.txt')
+            else:
+                await message.reply("No se encontraron enlaces de páginas web.")
+
+        except Exception as e:
+            await message.reply(f"Error al escanear la página: {e}")
+
+        bot_in_use = False
+    elif message.text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
+
+        # Obtener el mensaje completo
+        full_message = message.text
+
+        # Si el mensaje es una respuesta a un archivo, leer el contenido del archivo línea por línea
+        if message.reply_to_message and message.reply_to_message.document:
+            file_path = await message.reply_to_message.download()
+            with open(file_path, 'r') as f:
+                for line in f:
+                    full_message += line
+            os.remove(file_path)
+
+        # Buscar todas las combinaciones de 6 números consecutivos
+        codes = re.findall(r'\d{6}', full_message)
+        # Unir las combinaciones encontradas con comas
+        result = ','.join(codes)
+        # Enviar el resultado
+        await message.reply(result)
+
+
+
+
+
 
 
 
