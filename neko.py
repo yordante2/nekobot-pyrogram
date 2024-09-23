@@ -431,7 +431,7 @@ async def handle_message(client, message):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             code = sanitize_input(code)
-            url = f"https://.net/g/{code}/"
+            url = f"https://nhentai.net/g/{code}/"
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
@@ -498,7 +498,7 @@ async def handle_message(client, message):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             code = sanitize_input(code)
-            url = f"https://.net/g/{code}/"
+            url = f"https://es.3hentai.net/d/{code}/"
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
