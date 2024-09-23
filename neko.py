@@ -494,7 +494,7 @@ async def handle_message(client, message):
             await client.send_document(chat_id, zip_filename)
             bot_in_use = False 
 
-    elif text.startswith(('/nh', '.nh', 'nh')):
+    elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             code = sanitize_input(code)
