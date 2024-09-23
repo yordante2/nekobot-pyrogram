@@ -356,8 +356,10 @@ async def handle_message(client, message):
                     img_file.write(img_data)
 
                 await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
+                bot_in_use = False
             else:
                 await message.reply(f"No se encontró ninguna imagen para el código {code}")
+                bot_in_use = False
 
         bot_in_use = False
         
@@ -419,9 +421,12 @@ async def handle_message(client, message):
                     img_file.write(img_data)
 
                 await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}")
+                bot_in_use = False
             else:
                 await message.reply(f"No se encontró ninguna imagen para el código {code}")
                 bot_in_use = False
+
+        bot_in_use = False
 
         def clean_string(s):
             return s.strip()
