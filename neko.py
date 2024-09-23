@@ -318,7 +318,9 @@ async def handle_message(client, message):
             def clean_string(s):
                 return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
             if title_tag:
-                page_name = clean_string(title_tag.text.strip())
+                #page_name = clean_string(title_tag.text.strip())
+                page_name = re.sub(r'[^a-zA-Z0-9\[\]]', '', title_tag.text.strip()) if title_tag else re.sub(r'[^a-zA-Z0-9\[\]]', '', "code") + "code"
+                
             else:
                 page_name = clean_string(code) + code
 
@@ -378,7 +380,9 @@ async def handle_message(client, message):
             def clean_string(s):
                 return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
             if title_tag:
-                page_name = clean_string(title_tag.text.strip())
+                #page_name = clean_string(title_tag.text.strip())
+                page_name = re.sub(r'[^a-zA-Z0-9\[\]]', '', title_tag.text.strip()) if title_tag else re.sub(r'[^a-zA-Z0-9\[\]]', '', "code") + "code"
+                
             else:
                 page_name = clean_string(code) + code
 
