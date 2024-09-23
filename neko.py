@@ -156,7 +156,7 @@ async def handle_message(client, message):
             await message.reply("Descargando...")
             file_path = await client.download_media(replied_message.document.file_id)
             await message.reply("Subiendo a la nube...")
-            link = upload_token(file_path, os.getenv("NUBETOKEN"), "https://aulavirtual.upec.cu/")
+            link = upload_token(file_path, os.getenv("NUBETOKEN"), "https://aulavirtual.upec.cu")
             await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
             
             # Borrar el archivo después de subirlo
