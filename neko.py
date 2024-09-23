@@ -628,7 +628,6 @@ async def handle_message(client, message):
 
         bot_in_use = False
     elif message.text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
-
         # Obtener el mensaje completo
         full_message = message.text
 
@@ -642,10 +641,15 @@ async def handle_message(client, message):
 
         # Buscar todas las combinaciones de 6 números consecutivos
         codes = re.findall(r'\d{6}', full_message)
-        # Unir las combinaciones encontradas con comas
-        result = ','.join(codes)
-        # Enviar el resultado
-        await message.reply(result)
+        
+        if codes:
+            # Unir las combinaciones encontradas con comas
+            result = ','.join(codes)
+            # Enviar el resultado
+            await message.reply(result)
+        else:
+            # Enviar mensaje si no hay códigos
+            await message.reply("No hay códigos para resumir")
 
 
 
