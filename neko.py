@@ -494,15 +494,14 @@ async def handle_message(client, message):
             await client.send_document(chat_id, zip_filename)
             bot_in_use = False 
 
-    elif message.text.startswith(('/3h', '.3h', '3h')): codes = message.text.split(maxsplit=1)[1].split(',') if ',' in message.text.split(maxsplit=1)[1] else [message.text.split(maxsplit=1)[1]]
-        #codes = text.split()[1].split(',')
+    elif text.startswith(('/nh', '.nh', 'nh')):
+        codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             code = sanitize_input(code)
-            url = f"https://es.3hentai.net/d/{code}/"
+            url = f"https://.net/g/{code}/"
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
-
             try:
                 response = requests.get(url, headers=headers)
                 response.raise_for_status()
