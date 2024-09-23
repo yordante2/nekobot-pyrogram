@@ -292,7 +292,8 @@ async def handle_message(client, message):
         bot_in_use = True
         sender = message.from_user
         username = sender.id
-        codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
+        codes = [code.strip() for code in message.text.split()[1].split(',')]
+        #codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
 
         if not codes:
             await message.reply("No puedes enviar el comando vacío")
@@ -354,7 +355,8 @@ async def handle_message(client, message):
         bot_in_use = True
         sender = message.from_user
         username = sender.id
-        codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
+        codes = [code.strip() for code in message.text.split()[1].split(',')]
+        #codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
 
         if not codes:
             await message.reply("No puedes enviar el comando vacío")
