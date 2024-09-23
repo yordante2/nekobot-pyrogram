@@ -427,10 +427,11 @@ async def handle_message(client, message):
             return s.strip()
             codes = [clean_string(code.strip()) for code in message.text.split()[1].split(',')]
 
-    elif message.text.startswith(('/nh', '.nh', 'nh')): codes = message.text.split(maxsplit=1)[1].split(',') if ',' in message.text.split(maxsplit=1)[1] else [message.text.split(maxsplit=1)[1]]
+    elif text.startswith(('/nh', '.nh', 'nh')):
+        codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             code = sanitize_input(code)
-            url = f"https://nhentai.net/g/{code}/"
+            url = f"https://.net/g/{code}/"
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
