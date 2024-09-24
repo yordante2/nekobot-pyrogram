@@ -71,6 +71,7 @@ def sanitize_input(input_string):
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 
+common_lines = None
 
 async def handle_compare(message):
     global common_lines
