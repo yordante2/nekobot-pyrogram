@@ -687,6 +687,36 @@ async def handle_message(client, message):
         await handle_listo(message)
 
 
+    elif message.text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
+        # Obtener el mensaje completo
+        full_message = message.text
+
+        # Si el mensaje es una respuesta a un archivo, leer el contenido del archivo línea por línea
+        if message.reply_to_message and message.reply_to_message.document:
+            file_path = await message.reply_to_message.download()
+            with open(file_path, 'r') as f:
+                for line in f:
+                    full_message += line
+            os.remove(file_path)
+
+        # Buscar todas las combinaciones de 6 números consecutivos
+        codes = re.findall(r'\d{6}', full_message)
+        
+        if codes:
+            # Crear un archivo de texto y escribir los códigos, cada uno en una línea distinta
+            file_name = "codes.txt"
+            with open(file_name, 'w') as f:
+                for code in codes:
+                    f.write(f"{code}\n")
+            
+            # Enviar el archivo al chat
+            await message.reply_document(file_name)
+            os.remove(file_name)
+        else:
+            # Enviar mensaje si no hay códigos
+            await message.reply("No hay códigos para resumir")
+
+
     
 
 
