@@ -95,88 +95,6 @@ async def handle_message(client, message):
 
     if message.text.startswith(('start', '.start', '/start')):
         await message.reply("Funcionando")
-
-    elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
-        if bot_in_use:
-            await message.reply("El bot está en uso actualmente, espere un poco")
-            return
-
-        bot_in_use = True
-        parts = message.text.split(' ')
-        base_url = parts[1]
-        start = int(parts[2])
-        end = int(parts[3])
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-
-        all_results = set()
-
-        try:
-            for i in range(start, end + 1):
-                url = f"{base_url}{i}"
-                response = requests.get(url, headers=headers)
-                soup = BeautifulSoup(response.content, 'html.parser')
-                links = soup.find_all('a', href=True)
-
-                for link in links:
-                    href = link['href']
-                    if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
-                        page_name = link.get_text(strip=True)
-                        if page_name:
-                            if not href.startswith('http'):
-                                href = f"{base_url}{href}"
-                            all_results.add(f"{page_name}\n{href}\n")
-
-            if all_results:
-                with open('results.txt', 'w') as f:
-                    f.write("\n".join(all_results))
-                await message.reply_document('results.txt')
-                os.remove('results.txt')
-            else:
-                await message.reply("No se encontraron enlaces de páginas web.")
-
-        except Exception as e:
-            await message.reply(f"Error al escanear las páginas: {e}")
-
-        bot_in_use = False
-
-    elif message.text.startswith(('/compare', '.compare', 'compare')):
-        await message.reply("Envie archivos TXT a comparar y escriba 'Listo' al terminar")
-
-        @client.on_message(filters.document)
-        async def handle_document(client, message):
-            if message.document.mime_type == 'text/plain':
-                await message.download(file_name=message.document.file_name)
-
-        @client.on_message(filters.text & filters.regex(r'(?i)^listo$'))
-        async def handle_done(client, message):
-            import glob
-
-            txt_files = glob.glob("*.txt")
-            common_lines = None
-
-            for file in txt_files:
-                with open(file, 'r') as f:
-                    lines = set(f.readlines())
-                    if common_lines is None:
-                        common_lines = lines
-                    else:
-                        common_lines &= lines
-
-            if common_lines:
-                with open('common_lines.txt', 'w') as f:
-                    f.writelines(common_lines)
-                await message.reply_document('common_lines.txt')
-                os.remove('common_lines.txt')
-
-            for file in txt_files:
-                os.remove(file)
-
-            await client.remove_handler(handle_document)
-            await client.remove_handler(handle_done)
-            
     elif message.text.startswith('/adduser'):
         if user_id in admin_users:
             new_user_id = int(message.text.split()[1])
@@ -234,58 +152,56 @@ async def handle_message(client, message):
             
             # Borrar el archivo después de subirlo
             os.remove(file_path)
-
-    bot_in_use = False
     elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.document:
-    global bot_in_use
-    if bot_in_use:
-        await message.reply("El comando está en uso actualmente, espere un poco")
-        return
-    try:
-        bot_in_use = True
-        os.system("rm -rf ./server/*")
-        await message.reply("Descargando el archivo para comprimirlo...")
+        global bot_in_use
+        if bot_in_use:
+            await message.reply("El comando está en uso actualmente, espere un poco")
+            return
+        try:
+            bot_in_use = True
+            os.system("rm -rf ./server/*")
+            await message.reply("Descargando el archivo para comprimirlo...")
 
-        # Descargar archivo
-        #file_path = await client.download_media(message.reply_to_message, file_name="server")
-        #file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
-        #file_path = await client.download_media(message.reply_to_message, file_name=(os.path.basename(message.reply_to_message.document.file_name)[:60] if message.reply_to_message.document.file_name else f"{''.join(random.choices(string.ascii_letters + string.digits, k=20))}"))    
-        file_name = (
-            os.path.basename(message.reply_to_message.document.file_name)[:50]
-            if message.reply_to_message.document.file_name
-            else  ''.join(random.choices(string.ascii_letters + string.digits, k=20))
-        )
-        file_path = await client.download_media(
-            message.reply_to_message,
-            file_name=file_name
-        )
-            
-        await message.reply("Comprimiendo el archivo...")
+            # Descargar archivo
+            #file_path = await client.download_media(message.reply_to_message, file_name="server")
+            #file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
+            #file_path = await client.download_media(message.reply_to_message, file_name=(os.path.basename(message.reply_to_message.document.file_name)[:60] if message.reply_to_message.document.file_name else f"{''.join(random.choices(string.ascii_letters + string.digits, k=20))}"))    
+            file_name = (
+                os.path.basename(message.reply_to_message.document.file_name)[:50]
+                if message.reply_to_message.document.file_name
+                else  ''.join(random.choices(string.ascii_letters + string.digits, k=20))
+            )
+            file_path = await client.download_media(
+                message.reply_to_message,
+                file_name=file_name
+            )
+                
+                
+                
+            await message.reply("Comprimiendo el archivo...")
 
-        sizd = user_comp.get(username, 10)
+            sizd = user_comp.get(username, 10)
 
-        # Comprimir archivo
-        parts = compressfile(file_path, sizd)
-        await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+            # Comprimir archivo
+            parts = compressfile(file_path, sizd)
+            await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
 
-        # Enviar partes
-        for part in parts:
-            try:
-                await client.send_document(message.chat.id, part)
-            except:
-                pass
+            # Enviar partes
+            for part in parts:
+                try:
+                    await client.send_document(message.chat.id, part)
+                except:
+                    pass
 
-        await message.reply("Esas son todas las partes")
-        shutil.rmtree('server')
-        os.mkdir('server')
+            await message.reply("Esas son todas las partes")
+            shutil.rmtree('server')
+            os.mkdir('server')
 
-        bot_in_use = False
-    except Exception as e:
-        await message.reply(f'Error: {str(e)}')
-    finally:
-        bot_in_use = False
-
-    
+            bot_in_use = False
+        except Exception as e:
+            await message.reply(f'Error: {str(e)}')
+        finally:
+            bot_in_use = False
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
@@ -726,6 +642,89 @@ async def handle_message(client, message):
             # Enviar mensaje si no hay códigos
             await message.reply("No hay códigos para resumir")
 
+    elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
+        if bot_in_use:
+            await message.reply("El bot está en uso actualmente, espere un poco")
+            return
+
+        bot_in_use = True
+        parts = message.text.split(' ')
+        base_url = parts[1]
+        start = int(parts[2])
+        end = int(parts[3])
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
+        all_results = set()
+
+        try:
+            for i in range(start, end + 1):
+                url = f"{base_url}{i}"
+                response = requests.get(url, headers=headers)
+                soup = BeautifulSoup(response.content, 'html.parser')
+                links = soup.find_all('a', href=True)
+
+                for link in links:
+                    href = link['href']
+                    if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
+                        page_name = link.get_text(strip=True)
+                        if page_name:
+                            if not href.startswith('http'):
+                                href = f"{base_url}{href}"
+                            all_results.add(f"{page_name}\n{href}\n")
+
+            if all_results:
+                with open('results.txt', 'w') as f:
+                    f.write("\n".join(all_results))
+                await message.reply_document('results.txt')
+                os.remove('results.txt')
+            else:
+                await message.reply("No se encontraron enlaces de páginas web.")
+
+        except Exception as e:
+            await message.reply(f"Error al escanear las páginas: {e}")
+
+        bot_in_use = False
+
+    elif message.text.startswith(('/compare', '.compare', 'compare')):
+        await message.reply("Envie archivos TXT a comparar y escriba 'Listo' al terminar")
+
+        @client.on_message(filters.document)
+        async def handle_document(client, message):
+            if message.document.mime_type == 'text/plain':
+                await message.download(file_name=message.document.file_name)
+
+        @client.on_message(filters.text & filters.regex(r'(?i)^listo$'))
+        async def handle_done(client, message):
+            import glob
+
+            txt_files = glob.glob("*.txt")
+            common_lines = None
+
+            for file in txt_files:
+                with open(file, 'r') as f:
+                    lines = set(f.readlines())
+                    if common_lines is None:
+                        common_lines = lines
+                    else:
+                        common_lines &= lines
+
+            if common_lines:
+                with open('common_lines.txt', 'w') as f:
+                    f.writelines(common_lines)
+                await message.reply_document('common_lines.txt')
+                os.remove('common_lines.txt')
+
+            for file in txt_files:
+                os.remove(file)
+
+            await client.remove_handler(handle_document)
+            await client.remove_handler(handle_done)
+                
+
+
 
 
 
@@ -735,4 +734,3 @@ async def handle_message(client, message):
 
 
 app.run()
-
