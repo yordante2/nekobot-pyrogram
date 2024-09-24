@@ -95,6 +95,88 @@ async def handle_message(client, message):
 
     if message.text.startswith(('start', '.start', '/start')):
         await message.reply("Funcionando")
+
+    elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
+        if bot_in_use:
+            await message.reply("El bot está en uso actualmente, espere un poco")
+            return
+
+        bot_in_use = True
+        parts = message.text.split(' ')
+        base_url = parts[1]
+        start = int(parts[2])
+        end = int(parts[3])
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
+        all_results = set()
+
+        try:
+            for i in range(start, end + 1):
+                url = f"{base_url}{i}"
+                response = requests.get(url, headers=headers)
+                soup = BeautifulSoup(response.content, 'html.parser')
+                links = soup.find_all('a', href=True)
+
+                for link in links:
+                    href = link['href']
+                    if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
+                        page_name = link.get_text(strip=True)
+                        if page_name:
+                            if not href.startswith('http'):
+                                href = f"{base_url}{href}"
+                            all_results.add(f"{page_name}\n{href}\n")
+
+            if all_results:
+                with open('results.txt', 'w') as f:
+                    f.write("\n".join(all_results))
+                await message.reply_document('results.txt')
+                os.remove('results.txt')
+            else:
+                await message.reply("No se encontraron enlaces de páginas web.")
+
+        except Exception as e:
+            await message.reply(f"Error al escanear las páginas: {e}")
+
+        bot_in_use = False
+
+    elif message.text.startswith(('/compare', '.compare', 'compare')):
+        await message.reply("Envie archivos TXT a comparar y escriba 'Listo' al terminar")
+
+        @client.on_message(filters.document)
+        async def handle_document(client, message):
+            if message.document.mime_type == 'text/plain':
+                await message.download(file_name=message.document.file_name)
+
+        @client.on_message(filters.text & filters.regex(r'(?i)^listo$'))
+        async def handle_done(client, message):
+            import glob
+
+            txt_files = glob.glob("*.txt")
+            common_lines = None
+
+            for file in txt_files:
+                with open(file, 'r') as f:
+                    lines = set(f.readlines())
+                    if common_lines is None:
+                        common_lines = lines
+                    else:
+                        common_lines &= lines
+
+            if common_lines:
+                with open('common_lines.txt', 'w') as f:
+                    f.writelines(common_lines)
+                await message.reply_document('common_lines.txt')
+                os.remove('common_lines.txt')
+
+            for file in txt_files:
+                os.remove(file)
+
+            await client.remove_handler(handle_document)
+            await client.remove_handler(handle_done)
+            
     elif message.text.startswith('/adduser'):
         if user_id in admin_users:
             new_user_id = int(message.text.split()[1])
