@@ -1,4 +1,5 @@
 import os
+import glob
 from pyrogram import Client, filters
 import zipfile
 import shutil
@@ -643,6 +644,43 @@ async def handle_message(client, message):
             # Enviar mensaje si no hay códigos
             await message.reply("No hay códigos para resumir")
 
+
+    elif message.text.startswith(('compare', '.compare', '/compare')):
+        await message.reply("Envía archivos TXT a comparar y escribe 'Listo' al terminar")
+
+        @app.on_message(filters.document)
+        async def handle_document(client, message):
+            global file_counter
+            if message.document.mime_type == 'text/plain':
+                file_counter += 1
+                custom_name = f"file_{file_counter}_{message.document.file_name}"
+                await message.download(file_name=custom_name)
+
+        @app.on_message(filters.text & filters.regex(r'(?i)^listo$'))
+        async def handle_done(client, message):
+            txt_files = glob.glob("*.txt")
+            common_lines = None
+
+            for file in txt_files:
+                with open(file, 'r') as f:
+                    lines = set(f.readlines())
+                    if common_lines is None:
+                        common_lines = lines
+                    else:
+                        common_lines &= lines
+
+            if common_lines:
+                with open('common_lines.txt', 'w') as f:
+                    f.writelines(common_lines)
+                await message.reply_document('common_lines.txt')
+                os.remove('common_lines.txt')
+
+            for file in txt_files:
+                os.remove(file)
+
+            await client.remove_handler(handle_document)
+            await client.remove_handler(handle_done)
+
     elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
         if bot_in_use:
             await message.reply("El bot está en uso actualmente, espere un poco")
@@ -699,42 +737,9 @@ async def handle_message(client, message):
             await message.reply(f"Error al escanear las páginas: {e}")
 
         bot_in_use = False
+
+
             
-    elif message.text.startswith(('/compare', '.compare', 'compare')):
-        await message.reply("Envie archivos TXT a comparar y escriba 'Listo' al terminar")
-
-        @client.on_message(filters.document)
-        async def handle_document(client, message):
-            if message.document.mime_type == 'text/plain':
-                await message.download(file_name=message.document.file_name)
-
-        @client.on_message(filters.text & filters.regex(r'(?i)^listo$'))
-        async def handle_done(client, message):
-            import glob
-
-            txt_files = glob.glob("*.txt")
-            common_lines = None
-
-            for file in txt_files:
-                with open(file, 'r') as f:
-                    lines = set(f.readlines())
-                    if common_lines is None:
-                        common_lines = lines
-                    else:
-                        common_lines &= lines
-
-            if common_lines:
-                with open('common_lines.txt', 'w') as f:
-                    f.writelines(common_lines)
-                await message.reply_document('common_lines.txt')
-                os.remove('common_lines.txt')
-
-            for file in txt_files:
-                os.remove(file)
-
-            await client.remove_handler(handle_document)
-            await client.remove_handler(handle_done)
-                
 
 
 
