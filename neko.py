@@ -651,6 +651,7 @@ async def handle_message(client, message):
         @app.on_message(filters.document)
         async def handle_document(client, message):
             global file_counter
+            file_counter = 0
             if message.document.mime_type == 'text/plain':
                 file_counter += 1
                 custom_name = f"file_{file_counter}_{message.document.file_name}"
