@@ -644,43 +644,41 @@ async def handle_message(client, message):
             # Enviar mensaje si no hay códigos
             await message.reply("No hay códigos para resumir")
 
+    elif message.text.startswith('/compare'):
+        await handle_compare(message)
 
-    elif message.text.startswith(('compare', '.compare', '/compare')):
-        await message.reply("Envía archivos TXT a comparar y escribe 'Listo' al terminar")
+    elif message.text.startswith('/listo'):
+        await handle_listo(message)
 
-        @app.on_message(filters.document)
-        async def handle_document(client, message):
-            global file_counter
-            file_counter = 0
-            if message.document.mime_type == 'text/plain':
-                file_counter += 1
-                custom_name = f"file_{file_counter}_{message.document.file_name}"
-                await message.download(file_name=custom_name)
+async def handle_compare(message):
+    global common_lines
 
-        @app.on_message(filters.text & filters.regex(r'(?i)^listo$'))
-        async def handle_done(client, message):
-            txt_files = glob.glob("*.txt")
-            common_lines = None
+    if message.reply_to_message and message.reply_to_message.document:
+        file_path = await message.reply_to_message.download()
+        with open(file_path, 'r') as f:
+            lines = set(f.readlines())
+        os.remove(file_path)
 
-            for file in txt_files:
-                with open(file, 'r') as f:
-                    lines = set(f.readlines())
-                    if common_lines is None:
-                        common_lines = lines
-                    else:
-                        common_lines &= lines
+        if common_lines is None:
+            common_lines = lines
+        else:
+            common_lines = common_lines.intersection(lines)
 
-            if common_lines:
-                with open('common_lines.txt', 'w') as f:
-                    f.writelines(common_lines)
-                await message.reply_document('common_lines.txt')
-                os.remove('common_lines.txt')
+        await message.reply("Archivo analizado, responda /compare a otro para seguir o /listo para terminar")
 
-            for file in txt_files:
-                os.remove(file)
+async def handle_listo(message):
+    global common_lines
 
-            await client.remove_handler(handle_document)
-            await client.remove_handler(handle_done)
+    if common_lines is not None:
+        with open('resultado.txt', 'w') as f:
+            f.writelines(common_lines)
+        await message.reply_document('resultado.txt')
+        os.remove('resultado.txt')
+        common_lines = None
+    else:
+        await message.reply("No hay líneas comunes para enviar")
+    
+
 
     elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
         if bot_in_use:
