@@ -72,6 +72,36 @@ def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 
 
+async def handle_compare(message):
+    global common_lines
+
+    if message.reply_to_message and message.reply_to_message.document:
+        file_path = await message.reply_to_message.download()
+        with open(file_path, 'r') as f:
+            lines = set(f.readlines())
+        os.remove(file_path)
+
+        if common_lines is None:
+            common_lines = lines
+        else:
+            common_lines = common_lines.intersection(lines)
+
+        await message.reply("Archivo analizado, responda /compare a otro para seguir o /listo para terminar")
+
+async def handle_listo(message):
+    global common_lines
+
+    if common_lines is not None:
+        with open('resultado.txt', 'w') as f:
+            f.writelines(common_lines)
+        await message.reply_document('resultado.txt')
+        os.remove('resultado.txt')
+        common_lines = None
+    else:
+        await message.reply("No hay líneas comunes para enviar")
+
+
+
 user_comp = {}
 
 @app.on_message(filters.text)
@@ -650,33 +680,7 @@ async def handle_message(client, message):
     elif message.text.startswith('/listo'):
         await handle_listo(message)
 
-async def handle_compare(message):
-    global common_lines
 
-    if message.reply_to_message and message.reply_to_message.document:
-        file_path = await message.reply_to_message.download()
-        with open(file_path, 'r') as f:
-            lines = set(f.readlines())
-        os.remove(file_path)
-
-        if common_lines is None:
-            common_lines = lines
-        else:
-            common_lines = common_lines.intersection(lines)
-
-        await message.reply("Archivo analizado, responda /compare a otro para seguir o /listo para terminar")
-
-async def handle_listo(message):
-    global common_lines
-
-    if common_lines is not None:
-        with open('resultado.txt', 'w') as f:
-            f.writelines(common_lines)
-        await message.reply_document('resultado.txt')
-        os.remove('resultado.txt')
-        common_lines = None
-    else:
-        await message.reply("No hay líneas comunes para enviar")
     
 
 
