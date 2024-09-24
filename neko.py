@@ -237,55 +237,55 @@ async def handle_message(client, message):
 
     bot_in_use = False
     elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.document:
-        global bot_in_use
-        if bot_in_use:
-            await message.reply("El comando está en uso actualmente, espere un poco")
-            return
-        try:
-            bot_in_use = True
-            os.system("rm -rf ./server/*")
-            await message.reply("Descargando el archivo para comprimirlo...")
+    global bot_in_use
+    if bot_in_use:
+        await message.reply("El comando está en uso actualmente, espere un poco")
+        return
+    try:
+        bot_in_use = True
+        os.system("rm -rf ./server/*")
+        await message.reply("Descargando el archivo para comprimirlo...")
 
-            # Descargar archivo
-            #file_path = await client.download_media(message.reply_to_message, file_name="server")
-            #file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
-            #file_path = await client.download_media(message.reply_to_message, file_name=(os.path.basename(message.reply_to_message.document.file_name)[:60] if message.reply_to_message.document.file_name else f"{''.join(random.choices(string.ascii_letters + string.digits, k=20))}"))    
-            file_name = (
-                os.path.basename(message.reply_to_message.document.file_name)[:50]
-                if message.reply_to_message.document.file_name
-                else  ''.join(random.choices(string.ascii_letters + string.digits, k=20))
-            )
-            file_path = await client.download_media(
-                message.reply_to_message,
-                file_name=file_name
-            )
-                
-                
-                
-            await message.reply("Comprimiendo el archivo...")
+        # Descargar archivo
+        #file_path = await client.download_media(message.reply_to_message, file_name="server")
+        #file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
+        #file_path = await client.download_media(message.reply_to_message, file_name=(os.path.basename(message.reply_to_message.document.file_name)[:60] if message.reply_to_message.document.file_name else f"{''.join(random.choices(string.ascii_letters + string.digits, k=20))}"))    
+        file_name = (
+            os.path.basename(message.reply_to_message.document.file_name)[:50]
+            if message.reply_to_message.document.file_name
+            else  ''.join(random.choices(string.ascii_letters + string.digits, k=20))
+        )
+        file_path = await client.download_media(
+            message.reply_to_message,
+            file_name=file_name
+        )
+            
+        await message.reply("Comprimiendo el archivo...")
 
-            sizd = user_comp.get(username, 10)
+        sizd = user_comp.get(username, 10)
 
-            # Comprimir archivo
-            parts = compressfile(file_path, sizd)
-            await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+        # Comprimir archivo
+        parts = compressfile(file_path, sizd)
+        await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
 
-            # Enviar partes
-            for part in parts:
-                try:
-                    await client.send_document(message.chat.id, part)
-                except:
-                    pass
+        # Enviar partes
+        for part in parts:
+            try:
+                await client.send_document(message.chat.id, part)
+            except:
+                pass
 
-            await message.reply("Esas son todas las partes")
-            shutil.rmtree('server')
-            os.mkdir('server')
+        await message.reply("Esas son todas las partes")
+        shutil.rmtree('server')
+        os.mkdir('server')
 
-            bot_in_use = False
-        except Exception as e:
-            await message.reply(f'Error: {str(e)}')
-        finally:
-            bot_in_use = False
+        bot_in_use = False
+    except Exception as e:
+        await message.reply(f'Error: {str(e)}')
+    finally:
+        bot_in_use = False
+
+    
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
