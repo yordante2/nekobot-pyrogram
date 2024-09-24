@@ -667,13 +667,18 @@ async def handle_message(client, message):
         codes = re.findall(r'\d{6}', full_message)
         
         if codes:
-            # Unir las combinaciones encontradas con comas
-            result = ','.join(codes)
-            # Enviar el resultado
-            await message.reply(result)
+            # Dividir las combinaciones en grupos de 550
+            chunk_size = 550
+            chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
+            
+            # Enviar cada grupo en un mensaje separado
+            for chunk in chunks:
+                result = ','.join(chunk)
+                await message.reply(result)
         else:
             # Enviar mensaje si no hay códigos
             await message.reply("No hay códigos para resumir")
+
 
     elif message.text.startswith('/compare'):
         await handle_compare(message)
