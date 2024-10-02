@@ -529,15 +529,26 @@ async def handle_message(client, message):
 
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
-        await cover3h_operation(client, message, codes)
-        await h3_operation(client, message, codes)
+        for code in codes:
+            await cover3h_operation(client, message, [code])
+            await h3_operation(client, message, [code])
+
+    elif text.startswith(('/cover3h', '.cover3h')):
+        codes = [code.strip() for code in text.split()[1].split(',')]
+        for code in codes:
+            await cover3h_operation(client, message, [code])
+            
+
     elif text.startswith(('/covernh', '.covernh')):
         codes = [code.strip() for code in text.split()[1].split(',')]
-        await covernh_operation(client, message, codes)
+        for code in codes:
+            await covernh_operation(client, message, [code])
+
     elif text.startswith(('/nh', '.nh', 'nh')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
-        await covernh_operation(client, message, codes)
-        await nh_operation(client, message, codes)
+        for code in codes:
+            await covernh_operation(client, message, [code])
+            await nh_operation(client, message, [code])
 
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         if bot_in_use:
