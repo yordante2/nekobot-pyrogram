@@ -257,8 +257,8 @@ async def h3_operation(client, message, codes):
 def sanitize_input(input_string):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 
-#def clean_string(s):
-    #return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
+def clean_string(s):
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
 common_lines = None
 
