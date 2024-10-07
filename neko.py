@@ -35,20 +35,6 @@ bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
-#def compressfile(file_path, part_size):
-    #parts = []
-    #with open(file_path, 'rb') as f:
-        #part_num = 1
-        #while True:
-            #part_data = f.read(part_size * 1024 * 1024)
-            #if not part_data:
-                #break
-            #part_file = f"{file_path}.part{part_num}"
-            #with open(part_file, 'wb') as part:
-                #part.write(part_data)
-            #parts.append(part_file)
-            #part_num += 1
-    #return parts
 
 def compressfile(file_path, part_size):
     parts = []
@@ -105,6 +91,60 @@ async def cover3h_operation(client, message, codes):
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
+async def h3_operation(client, message, codes):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
+    for code in codes:
+        url = f"https://es.3hentai.net/d/{code}/"
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            continue
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
+        folder_name = os.path.join("h3dl", clean_string(title_tag.text.strip()) if title_tag else clean_string(code))
+
+        os.makedirs(folder_name, exist_ok=True)
+
+        page_number = 1
+        while True:
+            page_url = f"https://es.3hentai.net/d/{code}/{page_number}/"
+            try:
+                response = requests.get(page_url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                if page_number == 1:
+                    await message.reply(f"Error al acceder a la página: {str(e)}")
+                break
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+            if not img_tag:
+                break
+
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_data = requests.get(img_url, headers=headers).content
+
+            img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
+            with open(img_filename, 'wb') as img_file:
+                img_file.write(img_data)
+
+            page_number += 1
+
+        zip_filename = os.path.join(f"{folder_name}.cbz")
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for root, _, files in os.walk(folder_name):
+                for file in files:
+                    zipf.write(os.path.join(root, file), arcname=file)
+
+        await client.send_document(message.chat.id, zip_filename)
+
 async def nh_operation(client, message, codes):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -127,7 +167,7 @@ async def nh_operation(client, message, codes):
 
         page_number = 1
         while True:
-            page_url = f"https://nentai.net/g/{code}/{page_number}/"
+            page_url = f"https://nhentai.net/g/{code}/{page_number}/"
             try:
                 response = requests.get(page_url, headers=headers)
                 response.raise_for_status()
@@ -200,59 +240,6 @@ async def covernh_operation(client, message, codes):
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
-async def h3_operation(client, message, codes):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-
-    for code in codes:
-        url = f"https://es.3hentai.net/d/{code}/"
-        try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            await message.reply(f"El código {code} es erróneo: {str(e)}")
-            continue
-
-        soup = BeautifulSoup(response.content, 'html.parser')
-        title_tag = soup.find('title')
-        folder_name = os.path.join("h3dl", clean_string(title_tag.text.strip()) if title_tag else clean_string(code))
-
-        os.makedirs(folder_name, exist_ok=True)
-
-        page_number = 1
-        while True:
-            page_url = f"https://es.3hentai.net/d/{code}/{page_number}/"
-            try:
-                response = requests.get(page_url, headers=headers)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                if page_number == 1:
-                    await message.reply(f"Error al acceder a la página: {str(e)}")
-                break
-
-            soup = BeautifulSoup(response.content, 'html.parser')
-            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
-            if not img_tag:
-                break
-
-            img_url = img_tag['src']
-            img_extension = os.path.splitext(img_url)[1]
-            img_data = requests.get(img_url, headers=headers).content
-
-            img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
-            with open(img_filename, 'wb') as img_file:
-                img_file.write(img_data)
-
-            page_number += 1
-
-        zip_filename = os.path.join(f"{folder_name}.cbz")
-        with zipfile.ZipFile(zip_filename, 'w') as zipf:
-            for root, _, files in os.walk(folder_name):
-                for file in files:
-                    zipf.write(os.path.join(root, file), arcname=file)
-
-        await client.send_document(message.chat.id, zip_filename)
     
 def sanitize_input(input_string):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
