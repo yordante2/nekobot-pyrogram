@@ -478,9 +478,7 @@ async def handle_message(client, message):
         if media.photo:
             file_id = media.photo.file_id
         elif media.video:
-            file_id = media.video.fil
-            
-            e_id
+            file_id = media.video.file_id
         elif media.document:
             file_id = media.document.file_id
         elif media.audio:
