@@ -242,8 +242,8 @@ async def covernh_operation(client, message, codes):
 
             except Exception as e:
                 client.send_document(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
-            else:
-                await message.reply(f"No se encontró ninguna imagen para el código {code}")
+            #else:
+                #await message.reply(f"No se encontró ninguna imagen para el código {code}")
             
     
 def sanitize_input(input_string):
