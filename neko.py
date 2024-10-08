@@ -240,13 +240,6 @@ async def covernh_operation(client, message, codes):
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
-
-try:
-    await client.send_photo(message.chat.id, img_filename, caption=f"https://n.net/g/{code} {page_name}")
-except Exception as e:
-    print(f"Error al enviar la imagen: {e}")
-    await client.send_document(message.chat.id, img_filename, caption=f"https://n.net/g/{code} {page_name}")
-    
     
 def sanitize_input(input_string):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
