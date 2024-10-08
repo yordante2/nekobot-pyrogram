@@ -236,7 +236,7 @@ async def covernh_operation(client, message, codes):
             with open(img_filename, 'wb') as img_file:
                 img_file.write(img_data)
 
-            await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}") if not Exception else client.send_document(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
+            await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}") if not Exception else await client.send_document(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
