@@ -516,29 +516,24 @@ async def handle_sendmail(client, message):
         finally:
             shutil.rmtree('mailtemp')
             os.mkdir('mailtemp')
-async def handle_rename(client, message):
-    global bot_in_use
+async def rename_file(message, client, bot_in_use):
     if bot_in_use:
         await message.reply("El bot está en uso, espere un poco")
         return
-
-    bot_in_use = False
-
+    bot_in_use = True
     if not message.reply_to_message or not message.reply_to_message.media:
         await message.reply("Debe usar el comando respondiendo a un archivo")
         bot_in_use = False
         return
-
-    command = text.split()
+    command = message.text.split()
     if len(command) < 2:
         await message.reply("Introduzca un nuevo nombre")
         bot_in_use = False
         return
-
     new_name = command[1]
     media = message.reply_to_message
+    file_id = None
 
-    # Determinar el tipo de medio y obtener el file_id correspondiente
     if media.photo:
         file_id = media.photo.file_id
     elif media.video:
@@ -552,31 +547,21 @@ async def handle_rename(client, message):
         bot_in_use = False
         return
 
-    try:
-        # Descargar el archivo
-        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
-
-        # Crear el nuevo nombre
-        new_file_path = f"temprename/{new_name}"
-
-        # Renombrar el archivo
-        os.rename(file_path, new_file_path)
-
-        # Enviar el archivo renombrado
-        await client.send_document(message.chat.id, new_file_path)
-
-        # Eliminar el archivo temporal
-        os.remove(new_file_path)
-
-    except Exception as e:
-        await message.reply(f"Error al renombrar el archivo: {str(e)}")
-
-    finally:
-        # Limpiar la variable de estado y crear el directorio temporal
-        bot_in_use = False
-        shutil.rmtree('temprename')
-        os.mkdir('temprename')
-
+    # Descargar el archivo
+    file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
+    file_extension = os.path.splitext(file_path)[1]
+    new_file_path = f"temprename/{new_name}{file_extension}"
+    
+    # Renombrar el archivo
+    os.rename(file_path, new_file_path)
+    await client.send_document(message.chat.id, new_file_path)
+    
+    # Limpiar la variable de estado
+    bot_in_use = False
+    os.remove(new_file_path)
+    shutil.rmtree('temprename')
+    os.mkdir('temprename')
+    
 async def handle_scan(message):
     if bot_in_use:
         await message.reply("El bot está en uso actualmente, espere un poco")
@@ -659,7 +644,7 @@ async def handle_message(client, message):
     elif text.startswith('/sendmail'):
         await handle_sendmail(client, message)
     elif text.startswith('/rename'):
-        await handle_rename(client, message)
+        await rename_file(message, client, bot_in_use)
     elif text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(message)
     elif text.startswith(('/3h', '.3h', '3h')):
