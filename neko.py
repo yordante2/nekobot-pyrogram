@@ -286,6 +286,70 @@ async def handle_listo(message):
 
 user_comp = {}
 
+
+
+async def handle_start(message):
+    await message.reply("Funcionando")
+
+async def handle_adduser(message):
+    user_id = message.from_user.id
+    if user_id in admin_users:
+        new_user_id = int(message.text.split()[1])
+        temp_users.append(new_user_id)
+        allowed_users.append(new_user_id)
+        await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
+
+async def handle_remuser(message):
+    user_id = message.from_user.id
+    if user_id in admin_users:
+        rem_user_id = int(message.text.split()[1])
+        if rem_user_id in temp_users:
+            temp_users.remove(rem_user_id)
+            allowed_users.remove(rem_user_id)
+            await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
+        else:
+            await message.reply("Usuario no encontrado en la lista temporal.")
+
+async def handle_addchat(message):
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    if user_id in admin_users:
+        temp_chats.append(chat_id)
+        allowed_users.append(chat_id)
+        await message.reply(f"Chat {chat_id} añadido temporalmente.")
+
+async def handle_remchat(message):
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    if user_id in admin_users:
+        if chat_id in temp_chats:
+            temp_chats.remove(chat_id)
+            allowed_users.remove(chat_id)
+            await message.reply(f"Chat {chat_id} eliminado temporalmente.")
+        else:
+            await message.reply("Chat no encontrado en la lista temporal.")
+
+async def handle_banuser(message):
+    user_id = message.from_user.id
+    if user_id in admin_users:
+        ban_user_id = int(message.text.split()[1])
+        if ban_user_id not in admin_users:
+            ban_users.append(ban_user_id)
+            await message.reply(f"Usuario {ban_user_id} baneado.")
+
+async def handle_debanuser(message):
+    user_id = message.from_user.id
+    if user_id in admin_users:
+        deban_user_id = int(message.text.split()[1])
+        if deban_user_id in ban_users:
+            ban_users.remove(deban_user_id)
+            await message.reply(f"Usuario {deban_user_id} desbaneado.")
+        else:
+            await message.reply("Usuario no encontrado en la lista de baneados.")
+            
+
+
+
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
@@ -293,67 +357,28 @@ async def handle_message(client, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
 
-    # Verificar si el user_id está en la lista de usuarios permitidos
     if user_id in allowed_users:
-        # El usuario tiene acceso en todos los chats
         pass
     else:
-        # Verificar si el chat_id está en la lista de chats permitidos
         if chat_id not in allowed_users:
-            return  # No hacer nada si el chat no está permitido
-
-        # Verificar si el user_id está en la lista de usuarios bloqueados
+            return
         if user_id in ban_users:
             return
 
-    if message.text.startswith(('start', '.start', '/start')):
-        await message.reply("Funcionando")
-    elif message.text.startswith('/adduser'):
-        if user_id in admin_users:
-            new_user_id = int(message.text.split()[1])
-            temp_users.append(new_user_id)
-            allowed_users.append(new_user_id)
-            await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
-        else:
-            return
-    elif message.text.startswith('/remuser'):
-        if user_id in admin_users:
-            rem_user_id = int(message.text.split()[1])
-            if rem_user_id in temp_users:
-                temp_users.remove(rem_user_id)
-                allowed_users.remove(rem_user_id)
-                await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
-            else:
-                await message.reply("Usuario no encontrado en la lista temporal.")
-        else:
-            return
-    elif message.text.startswith('/addchat'):
-        if user_id in admin_users:
-            temp_chats.append(chat_id)
-            allowed_users.append(chat_id)
-            await message.reply(f"Chat {chat_id} añadido temporalmente.")
-    elif message.text.startswith('/remchat'):
-        if user_id in admin_users:
-            if chat_id in temp_chats:
-                temp_chats.remove(chat_id)
-                allowed_users.remove(chat_id)
-                await message.reply(f"Chat {chat_id} eliminado temporalmente.")
-            else:
-                await message.reply("Chat no encontrado en la lista temporal.")
-    elif message.text.startswith('/banuser'):
-        if user_id in admin_users:
-            ban_user_id = int(message.text.split()[1])
-            if ban_user_id not in admin_users:
-                ban_users.append(ban_user_id)
-                await message.reply(f"Usuario {ban_user_id} baneado.")
-    elif message.text.startswith('/debanuser'):
-        if user_id in admin_users:
-            deban_user_id = int(message.text.split()[1])
-            if deban_user_id in ban_users:
-                ban_users.remove(deban_user_id)
-                await message.reply(f"Usuario {deban_user_id} desbaneado.")
-            else:
-                await message.reply("Usuario no encontrado en la lista de baneados.")
+    if text.startswith(('start', '.start', '/start')):
+        await handle_start(message)
+    elif text.startswith('/adduser'):
+        await handle_adduser(message)
+    elif text.startswith('/remuser'):
+        await handle_remuser(message)
+    elif text.startswith('/addchat'):
+        await handle_addchat(message)
+    elif text.startswith('/remchat'):
+        await handle_remchat(message)
+    elif text.startswith('/banuser'):
+        await handle_banuser(message)
+    elif text.startswith('/debanuser'):
+        await handle_debanuser(message)
     elif text.startswith("/up"):
         replied_message = message.reply_to_message
         if replied_message:
