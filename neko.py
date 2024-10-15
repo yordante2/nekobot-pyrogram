@@ -528,6 +528,45 @@ async def handle_rename(client, message):
 
 
 
+async def handle_scan(message):
+    if bot_in_use:
+        await message.reply("El bot está en uso actualmente, espere un poco")
+        return
+    bot_in_use = True
+    url = message.text.split(' ', 1)[1]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        links = soup.find_all('a', href=True)
+        results = []
+        for link in links:
+            href = link['href']
+            if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
+                page_name = link.get_text(strip=True)
+                if page_name:
+                    results.append(f"{page_name}\n{href}\n")
+        final_results = []
+        for result in results:
+            lines = result.split('\n')
+            if len(lines) > 1:
+                href = lines[1]
+                if not href.startswith('http'):
+                    base_url = '/'.join(url.split('/')[:3])
+                    href = f"{base_url}{href}"
+                final_results.append(f"{lines[0]}\n{href}\n")
+        if final_results:
+            with open('results.txt', 'w') as f:
+                f.write("\n".join(final_results))
+            await message.reply_document('results.txt')
+            os.remove('results.txt')
+        else:
+            await message.reply("No se encontraron enlaces de páginas web.")
+    except Exception as e:
+        await message.reply(f"Error al escanear la página: {e}")
+    bot_in_use = False
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
@@ -535,7 +574,6 @@ async def handle_message(client, message):
     username = message.from_user.username
     chat_id = message.chat.id
     user_id = message.from_user.id
-
     if user_id in allowed_users:
         pass
     else:
@@ -543,7 +581,6 @@ async def handle_message(client, message):
             return
         if user_id in ban_users:
             return
-
     if text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
         await handle_resumetxtcodes(message)
     elif text.startswith(('/multiscan', '.multiscan', 'multiscan')):
@@ -574,84 +611,28 @@ async def handle_message(client, message):
         await handle_sendmail(client, message)
     elif text.startswith('/rename'):
         await handle_rename(client, message)
-
-
+    elif text.startswith(('/scan', '.scan', 'scan')):
+        await handle_scan(message)
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             await cover3h_operation(client, message, [code])
             await h3_operation(client, message, [code])
-
     elif text.startswith(('/cover3h', '.cover3h')):
         codes = [code.strip() for code in text.split()[1].split(',')]
         for code in codes:
             await cover3h_operation(client, message, [code])
-            
-
     elif text.startswith(('/covernh', '.covernh')):
         codes = [code.strip() for code in text.split()[1].split(',')]
         for code in codes:
             await covernh_operation(client, message, [code])
-
     elif text.startswith(('/nh', '.nh', 'nh')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             await covernh_operation(client, message, [code])
             await nh_operation(client, message, [code])
-
-    elif message.text.startswith(('/scan', '.scan', 'scan')):
-        if bot_in_use:
-            await message.reply("El bot está en uso actualmente, espere un poco")
-            return
-
-        bot_in_use = True
-        url = message.text.split(' ', 1)[1]
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-
-        try:
-            response = requests.get(url, headers=headers)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            links = soup.find_all('a', href=True)
-
-            results = []
-            for link in links:
-                href = link['href']
-                if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
-                    page_name = link.get_text(strip=True)
-                    if page_name:
-                        results.append(f"{page_name}\n{href}\n")
-
-            # Process results to check and modify links
-            final_results = []
-            for result in results:
-                lines = result.split('\n')
-                if len(lines) > 1:
-                    href = lines[1]
-                    if not href.startswith('http'):
-                        base_url = '/'.join(url.split('/')[:3])
-                        href = f"{base_url}{href}"
-                    final_results.append(f"{lines[0]}\n{href}\n")
-
-            if final_results:
-                with open('results.txt', 'w') as f:
-                    f.write("\n".join(final_results))
-                await message.reply_document('results.txt')
-                os.remove('results.txt')
-            else:
-                await message.reply("No se encontraron enlaces de páginas web.")
-
-        except Exception as e:
-            await message.reply(f"Error al escanear la página: {e}")
-
-        bot_in_use = False
-
-
     elif message.text.startswith('/compare'):
         await handle_compare(message)
-
     elif message.text.startswith('/listo'):
         await handle_listo(message)
 
