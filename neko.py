@@ -552,31 +552,30 @@ async def handle_rename(client, message):
         bot_in_use = False
         return
 
-    # Descargar el archivo
-    file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
+    try:
+        # Descargar el archivo
+        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
 
-    # Obtener la extensión del archivo original
-    file_extension = os.path.splitext(file_path)[1]
+        # Crear el nuevo nombre
+        new_file_path = f"temprename/{new_name}"
 
-    # Crear el nuevo nombre con la extensión original
-    new_file_path = f"temprename/{new_name}{file_extension}"
+        # Renombrar el archivo
+        os.rename(file_path, new_file_path)
 
-    # Renombrar el archivo
-    os.rename(file_path, new_file_path)
+        # Enviar el archivo renombrado
+        await client.send_document(message.chat.id, new_file_path)
 
-    # Enviar el archivo renombrado
-    await client.send_document(message.chat.id, new_file_path)
+        # Eliminar el archivo temporal
+        os.remove(new_file_path)
 
-    # Limpiar la variable de estado
-    bot_in_use = False
+    except Exception as e:
+        await message.reply(f"Error al renombrar el archivo: {str(e)}")
 
-    # Eliminar el archivo temporal
-    os.remove(new_file_path)
-    shutil.rmtree('temprename')
-    os.mkdir('temprename')
-                
-
-
+    finally:
+        # Limpiar la variable de estado y crear el directorio temporal
+        bot_in_use = False
+        shutil.rmtree('temprename')
+        os.mkdir('temprename')
 
 async def handle_scan(message):
     if bot_in_use:
