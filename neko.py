@@ -17,7 +17,7 @@ from nekomail import handle_setmail, handle_sendmail
 from nekoadmintools import handle_adduser, handle_remuser, handle_addchat,handle_remchat,  handle_banuser, handle_debanuser
 from nekocompress import handle_compress, compressfile, handle_setsize
 from nekoup import handle_up
-from nekoother import handle_compare, handle_listo, handle_resumetxtcodes, handle_scan, handle_multiscan, handle_rename
+from nekoother import handle_compare, handle_listo, handle_resumetxtcodes, handle_scan, handle_multiscan, rename_file
 
 # Configuracion del bot
 api_id = os.getenv('API_ID')
@@ -97,7 +97,7 @@ async def handle_message(client, message):
     elif text.startswith('/sendmail'):
         await handle_sendmail(client, message)
     elif text.startswith('/rename'):
-        await handle_rename(client, message)
+        await rename_file(client, message)
     elif text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(message)
     elif text.startswith(('/3h', '.3h', '3h')):
