@@ -520,10 +520,61 @@ async def handle_sendmail(client, message):
 async def handle_rename(client, message):
     global bot_in_use
     if bot_in_use:
-        await message.reply("El bot está en uso, espere un poco")
-        return
-    bot_in_use = True
-    if not message.reply_to_message or not message
+            await message.reply("El bot está en uso, espere un poco")
+            return
+
+        bot_in_use = True
+
+        if not message.reply_to_message or not message.reply_to_message.media:
+            await message.reply("Debe usar el comando respondiendo a un archivo")
+            bot_in_use = False
+            return
+
+        command = text.split()
+        if len(command) < 2:
+            await message.reply("Introduzca un nuevo nombre")
+            bot_in_use = False
+            return
+
+        new_name = command[1]
+        media = message.reply_to_message
+
+        # Determinar el tipo de medio y obtener el file_id correspondiente
+        if media.photo:
+            file_id = media.photo.file_id
+        elif media.video:
+            file_id = media.video.file_id
+        elif media.document:
+            file_id = media.document.file_id
+        elif media.audio:
+            file_id = media.audio.file_id
+        else:
+            await message.reply("Tipo de archivo no soportado")
+            bot_in_use = False
+            return
+
+        # Descargar el archivo
+        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
+
+        # Obtener la extensión del archivo original
+        file_extension = os.path.splitext(file_path)[1]
+
+        # Crear el nuevo nombre con la extensión original
+        new_file_path = f"temprename/{new_name}{file_extension}"
+
+        # Renombrar el archivo
+        os.rename(file_path, new_file_path)
+
+        # Enviar el archivo renombrado
+        await client.send_document(message.chat.id, new_file_path)
+
+        # Limpiar la variable de estado
+        bot_in_use = False
+
+        # Eliminar el archivo temporal
+        os.remove(new_file_path)
+        shutil.rmtree('temprename')
+        os.mkdir('temprename')
 
 
 
