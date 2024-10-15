@@ -522,7 +522,7 @@ async def handle_rename(client, message):
         await message.reply("El bot está en uso, espere un poco")
         return
 
-    bot_in_use = True
+    bot_in_use = False
 
     if not message.reply_to_message or not message.reply_to_message.media:
         await message.reply("Debe usar el comando respondiendo a un archivo")
