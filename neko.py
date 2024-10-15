@@ -365,7 +365,7 @@ async def handle_message(client, message):
             
             # Borrar el archivo después de subirlo
             os.remove(file_path)
-    elif message.text.startswith("/compress") and message.reply_to_message and message.reply_to_message.document:
+    elif message.text.startswith("/compress") and message.reply_to_message and not message.reply_to_message.text:
         global bot_in_use
         if bot_in_use:
             await message.reply("El comando está en uso actualmente, espere un poco")
