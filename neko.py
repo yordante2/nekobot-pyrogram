@@ -408,7 +408,127 @@ async def handle_up(client, message):
         # Borrar el archivo después de subirlo
         os.remove(file_path)
 
-# Llamar a las funciones según el comando recibido
+async def handle_resumetxtcodes(message):
+    full_message = message.text
+    if message.reply_to_message and message.reply_to_message.document:
+        file_path = await message.reply_to_message.download()
+        with open(file_path, 'r') as f:
+            for line in f:
+                full_message += line
+        os.remove(file_path)
+    codes = re.findall(r'\d{6}', full_message)
+    if codes:
+        file_name = "codes.txt"
+        with open(file_name, 'w') as f:
+            for code in codes:
+                f.write(f"{code}\n")
+        await message.reply_document(file_name)
+        os.remove(file_name)
+    else:
+        await message.reply("No hay códigos para resumir")
+
+async def handle_multiscan(message):
+    global bot_in_use
+    if bot_in_use:
+        await message.reply("El bot está en uso actualmente, espere un poco")
+        return
+    bot_in_use = True
+    parts = message.text.split(' ')
+    if len(parts) < 4:
+        await message.reply("Por favor, proporcione todos los parámetros necesarios: URL base, inicio y fin.")
+        bot_in_use = False
+        return
+    base_url = parts[1]
+    try:
+        start = int(parts[2])
+        end = int(parts[3])
+    except ValueError:
+        await message.reply("Los parámetros de inicio y fin deben ser números enteros.")
+        bot_in_use = False
+        return
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    all_results = set()
+    try:
+        for i in range(start, end + 1):
+            url = f"{base_url}{i}"
+            response = requests.get(url, headers=headers)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            links = soup.find_all('a', href=True)
+            for link in links:
+                href = link['href']
+                if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
+                    page_name = link.get_text(strip=True)
+                    if page_name:
+                        if not href.startswith('http'):
+                            href = f"{base_url}{href}"
+                        all_results.add(f"{page_name}\n{href}\n")
+        if all_results:
+            with open('results.txt', 'w') as f:
+                f.write("\n".join(all_results))
+            await message.reply_document('results.txt')
+            os.remove('results.txt')
+        else:
+            await message.reply("No se encontraron enlaces de páginas web.")
+    except Exception as e:
+        await message.reply(f"Error al escanear las páginas: {e}")
+    bot_in_use = False
+
+async def handle_setsize(message):
+    valor = message.text.split(" ")[1]
+    user_comp[username] = int(valor)
+    await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+
+async def handle_setmail(message):
+    email = message.text.split(' ', 1)[1]
+    user_emails[user_id] = email
+    await message.reply("Correo electrónico registrado correctamente.")
+
+async def handle_sendmail(client, message):
+    if user_id not in user_emails:
+        await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
+        return
+    email = user_emails[user_id]
+    if message.reply_to_message:
+        msg = EmailMessage()
+        msg['Subject'] = 'Mensaje de Telegram'
+        msg['From'] = os.getenv('DISMAIL')
+        msg['To'] = email
+        if message.reply_to_message.text:
+            msg.set_content(message.reply_to_message.text)
+        elif message.reply_to_message.media:
+            media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
+            if os.path.getsize(media) < 59 * 1024 * 1024:  # 59 MB
+                with open(media, 'rb') as f:
+                    msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
+            else:
+                await message.reply("El archivo supera el límite de lo permitido (59 MB).")
+                return
+        try:
+            with smtplib.SMTP('disroot.org', 587) as server:
+                server.starttls()
+                server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+                server.send_message(msg)
+            await message.reply("Correo electrónico enviado correctamente.")
+        except Exception as e:
+            await message.reply(f"Error al enviar el correo: {e}")
+        finally:
+            shutil.rmtree('mailtemp')
+            os.mkdir('mailtemp')
+
+async def handle_rename(client, message):
+    global bot_in_use
+    if bot_in_use:
+        await message.reply("El bot está en uso, espere un poco")
+        return
+    bot_in_use = True
+    if not message.reply_to_message or not message
+
+
+
+
+
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
@@ -424,7 +544,11 @@ async def handle_message(client, message):
         if user_id in ban_users:
             return
 
-    if text.startswith(('start', '.start', '/start')):
+    if text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
+        await handle_resumetxtcodes(message)
+    elif text.startswith(('/multiscan', '.multiscan', 'multiscan')):
+        await handle_multiscan(message)
+    elif text.startswith(('start', '.start', '/start')):
         await handle_start(message)
     elif text.startswith('/adduser'):
         await handle_adduser(message)
@@ -442,107 +566,14 @@ async def handle_message(client, message):
         await handle_compress(client, message, username)
     elif text.startswith('/up'):
         await handle_up(client, message)
-    
     elif text.startswith("/setsize"):
-        valor = text.split(" ")[1]
-        user_comp[username] = int(valor)
-        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+        await handle_setsize(message)
     elif text.startswith('/setmail'):
-        email = text.split(' ', 1)[1]
-        user_emails[user_id] = email
-        await message.reply("Correo electrónico registrado correctamente.")
-
+        await handle_setmail(message)
     elif text.startswith('/sendmail'):
-        if user_id not in user_emails:
-            await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
-            return
-
-        email = user_emails[user_id]
-        if message.reply_to_message:
-            msg = EmailMessage()
-            msg['Subject'] = 'Mensaje de Telegram'
-            msg['From'] = os.getenv('DISMAIL')
-            msg['To'] = email
-
-            if message.reply_to_message.text:
-                msg.set_content(message.reply_to_message.text)
-            elif message.reply_to_message.media:
-                media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
-                if os.path.getsize(media) < 59 * 1024 * 1024:  # 59 MB
-                    with open(media, 'rb') as f:
-                        msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
-                else:
-                    await message.reply("El archivo supera el límite de lo permitido (59 MB).")
-                    return
-
-            try:
-                with smtplib.SMTP('disroot.org', 587) as server:
-                    server.starttls()
-                    server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
-                    server.send_message(msg)
-                await message.reply("Correo electrónico enviado correctamente.")
-            except Exception as e:
-                await message.reply(f"Error al enviar el correo: {e}")
-            finally:
-                shutil.rmtree('mailtemp')
-                os.mkdir('mailtemp')
+        await handle_sendmail(client, message)
     elif text.startswith('/rename'):
-        if bot_in_use:
-            await message.reply("El bot está en uso, espere un poco")
-            return
-
-        bot_in_use = True
-
-        if not message.reply_to_message or not message.reply_to_message.media:
-            await message.reply("Debe usar el comando respondiendo a un archivo")
-            bot_in_use = False
-            return
-
-        command = text.split()
-        if len(command) < 2:
-            await message.reply("Introduzca un nuevo nombre")
-            bot_in_use = False
-            return
-
-        new_name = command[1]
-        media = message.reply_to_message
-
-        # Determinar el tipo de medio y obtener el file_id correspondiente
-        if media.photo:
-            file_id = media.photo.file_id
-        elif media.video:
-            file_id = media.video.file_id
-        elif media.document:
-            file_id = media.document.file_id
-        elif media.audio:
-            file_id = media.audio.file_id
-        else:
-            await message.reply("Tipo de archivo no soportado")
-            bot_in_use = False
-            return
-
-        # Descargar el archivo
-        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
-
-        # Obtener la extensión del archivo original
-        file_extension = os.path.splitext(file_path)[1]
-
-        # Crear el nuevo nombre con la extensión original
-        new_file_path = f"temprename/{new_name}{file_extension}"
-
-        # Renombrar el archivo
-        os.rename(file_path, new_file_path)
-
-        # Enviar el archivo renombrado
-        await client.send_document(message.chat.id, new_file_path)
-
-        # Limpiar la variable de estado
-        bot_in_use = False
-
-        # Eliminar el archivo temporal
-        os.remove(new_file_path)
-        shutil.rmtree('temprename')
-        os.mkdir('temprename')
+        await handle_rename(client, message)
 
 
     elif text.startswith(('/3h', '.3h', '3h')):
@@ -617,34 +648,6 @@ async def handle_message(client, message):
 
         bot_in_use = False
 
-    elif message.text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
-        # Obtener el mensaje completo
-        full_message = message.text
-
-        # Si el mensaje es una respuesta a un archivo, leer el contenido del archivo línea por línea
-        if message.reply_to_message and message.reply_to_message.document:
-            file_path = await message.reply_to_message.download()
-            with open(file_path, 'r') as f:
-                for line in f:
-                    full_message += line
-            os.remove(file_path)
-
-        # Buscar todas las combinaciones de 6 números consecutivos
-        codes = re.findall(r'\d{6}', full_message)
-        
-        if codes:
-            # Dividir las combinaciones en grupos de 550
-            chunk_size = 550
-            chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
-            
-            # Enviar cada grupo en un mensaje separado
-            for chunk in chunks:
-                result = ','.join(chunk)
-                await message.reply(result)
-        else:
-            # Enviar mensaje si no hay códigos
-            await message.reply("No hay códigos para resumir")
-
 
     elif message.text.startswith('/compare'):
         await handle_compare(message)
@@ -653,95 +656,6 @@ async def handle_message(client, message):
         await handle_listo(message)
 
 
-    elif message.text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
-        # Obtener el mensaje completo
-        full_message = message.text
-
-        # Si el mensaje es una respuesta a un archivo, leer el contenido del archivo línea por línea
-        if message.reply_to_message and message.reply_to_message.document:
-            file_path = await message.reply_to_message.download()
-            with open(file_path, 'r') as f:
-                for line in f:
-                    full_message += line
-            os.remove(file_path)
-
-        # Buscar todas las combinaciones de 6 números consecutivos
-        codes = re.findall(r'\d{6}', full_message)
-        
-        if codes:
-            # Crear un archivo de texto y escribir los códigos, cada uno en una línea distinta
-            file_name = "codes.txt"
-            with open(file_name, 'w') as f:
-                for code in codes:
-                    f.write(f"{code}\n")
-            
-            # Enviar el archivo al chat
-            await message.reply_document(file_name)
-            os.remove(file_name)
-        else:
-            # Enviar mensaje si no hay códigos
-            await message.reply("No hay códigos para resumir")
-
-
-    
-
-
-    elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
-        if bot_in_use:
-            await message.reply("El bot está en uso actualmente, espere un poco")
-            return
-
-        bot_in_use = True
-        parts = message.text.split(' ')
-
-        if len(parts) < 4:
-            await message.reply("Por favor, proporcione todos los parámetros necesarios: URL base, inicio y fin.")
-            bot_in_use = False
-            return
-
-        base_url = parts[1]
-        try:
-            start = int(parts[2])
-            end = int(parts[3])
-        except ValueError:
-            await message.reply("Los parámetros de inicio y fin deben ser números enteros.")
-            bot_in_use = False
-            return
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-
-        all_results = set()
-
-        try:
-            for i in range(start, end + 1):
-                url = f"{base_url}{i}"
-                response = requests.get(url, headers=headers)
-                soup = BeautifulSoup(response.content, 'html.parser')
-                links = soup.find_all('a', href=True)
-
-                for link in links:
-                    href = link['href']
-                    if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
-                        page_name = link.get_text(strip=True)
-                        if page_name:
-                            if not href.startswith('http'):
-                                href = f"{base_url}{href}"
-                            all_results.add(f"{page_name}\n{href}\n")
-
-            if all_results:
-                with open('results.txt', 'w') as f:
-                    f.write("\n".join(all_results))
-                await message.reply_document('results.txt')
-                os.remove('results.txt')
-            else:
-                await message.reply("No se encontraron enlaces de páginas web.")
-
-        except Exception as e:
-            await message.reply(f"Error al escanear las páginas: {e}")
-
-        bot_in_use = False
 
 
             
