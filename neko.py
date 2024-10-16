@@ -14,7 +14,7 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
-from nekocmd import handle_start, compress_video, update_video_settings, add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, set_size, set_mail
+from nekocmd import handle_start, compress_video, add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, set_size, set_mail
 
 
 # Configuracion del bot
@@ -39,7 +39,60 @@ bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
-
+async def compress_video(client, message):  # Cambiar a async
+    if message.reply_to_message and message.reply_to_message.video:
+        original_video_path = await app.download_media(message.reply_to_message.video)
+        original_size = os.path.getsize(original_video_path)
+        await app.send_message(chat_id=message.chat.id, text=f"Iniciando la compresión del video...\n"
+                                                              f"Tamaño original: {original_size // (1024 * 1024)} MB")
+        compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
+        ffmpeg_command = [
+            'ffmpeg', '-y', '-i', original_video_path,
+            '-s', video_settings['resolution'], '-crf', video_settings['crf'],
+            '-b:a', video_settings['audio_bitrate'], '-r', video_settings['fps'],
+            '-preset', video_settings['preset'], '-c:v', video_settings['codec'],
+            compressed_video_path
+        ]
+        try:
+            start_time = datetime.datetime.now()
+            process = subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
+            await app.send_message(chat_id=message.chat.id, text="Compresión en progreso...")
+            while True:
+                output = process.stderr.readline()
+                if output == '' and process.poll() is not None:
+                    break
+                if output:
+                    print(output.strip())
+            # Recuperar tamaño y duración
+            compressed_size = os.path.getsize(compressed_video_path)
+            duration = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries",
+                                                 "format=duration", "-of", "default=noprint_wrappers=1:nokey=1",
+                                                 compressed_video_path])
+            duration = float(duration.strip())
+            duration_str = str(datetime.timedelta(seconds=duration))
+            processing_time = datetime.datetime.now() - start_time
+            processing_time_str = str(processing_time).split('.')[0]  # Formato sin microsegundos
+            # Descripción para el video comprimido
+            description = (
+                f"✅ Archivo procesado correctamente ☑️\n"
+                f" Tamaño original: {original_size // (1024 * 1024)} MB\n"
+                f" Tamaño procesado: {compressed_size // (1024 * 1024)} MB\n"
+                f"⌛ Tiempo de procesamiento: {processing_time_str}\n"
+                f" Duración: {duration_str}\n"
+                f" ¡Muchas gracias por usar el bot!"
+            )
+            # Enviar el video comprimido con la descripción
+            await app.send_document(chat_id=message.chat.id, document=compressed_video_path, caption=description)
+        except Exception as e:
+            await app.send_message(chat_id=message.chat.id, text=f"Ocurrió un error al comprimir el video: {e}")
+        finally:
+            if os.path.exists(original_video_path):
+                os.remove(original_video_path)
+            if os.path.exists(compressed_video_path):
+                os.remove(compressed_video_path)
+    else:
+        await app.send_message(chat_id=message.chat.id, text="Por favor, responde a un video para comprimirlo.")
+        
 def compressfile(file_path, part_size):
     parts = []
     with open(file_path, 'rb') as f:
