@@ -153,56 +153,6 @@ async def cover3h_operation(client, message, codes):
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
-
-async def handle_rename_command(client, message, text):
-    global bot_in_use
-    if bot_in_use:
-        await message.reply("El bot está en uso, espere un poco")
-        return
-    bot_in_use = True
-    if not message.reply_to_message or not message.reply_to_message.media:
-        await message.reply("Debe usar el comando respondiendo a un archivo")
-        bot_in_use = False
-        return
-    command = text.split()
-    if len(command) < 2:
-        await message.reply("Introduzca un nuevo nombre")
-        bot_in_use = False
-        return
-    new_name = command[1]
-    
-    media = message.reply_to_message
-    # Determinar el tipo de medio y obtener el file_id correspondiente
-    if media.photo:
-        file_id = media.photo.file_id
-    elif media.video:
-        file_id = media.video.file_id
-    elif media.document:
-        file_id = media.document.file_id
-    elif media.audio:
-        file_id = media.audio.file_id
-    else:
-        await message.reply("Tipo de archivo no soportado")
-        bot_in_use = False
-        return
-    # Descargar el archivo
-    file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
-    # Obtener la extensión del archivo original
-    file_extension = os.path.splitext(file_path)[1]
-    # Crear el nuevo nombre con la extensión original
-    new_file_path = f"temprename/{new_name}{file_extension}"
-    # Renombrar el archivo
-    os.rename(file_path, new_file_path)
-    # Enviar el archivo renombrado
-    await client.send_document(message.chat.id, new_file_path)
-    # Eliminar el archivo temporal
-    os.remove(new_file_path)
-    bot_in_use = False
-    shutil.rmtree('temprename')
-    os.mkdir('temprename')
-    await message.reply("Archivo renombrado con éxito")
-
-
 async def h3_operation(client, message, codes):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -397,105 +347,75 @@ async def handle_listo(message):
 
 
 user_comp = {}
-# Variables globales
-bot_in_use = True
-
-# Definiciones de funciones
-async def start(client, message):
-    if bot_in_use:
-        await message.reply("Funcionando")
-
-async def add_user(client, message):
-    if bot_in_use:
-        new_user_id = int(message.text.split()[1])
-        temp_users.append(new_user_id)
-        allowed_users.append(new_user_id)
-        await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
-
-async def rem_user(client, message):
-    if bot_in_use:
-        rem_user_id = int(message.text.split()[1])
-        if rem_user_id in temp_users:
-            temp_users.remove(rem_user_id)
-            allowed_users.remove(rem_user_id)
-            await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
-        else:
-            await message.reply("Usuario no encontrado en la lista temporal.")
-
-async def add_chat(client, message):
-    if bot_in_use:
-        temp_chats.append(message.chat.id)
-        allowed_users.append(message.chat.id)
-        await message.reply(f"Chat {message.chat.id} añadido temporalmente.")
-
-async def rem_chat(client, message):
-    if bot_in_use:
-        if message.chat.id in temp_chats:
-            temp_chats.remove(message.chat.id)
-            allowed_users.remove(message.chat.id)
-            await message.reply(f"Chat {message.chat.id} eliminado temporalmente.")
-        else:
-            await message.reply("Chat no encontrado en la lista temporal.")
-
-async def ban_user(client, message):
-    if bot_in_use:
-        ban_user_id = int(message.text.split()[1])
-        if ban_user_id not in admin_users:
-            ban_users.append(ban_user_id)
-            await message.reply(f"Usuario {ban_user_id} baneado.")
-
-async def deban_user(client, message):
-    if bot_in_use:
-        deban_user_id = int(message.text.split()[1])
-        if deban_user_id in ban_users:
-            ban_users.remove(deban_user_id)
-            await message.reply(f"Usuario {deban_user_id} desbaneado.")
-        else:
-            await message.reply("Usuario no encontrado en la lista de baneados.")
-
-async def kill(client, message):
-    global bot_in_use
-    if message.from_user.id in admin_users:
-        bot_in_use = False
-        await message.reply("Bot detenido.")
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
-    user_id = message.from_user.id
+    username = message.from_user.username
     chat_id = message.chat.id
-
-    # Verificar si el bot está en uso
-    if not bot_in_use:
-        return
+    user_id = message.from_user.id
 
     # Verificar si el user_id está en la lista de usuarios permitidos
     if user_id in allowed_users:
+        # El usuario tiene acceso en todos los chats
         pass
     else:
         # Verificar si el chat_id está en la lista de chats permitidos
         if chat_id not in allowed_users:
             return  # No hacer nada si el chat no está permitido
+
         # Verificar si el user_id está en la lista de usuarios bloqueados
         if user_id in ban_users:
             return
 
-    if text.startswith(('start', '.start', '/start')):
-        await start(client, message)
-    elif text.startswith('/adduser') and user_id in admin_users:
-        await add_user(client, message)
-    elif text.startswith('/remuser') and user_id in admin_users:
-        await rem_user(client, message)
-    elif text.startswith('/addchat') and user_id in admin_users:
-        await add_chat(client, message)
-    elif text.startswith('/remchat') and user_id in admin_users:
-        await rem_chat(client, message)
-    elif text.startswith('/banuser') and user_id in admin_users:
-        await ban_user(client, message)
-    elif text.startswith('/debanuser') and user_id in admin_users:
-        await deban_user(client, message)
-    elif text.startswith('/kill') and user_id in admin_users:
-        await kill(client, message)
+    if message.text.startswith(('start', '.start', '/start')):
+        await message.reply("Funcionando")
+    elif message.text.startswith('/adduser'):
+        if user_id in admin_users:
+            new_user_id = int(message.text.split()[1])
+            temp_users.append(new_user_id)
+            allowed_users.append(new_user_id)
+            await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
+        else:
+            return
+    elif message.text.startswith('/remuser'):
+        if user_id in admin_users:
+            rem_user_id = int(message.text.split()[1])
+            if rem_user_id in temp_users:
+                temp_users.remove(rem_user_id)
+                allowed_users.remove(rem_user_id)
+                await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
+            else:
+                await message.reply("Usuario no encontrado en la lista temporal.")
+        else:
+            return
+    elif message.text.startswith('/addchat'):
+        if user_id in admin_users:
+            temp_chats.append(chat_id)
+            allowed_users.append(chat_id)
+            await message.reply(f"Chat {chat_id} añadido temporalmente.")
+    elif message.text.startswith('/remchat'):
+        if user_id in admin_users:
+            if chat_id in temp_chats:
+                temp_chats.remove(chat_id)
+                allowed_users.remove(chat_id)
+                await message.reply(f"Chat {chat_id} eliminado temporalmente.")
+            else:
+                await message.reply("Chat no encontrado en la lista temporal.")
+    elif message.text.startswith('/banuser'):
+        if user_id in admin_users:
+            ban_user_id = int(message.text.split()[1])
+            if ban_user_id not in admin_users:
+                ban_users.append(ban_user_id)
+                await message.reply(f"Usuario {ban_user_id} baneado.")
+    elif message.text.startswith('/debanuser'):
+        if user_id in admin_users:
+            deban_user_id = int(message.text.split()[1])
+            if deban_user_id in ban_users:
+                ban_users.remove(deban_user_id)
+                await message.reply(f"Usuario {deban_user_id} desbaneado.")
+            else:
+                await message.reply("Usuario no encontrado en la lista de baneados.")
     elif text.startswith('/up'):
         await handle_up(client, message)
     elif text.startswith('/compress'):
@@ -508,6 +428,7 @@ async def handle_message(client, message):
         email = text.split(' ', 1)[1]
         user_emails[user_id] = email
         await message.reply("Correo electrónico registrado correctamente.")
+
     elif text.startswith('/sendmail'):
         if user_id not in user_emails:
             await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
@@ -543,7 +464,64 @@ async def handle_message(client, message):
                 shutil.rmtree('mailtemp')
                 os.mkdir('mailtemp')
     elif text.startswith('/rename'):
-        await handle_rename_command(client, message, text)
+        if bot_in_use:
+            await message.reply("El bot está en uso, espere un poco")
+            return
+
+        bot_in_use = True
+
+        if not message.reply_to_message or not message.reply_to_message.media:
+            await message.reply("Debe usar el comando respondiendo a un archivo")
+            bot_in_use = False
+            return
+
+        command = text.split()
+        if len(command) < 2:
+            await message.reply("Introduzca un nuevo nombre")
+            bot_in_use = False
+            return
+
+        new_name = command[1]
+        media = message.reply_to_message
+
+        # Determinar el tipo de medio y obtener el file_id correspondiente
+        if media.photo:
+            file_id = media.photo.file_id
+        elif media.video:
+            file_id = media.video.file_id
+        elif media.document:
+            file_id = media.document.file_id
+        elif media.audio:
+            file_id = media.audio.file_id
+        else:
+            await message.reply("Tipo de archivo no soportado")
+            bot_in_use = False
+            return
+
+        # Descargar el archivo
+        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
+
+        # Obtener la extensión del archivo original
+        file_extension = os.path.splitext(file_path)[1]
+
+        # Crear el nuevo nombre con la extensión original
+        new_file_path = f"temprename/{new_name}{file_extension}"
+
+        # Renombrar el archivo
+        os.rename(file_path, new_file_path)
+
+        # Enviar el archivo renombrado
+        await client.send_document(message.chat.id, new_file_path)
+
+        # Limpiar la variable de estado
+        bot_in_use = False
+
+        # Eliminar el archivo temporal
+        os.remove(new_file_path)
+        shutil.rmtree('temprename')
+        os.mkdir('temprename')
+
+
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
