@@ -14,6 +14,7 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
+from nekocmd import handle_start, compress_video, update_video_settings, add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, set_size, set_mail
 
 
 # Configuracion del bot
@@ -368,85 +369,41 @@ async def handle_message(client, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
 
-    # Verificar si el user_id está en la lista de usuarios permitidos
     if user_id in allowed_users:
-        # El usuario tiene acceso en todos los chats
         pass
     else:
-        # Verificar si el chat_id está en la lista de chats permitidos
         if chat_id not in allowed_users:
-            return  # No hacer nada si el chat no está permitido
-
-        # Verificar si el user_id está en la lista de usuarios bloqueados
+            return
         if user_id in ban_users:
             return
 
-    if message.text.startswith(('start', '.start', '/start')):
-        await message.reply("Funcionando")
+    if text.startswith(('start', '.start', '/start')):
+        await handle_start(client, message)
     elif text.startswith('/convert'):
         await compress_video(client, message)
     elif text.startswith('/calidad'):
-        update_video_settings(text[len('/calidad '):])
-        await message.reply(f"Configuración de video actualizada: {video_settings}")
-    elif message.text.startswith('/adduser'):
-        if user_id in admin_users:
-            new_user_id = int(message.text.split()[1])
-            temp_users.append(new_user_id)
-            allowed_users.append(new_user_id)
-            await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
-        else:
-            return
-    elif message.text.startswith('/remuser'):
-        if user_id in admin_users:
-            rem_user_id = int(message.text.split()[1])
-            if rem_user_id in temp_users:
-                temp_users.remove(rem_user_id)
-                allowed_users.remove(rem_user_id)
-                await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
-            else:
-                await message.reply("Usuario no encontrado en la lista temporal.")
-        else:
-            return
-    elif message.text.startswith('/addchat'):
-        if user_id in admin_users:
-            temp_chats.append(chat_id)
-            allowed_users.append(chat_id)
-            await message.reply(f"Chat {chat_id} añadido temporalmente.")
-    elif message.text.startswith('/remchat'):
-        if user_id in admin_users:
-            if chat_id in temp_chats:
-                temp_chats.remove(chat_id)
-                allowed_users.remove(chat_id)
-                await message.reply(f"Chat {chat_id} eliminado temporalmente.")
-            else:
-                await message.reply("Chat no encontrado en la lista temporal.")
-    elif message.text.startswith('/banuser'):
-        if user_id in admin_users:
-            ban_user_id = int(message.text.split()[1])
-            if ban_user_id not in admin_users:
-                ban_users.append(ban_user_id)
-                await message.reply(f"Usuario {ban_user_id} baneado.")
-    elif message.text.startswith('/debanuser'):
-        if user_id in admin_users:
-            deban_user_id = int(message.text.split()[1])
-            if deban_user_id in ban_users:
-                ban_users.remove(deban_user_id)
-                await message.reply(f"Usuario {deban_user_id} desbaneado.")
-            else:
-                await message.reply("Usuario no encontrado en la lista de baneados.")
+        await update_video_settings(client, message)
+    elif text.startswith('/adduser'):
+        await add_user(client, message)
+    elif text.startswith('/remuser'):
+        await remove_user(client, message)
+    elif text.startswith('/addchat'):
+        await add_chat(client, message)
+    elif text.startswith('/remchat'):
+        await remove_chat(client, message)
+    elif text.startswith('/banuser'):
+        await ban_user(client, message)
+    elif text.startswith('/debanuser'):
+        await deban_user(client, message)
     elif text.startswith('/up'):
         await handle_up(client, message)
     elif text.startswith('/compress'):
         await handle_compress(client, message, username)
     elif text.startswith("/setsize"):
-        valor = text.split(" ")[1]
-        user_comp[username] = int(valor)
-        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+        await set_size(client, message)
     elif text.startswith('/setmail'):
-        email = text.split(' ', 1)[1]
-        user_emails[user_id] = email
-        await message.reply("Correo electrónico registrado correctamente.")
-
+        await set_mail(client, message)
+        
     elif text.startswith('/sendmail'):
         if user_id not in user_emails:
             await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
