@@ -14,7 +14,7 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
-from nekocmd import handle_start, compress_video, add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, set_size, set_mail
+from nekocmd import handle_start, update_video_settings, add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, set_size, set_mail
 
 
 # Configuracion del bot
