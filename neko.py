@@ -153,7 +153,7 @@ async def cover3h_operation(client, message, codes):
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
-async def rename_file(message, new_name):
+async def rename_file(client, message, new_name):
     media = message.reply_to_message
     # Determinar el tipo de medio y obtener el file_id correspondiente
     if media.photo:
@@ -182,7 +182,7 @@ async def rename_file(message, new_name):
     os.remove(new_file_path)
     return True
 
-async def handle_rename_command(message, text):
+async def handle_rename_command(client, message, text):
     global bot_in_use
     if bot_in_use:
         await message.reply("El bot está en uso, espere un poco")
@@ -519,7 +519,7 @@ async def handle_message(client, message):
                 shutil.rmtree('mailtemp')
                 os.mkdir('mailtemp')
     elif text.startswith('/rename'):
-        await handle_rename_command(message, text)
+        await handle_rename_command(client, message, text)
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
