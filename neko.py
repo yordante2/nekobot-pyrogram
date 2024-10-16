@@ -50,6 +50,68 @@ def compressfile(file_path, part_size):
             parts.append(part_file)
             part_num += 1
     return parts
+
+async def handle_compress(client, message, username):
+    global bot_in_use
+    if bot_in_use:
+        await message.reply("El comando está en uso actualmente, espere un poco")
+        return
+    try:
+        bot_in_use = True
+        os.system("rm -rf ./server/*")
+        await message.reply("Descargando el archivo para comprimirlo...")
+
+        def get_file_name(message):
+            if message.reply_to_message.document:
+                return os.path.basename(message.reply_to_message.document.file_name)[:50]
+            elif message.reply_to_message.photo:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".jpg"
+            elif message.reply_to_message.audio:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp3"
+            elif message.reply_to_message.video:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp4"
+            elif message.reply_to_message.sticker:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".webp"
+            else:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20))
+
+        # Descargar archivo
+        file_name = get_file_name(message)
+        file_path = await client.download_media(
+            message.reply_to_message,
+            file_name=file_name
+        )
+        await message.reply("Comprimiendo el archivo...")
+        sizd = user_comp.get(username, 10)
+        # Comprimir archivo
+        parts = compressfile(file_path, sizd)
+        await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+        # Enviar partes
+        for part in parts:
+            try:
+                await client.send_document(message.chat.id, part)
+            except:
+                pass
+        await message.reply("Esas son todas las partes")
+        shutil.rmtree('server')
+        os.mkdir('server')
+        bot_in_use = False
+    except Exception as e:
+        await message.reply(f'Error: {str(e)}')
+    finally:
+        bot_in_use = False
+
+
+async def handle_up(client, message):
+    if message.reply_to_message:
+        await message.reply("Descargando...")
+        file_path = await client.download_media(message.reply_to_message.document.file_id)
+        await message.reply("Subiendo a la nube...")
+        link = upload_token(file_path, os.getenv("NUBETOKEN"), os.getenv("NUBELINK"))
+        await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
+        # Borrar el archivo después de subirlo
+        os.remove(file_path)
+
 async def cover3h_operation(client, message, codes):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -354,67 +416,10 @@ async def handle_message(client, message):
                 await message.reply(f"Usuario {deban_user_id} desbaneado.")
             else:
                 await message.reply("Usuario no encontrado en la lista de baneados.")
-    elif text.startswith("/up"):
-        replied_message = message.reply_to_message
-        if replied_message:
-            await message.reply("Descargando...")
-            file_path = await client.download_media(replied_message.document.file_id)
-            await message.reply("Subiendo a la nube...")
-            link = upload_token(file_path, os.getenv("NUBETOKEN"), os.getenv("NUBELINK"))
-            await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
-            
-            # Borrar el archivo después de subirlo
-            os.remove(file_path)
-    elif message.text.startswith("/compress") and message.reply_to_message and not message.reply_to_message.text:
-        global bot_in_use
-        if bot_in_use:
-            await message.reply("El comando está en uso actualmente, espere un poco")
-            return
-        try:
-            bot_in_use = True
-            os.system("rm -rf ./server/*")
-            await message.reply("Descargando el archivo para comprimirlo...")
-
-            # Descargar archivo
-            #file_path = await client.download_media(message.reply_to_message, file_name="server")
-            #file_path = await client.download_media(message.reply_to_message, file_name=os.path.basename(message.reply_to_message.document.file_name)[:72])
-            #file_path = await client.download_media(message.reply_to_message, file_name=(os.path.basename(message.reply_to_message.document.file_name)[:60] if message.reply_to_message.document.file_name else f"{''.join(random.choices(string.ascii_letters + string.digits, k=20))}"))    
-            file_name = (
-                os.path.basename(message.reply_to_message.document.file_name)[:50]
-                if message.reply_to_message.document.file_name
-                else  ''.join(random.choices(string.ascii_letters + string.digits, k=20))
-            )
-            file_path = await client.download_media(
-                message.reply_to_message,
-                file_name=file_name
-            )
-                
-                
-                
-            await message.reply("Comprimiendo el archivo...")
-
-            sizd = user_comp.get(username, 10)
-
-            # Comprimir archivo
-            parts = compressfile(file_path, sizd)
-            await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
-
-            # Enviar partes
-            for part in parts:
-                try:
-                    await client.send_document(message.chat.id, part)
-                except:
-                    pass
-
-            await message.reply("Esas son todas las partes")
-            shutil.rmtree('server')
-            os.mkdir('server')
-
-            bot_in_use = False
-        except Exception as e:
-            await message.reply(f'Error: {str(e)}')
-        finally:
-            bot_in_use = False
+    elif text.startswith('/up'):
+        await handle_up(client, message)
+    elif text.startswith('/compress'):
+        await handle_compress(client, message, username)
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
