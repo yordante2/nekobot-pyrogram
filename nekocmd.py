@@ -1,7 +1,7 @@
 async def handle_start(client, message):
     await message.reply("Funcionando")
 
-async def compress_video(client, message: Message):  # Cambiar a async
+async def compress_video(client, message):  # Cambiar a async
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
         original_size = os.path.getsize(original_video_path)
