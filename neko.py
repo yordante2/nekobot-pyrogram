@@ -402,75 +402,105 @@ async def handle_listo(message):
 
 
 user_comp = {}
+# Variables globales
+bot_in_use = True
+
+# Definiciones de funciones
+async def start(client, message):
+    if bot_in_use:
+        await message.reply("Funcionando")
+
+async def add_user(client, message):
+    if bot_in_use:
+        new_user_id = int(message.text.split()[1])
+        temp_users.append(new_user_id)
+        allowed_users.append(new_user_id)
+        await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
+
+async def rem_user(client, message):
+    if bot_in_use:
+        rem_user_id = int(message.text.split()[1])
+        if rem_user_id in temp_users:
+            temp_users.remove(rem_user_id)
+            allowed_users.remove(rem_user_id)
+            await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
+        else:
+            await message.reply("Usuario no encontrado en la lista temporal.")
+
+async def add_chat(client, message):
+    if bot_in_use:
+        temp_chats.append(message.chat.id)
+        allowed_users.append(message.chat.id)
+        await message.reply(f"Chat {message.chat.id} añadido temporalmente.")
+
+async def rem_chat(client, message):
+    if bot_in_use:
+        if message.chat.id in temp_chats:
+            temp_chats.remove(message.chat.id)
+            allowed_users.remove(message.chat.id)
+            await message.reply(f"Chat {message.chat.id} eliminado temporalmente.")
+        else:
+            await message.reply("Chat no encontrado en la lista temporal.")
+
+async def ban_user(client, message):
+    if bot_in_use:
+        ban_user_id = int(message.text.split()[1])
+        if ban_user_id not in admin_users:
+            ban_users.append(ban_user_id)
+            await message.reply(f"Usuario {ban_user_id} baneado.")
+
+async def deban_user(client, message):
+    if bot_in_use:
+        deban_user_id = int(message.text.split()[1])
+        if deban_user_id in ban_users:
+            ban_users.remove(deban_user_id)
+            await message.reply(f"Usuario {deban_user_id} desbaneado.")
+        else:
+            await message.reply("Usuario no encontrado en la lista de baneados.")
+
+async def kill(client, message):
+    global bot_in_use
+    if message.from_user.id in admin_users:
+        bot_in_use = False
+        await message.reply("Bot detenido.")
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
-    username = message.from_user.username
-    chat_id = message.chat.id
     user_id = message.from_user.id
+    chat_id = message.chat.id
+
+    # Verificar si el bot está en uso
+    if not bot_in_use:
+        return
 
     # Verificar si el user_id está en la lista de usuarios permitidos
     if user_id in allowed_users:
-        # El usuario tiene acceso en todos los chats
         pass
     else:
         # Verificar si el chat_id está en la lista de chats permitidos
         if chat_id not in allowed_users:
             return  # No hacer nada si el chat no está permitido
-
         # Verificar si el user_id está en la lista de usuarios bloqueados
         if user_id in ban_users:
             return
 
-    if message.text.startswith(('start', '.start', '/start')):
-        await message.reply("Funcionando")
-    elif message.text.startswith('/adduser'):
-        if user_id in admin_users:
-            new_user_id = int(message.text.split()[1])
-            temp_users.append(new_user_id)
-            allowed_users.append(new_user_id)
-            await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
-        else:
-            return
-    elif message.text.startswith('/remuser'):
-        if user_id in admin_users:
-            rem_user_id = int(message.text.split()[1])
-            if rem_user_id in temp_users:
-                temp_users.remove(rem_user_id)
-                allowed_users.remove(rem_user_id)
-                await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
-            else:
-                await message.reply("Usuario no encontrado en la lista temporal.")
-        else:
-            return
-    elif message.text.startswith('/addchat'):
-        if user_id in admin_users:
-            temp_chats.append(chat_id)
-            allowed_users.append(chat_id)
-            await message.reply(f"Chat {chat_id} añadido temporalmente.")
-    elif message.text.startswith('/remchat'):
-        if user_id in admin_users:
-            if chat_id in temp_chats:
-                temp_chats.remove(chat_id)
-                allowed_users.remove(chat_id)
-                await message.reply(f"Chat {chat_id} eliminado temporalmente.")
-            else:
-                await message.reply("Chat no encontrado en la lista temporal.")
-    elif message.text.startswith('/banuser'):
-        if user_id in admin_users:
-            ban_user_id = int(message.text.split()[1])
-            if ban_user_id not in admin_users:
-                ban_users.append(ban_user_id)
-                await message.reply(f"Usuario {ban_user_id} baneado.")
-    elif message.text.startswith('/debanuser'):
-        if user_id in admin_users:
-            deban_user_id = int(message.text.split()[1])
-            if deban_user_id in ban_users:
-                ban_users.remove(deban_user_id)
-                await message.reply(f"Usuario {deban_user_id} desbaneado.")
-            else:
-                await message.reply("Usuario no encontrado en la lista de baneados.")
+    if text.startswith(('start', '.start', '/start')):
+        await start(client, message)
+    elif text.startswith('/adduser') and user_id in admin_users:
+        await add_user(client, message)
+    elif text.startswith('/remuser') and user_id in admin_users:
+        await rem_user(client, message)
+    elif text.startswith('/addchat') and user_id in admin_users:
+        await add_chat(client, message)
+    elif text.startswith('/remchat') and user_id in admin_users:
+        await rem_chat(client, message)
+    elif text.startswith('/banuser') and user_id in admin_users:
+        await ban_user(client, message)
+    elif text.startswith('/debanuser') and user_id in admin_users:
+        await deban_user(client, message)
+    elif text.startswith('/kill') and user_id in admin_users:
+        await kill(client, message)
     elif text.startswith('/up'):
         await handle_up(client, message)
     elif text.startswith('/compress'):
@@ -483,7 +513,6 @@ async def handle_message(client, message):
         email = text.split(' ', 1)[1]
         user_emails[user_id] = email
         await message.reply("Correo electrónico registrado correctamente.")
-
     elif text.startswith('/sendmail'):
         if user_id not in user_emails:
             await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
