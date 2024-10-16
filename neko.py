@@ -520,8 +520,6 @@ async def handle_message(client, message):
         os.remove(new_file_path)
         shutil.rmtree('temprename')
         os.mkdir('temprename')
-
-
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
