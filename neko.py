@@ -39,7 +39,7 @@ bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
-async def compress_video(client, message):  # Cambiar a async
+async def compress_video(client, message: Message):  # Cambiar a async
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
         original_size = os.path.getsize(original_video_path)
