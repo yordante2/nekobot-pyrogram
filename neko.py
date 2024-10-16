@@ -153,7 +153,24 @@ async def cover3h_operation(client, message, codes):
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
-async def rename_file(client, message, new_name):
+
+async def handle_rename_command(client, message, text):
+    global bot_in_use
+    if bot_in_use:
+        await message.reply("El bot está en uso, espere un poco")
+        return
+    bot_in_use = True
+    if not message.reply_to_message or not message.reply_to_message.media:
+        await message.reply("Debe usar el comando respondiendo a un archivo")
+        bot_in_use = False
+        return
+    command = text.split()
+    if len(command) < 2:
+        await message.reply("Introduzca un nuevo nombre")
+        bot_in_use = False
+        return
+    new_name = command[1]
+    
     media = message.reply_to_message
     # Determinar el tipo de medio y obtener el file_id correspondiente
     if media.photo:
@@ -166,8 +183,8 @@ async def rename_file(client, message, new_name):
         file_id = media.audio.file_id
     else:
         await message.reply("Tipo de archivo no soportado")
-        return False
-
+        bot_in_use = False
+        return
     # Descargar el archivo
     file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
     # Obtener la extensión del archivo original
@@ -180,33 +197,11 @@ async def rename_file(client, message, new_name):
     await client.send_document(message.chat.id, new_file_path)
     # Eliminar el archivo temporal
     os.remove(new_file_path)
-    return True
-
-async def handle_rename_command(client, message, text):
-    global bot_in_use
-    if bot_in_use:
-        await message.reply("El bot está en uso, espere un poco")
-        return
-
-    bot_in_use = True
-    if not message.reply_to_message or not message.reply_to_message.media:
-        await message.reply("Debe usar el comando respondiendo a un archivo")
-        bot_in_use = False
-        return
-
-    command = text.split()
-    if len(command) < 2:
-        await message.reply("Introduzca un nuevo nombre")
-        bot_in_use = False
-        return
-
-    new_name = command[1]
-    success = await rename_file(message, new_name)
-    if success:
-        await message.reply("Archivo renombrado con éxito")
     bot_in_use = False
     shutil.rmtree('temprename')
     os.mkdir('temprename')
+    await message.reply("Archivo renombrado con éxito")
+
 
 async def h3_operation(client, message, codes):
     headers = {
