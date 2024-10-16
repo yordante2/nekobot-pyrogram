@@ -14,7 +14,7 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
-from nekocmd import handle_start, update_video_settings, add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, set_size, set_mail
+from nekocmd import rename, handle_start, update_video_settings, add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, set_size, set_mail
 
 
 # Configuracion del bot
@@ -421,7 +421,7 @@ async def handle_message(client, message):
     username = message.from_user.username
     chat_id = message.chat.id
     user_id = message.from_user.id
-
+    
     if user_id in allowed_users:
         pass
     else:
@@ -430,33 +430,36 @@ async def handle_message(client, message):
         if user_id in ban_users:
             return
 
-    if text.startswith(('start', '.start', '/start')):
+    if text.startswith(('/start', '.start')):
         await handle_start(client, message)
-    elif text.startswith('/convert'):
+    elif text.startswith(('/convert', '.convert')):
         await compress_video(client, message)
-    elif text.startswith('/calidad'):
+    elif text.startswith(('/calidad', '.calidad')):
         await update_video_settings(client, message)
-    elif text.startswith('/adduser'):
+    elif text.startswith(('/adduser', '.adduser')):
         await add_user(client, message)
-    elif text.startswith('/remuser'):
+    elif text.startswith(('/remuser', '.remuser')):
         await remove_user(client, message)
-    elif text.startswith('/addchat'):
+    elif text.startswith(('/addchat', '.addchat')):
         await add_chat(client, message)
-    elif text.startswith('/remchat'):
+    elif text.startswith(('/remchat', '.remchat')):
         await remove_chat(client, message)
-    elif text.startswith('/banuser'):
+    elif text.startswith(('/banuser', '.banuser')):
         await ban_user(client, message)
-    elif text.startswith('/debanuser'):
+    elif text.startswith(('/debanuser', '.debanuser')):
         await deban_user(client, message)
-    elif text.startswith('/up'):
+    elif text.startswith(('/up', '.up')):
         await handle_up(client, message)
-    elif text.startswith('/compress'):
+    elif text.startswith(('/compress', '.compress')):
         await handle_compress(client, message, username)
-    elif text.startswith("/setsize"):
+    elif text.startswith(('/setsize', '.setsize')):
         await set_size(client, message)
-    elif text.startswith('/setmail'):
+    elif text.startswith(('/setmail', '.setmail')):
         await set_mail(client, message)
+    elif text.startswith(('/rename', '.rename')):
+        await rename(client, message)
         
+
     elif text.startswith('/sendmail'):
         if user_id not in user_emails:
             await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
@@ -491,65 +494,6 @@ async def handle_message(client, message):
             finally:
                 shutil.rmtree('mailtemp')
                 os.mkdir('mailtemp')
-    elif text.startswith('/rename'):
-        if bot_in_use:
-            await message.reply("El bot está en uso, espere un poco")
-            return
-
-        bot_in_use = True
-
-        if not message.reply_to_message or not message.reply_to_message.media:
-            await message.reply("Debe usar el comando respondiendo a un archivo")
-            bot_in_use = False
-            return
-
-        command = text.split()
-        if len(command) < 2:
-            await message.reply("Introduzca un nuevo nombre")
-            bot_in_use = False
-            return
-
-        new_name = command[1]
-        media = message.reply_to_message
-
-        # Determinar el tipo de medio y obtener el file_id correspondiente
-        if media.photo:
-            file_id = media.photo.file_id
-        elif media.video:
-            file_id = media.video.file_id
-        elif media.document:
-            file_id = media.document.file_id
-        elif media.audio:
-            file_id = media.audio.file_id
-        else:
-            await message.reply("Tipo de archivo no soportado")
-            bot_in_use = False
-            return
-
-        # Descargar el archivo
-        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
-
-        # Obtener la extensión del archivo original
-        file_extension = os.path.splitext(file_path)[1]
-
-        # Crear el nuevo nombre con la extensión original
-        new_file_path = f"temprename/{new_name}{file_extension}"
-
-        # Renombrar el archivo
-        os.rename(file_path, new_file_path)
-
-        # Enviar el archivo renombrado
-        await client.send_document(message.chat.id, new_file_path)
-
-        # Limpiar la variable de estado
-        bot_in_use = False
-
-        # Eliminar el archivo temporal
-        os.remove(new_file_path)
-        shutil.rmtree('temprename')
-        os.mkdir('temprename')
-
-
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
