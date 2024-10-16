@@ -1,3 +1,20 @@
+import os
+import glob
+from pyrogram import Client, filters
+import zipfile
+import shutil
+import random
+import string
+import smtplib
+from email.message import EmailMessage
+import requests
+from bs4 import BeautifulSoup
+import re
+from moodleclient import upload_token
+import datetime
+import subprocess
+from pyrogram.types import Message
+
 async def handle_start(client, message):
     await message.reply("Funcionando")
 
