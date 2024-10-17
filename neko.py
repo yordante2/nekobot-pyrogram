@@ -561,8 +561,45 @@ async def send_mail(client, message):
         finally:
             shutil.rmtree('mailtemp')
             os.mkdir('mailtemp')
+async def resume_codes(client, message):
+    full_message = message.text
+    if message.reply_to_message and message.reply_to_message.document:
+        file_path = await message.reply_to_message.download()
+        with open(file_path, 'r') as f:
+            for line in f:
+                full_message += line
+        os.remove(file_path)
+    
+    codes = re.findall(r'\d{6}', full_message)
+    if codes:
+        chunk_size = 550
+        chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
+        for chunk in chunks:
+            result = ','.join(chunk)
+            await message.reply(result)
+    else:
+        await message.reply("No hay códigos para resumir")
 
-
+async def resume_txt_codes(client, message):
+    full_message = message.text
+    if message.reply_to_message and message.reply_to_message.document:
+        file_path = await message.reply_to_message.download()
+        with open(file_path, 'r') as f:
+            for line in f:
+                full_message += line
+        os.remove(file_path)
+    
+    codes = re.findall(r'\d{6}', full_message)
+    if codes:
+        file_name = "codes.txt"
+        with open(file_name, 'w') as f:
+            for code in codes:
+                f.write(f"{code}\n")
+        await message.reply_document(file_name)
+        os.remove(file_name)
+    else:
+        await message.reply("No hay códigos para resumir")
+            
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
@@ -605,7 +642,6 @@ async def handle_message(client, message):
             await deban_user(client, message)
     elif text.startswith(('/rename', '.rename')):
         await rename(client, message)
-
     elif text.startswith('/up'):
         await handle_up(client, message)
     elif text.startswith('/compress'):
@@ -620,30 +656,33 @@ async def handle_message(client, message):
         await set_mail(client, message)
     elif text.startswith(('/sendmail', '.sendmail')):
         await send_mail(client, message)
-
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             await cover3h_operation(client, message, [code])
             await h3_operation(client, message, [code])
-
     elif text.startswith(('/cover3h', '.cover3h')):
         codes = [code.strip() for code in text.split()[1].split(',')]
         for code in codes:
             await cover3h_operation(client, message, [code])
-            
-
     elif text.startswith(('/covernh', '.covernh')):
         codes = [code.strip() for code in text.split()[1].split(',')]
         for code in codes:
             await covernh_operation(client, message, [code])
-
     elif text.startswith(('/nh', '.nh', 'nh')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             await covernh_operation(client, message, [code])
             await nh_operation(client, message, [code])
-
+    elif message.text.startswith('/compare'):
+        await handle_compare(message)
+    elif message.text.startswith('/listo'):
+        await handle_listo(message)
+    elif message.text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
+        await resume_codes(client, message)
+    elif message.text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
+        await resume_txt_codes(client, message)
+        
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         if bot_in_use:
             await message.reply("El bot está en uso actualmente, espere un poco")
@@ -692,76 +731,6 @@ async def handle_message(client, message):
             await message.reply(f"Error al escanear la página: {e}")
 
         bot_in_use = False
-
-    elif message.text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
-        # Obtener el mensaje completo
-        full_message = message.text
-
-        # Si el mensaje es una respuesta a un archivo, leer el contenido del archivo línea por línea
-        if message.reply_to_message and message.reply_to_message.document:
-            file_path = await message.reply_to_message.download()
-            with open(file_path, 'r') as f:
-                for line in f:
-                    full_message += line
-            os.remove(file_path)
-
-        # Buscar todas las combinaciones de 6 números consecutivos
-        codes = re.findall(r'\d{6}', full_message)
-        
-        if codes:
-            # Dividir las combinaciones en grupos de 550
-            chunk_size = 550
-            chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
-            
-            # Enviar cada grupo en un mensaje separado
-            for chunk in chunks:
-                result = ','.join(chunk)
-                await message.reply(result)
-        else:
-            # Enviar mensaje si no hay códigos
-            await message.reply("No hay códigos para resumir")
-
-
-    elif message.text.startswith('/compare'):
-        await handle_compare(message)
-
-    elif message.text.startswith('/listo'):
-        await handle_listo(message)
-
-
-    elif message.text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
-        # Obtener el mensaje completo
-        full_message = message.text
-
-        # Si el mensaje es una respuesta a un archivo, leer el contenido del archivo línea por línea
-        if message.reply_to_message and message.reply_to_message.document:
-            file_path = await message.reply_to_message.download()
-            with open(file_path, 'r') as f:
-                for line in f:
-                    full_message += line
-            os.remove(file_path)
-
-        # Buscar todas las combinaciones de 6 números consecutivos
-        codes = re.findall(r'\d{6}', full_message)
-        
-        if codes:
-            # Crear un archivo de texto y escribir los códigos, cada uno en una línea distinta
-            file_name = "codes.txt"
-            with open(file_name, 'w') as f:
-                for code in codes:
-                    f.write(f"{code}\n")
-            
-            # Enviar el archivo al chat
-            await message.reply_document(file_name)
-            os.remove(file_name)
-        else:
-            # Enviar mensaje si no hay códigos
-            await message.reply("No hay códigos para resumir")
-
-
-    
-
-
     elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
         if bot_in_use:
             await message.reply("El bot está en uso actualmente, espere un poco")
@@ -818,17 +787,4 @@ async def handle_message(client, message):
             await message.reply(f"Error al escanear las páginas: {e}")
 
         bot_in_use = False
-
-
-            
-
-
-
-
-
-
-
-
-
-
 app.run()
