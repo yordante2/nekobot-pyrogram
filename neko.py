@@ -14,7 +14,8 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
-from nekocmd import rename, handle_start
+from nekocmd import rename
+
 
 # Configuracion del bot
 api_id = os.getenv('API_ID')
@@ -39,82 +40,38 @@ user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
 
-async def update_video_settings(client, message):
-    settings = message.text[len('/calidad '):]
-    global video_settings
-    video_settings = settings
-    await message.reply(f"Configuración de video actualizada: {video_settings}")
-
-async def add_user(client, message):
-    user_id = message.from_user.id
-    if user_id in admin_users:
-        new_user_id = int(message.text.split()[1])
-        temp_users.append(new_user_id)
-        allowed_users.append(new_user_id)
-        await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
-
-async def remove_user(client, message):
-    user_id = message.from_user.id
-    if user_id in admin_users:
-        rem_user_id = int(message.text.split()[1])
-        if rem_user_id in temp_users:
-            temp_users.remove(rem_user_id)
-            allowed_users.remove(rem_user_id)
-            await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
-        else:
-            await message.reply("Usuario no encontrado en la lista temporal.")
-
-async def add_chat(client, message):
-    user_id = message.from_user.id
-    chat_id = message.chat.id
-    if user_id in admin_users:
-        temp_chats.append(chat_id)
-        allowed_users.append(chat_id)
-        await message.reply(f"Chat {chat_id} añadido temporalmente.")
-
-async def remove_chat(client, message):
-    user_id = message.from_user.id
-    chat_id = message.chat.id
-    if user_id in admin_users:
-        if chat_id in temp_chats:
-            temp_chats.remove(chat_id)
-            allowed_users.remove(chat_id)
-            await message.reply(f"Chat {chat_id} eliminado temporalmente.")
-        else:
-            await message.reply("Chat no encontrado en la lista temporal.")
-
-async def ban_user(client, message):
-    user_id = message.from_user.id
-    if user_id in admin_users:
-        ban_user_id = int(message.text.split()[1])
-        if ban_user_id not in admin_users:
-            ban_users.append(ban_user_id)
-            await message.reply(f"Usuario {ban_user_id} baneado.")
-
-async def deban_user(client, message):
-    user_id = message.from_user.id
-    if user_id in admin_users:
-        deban_user_id = int(message.text.split()[1])
-        if deban_user_id in ban_users:
-            ban_users.remove(deban_user_id)
-            await message.reply(f"Usuario {deban_user_id} desbaneado.")
-        else:
-            await message.reply("Usuario no encontrado en la lista de baneados.")
-
-async def set_size(client, message):
-    username = message.from_user.username
-    valor = message.text.split(" ")[1]
-    user_comp[username] = int(valor)
-    await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
-
-async def set_mail(client, message):
-    user_id = message.from_user.id
-    email = message.text.split(' ', 1)[1]
-    user_emails[user_id] = email
-    await message.reply("Correo electrónico registrado correctamente.")
+def compressfile(file_path, part_size):
+    parts = []
+    with open(file_path, 'rb') as f:
+        part_num = 1
+        while True:
+            part_data = f.read(part_size * 1024 * 1024)
+            if not part_data:
+                break
+            part_file = f"{file_path}.7z.{part_num:03d}"
+            with open(part_file, 'wb') as part:
+                part.write(part_data)
+            parts.append(part_file)
+            part_num += 1
+    return parts
 
 
+video_settings = {
+    'resolution': '640x480',
+    'crf': '28',
+    'audio_bitrate': '64k',
+    'fps': '30',
+    'preset': 'fast',
+    'codec': 'libx264'
+}
 
+def update_video_settings(command: str):
+    settings = command.split()
+    for setting in settings:
+        key, value = setting.split('=')
+        video_settings[key] = value
+
+@app.on_message(filters.command("convert"))
 async def compress_video(client, message: Message):  # Cambiar a async
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
@@ -168,31 +125,9 @@ async def compress_video(client, message: Message):  # Cambiar a async
                 os.remove(compressed_video_path)
     else:
         await app.send_message(chat_id=message.chat.id, text="Por favor, responde a un video para comprimirlo.")
+
+
         
-def compressfile(file_path, part_size):
-    parts = []
-    with open(file_path, 'rb') as f:
-        part_num = 1
-        while True:
-            part_data = f.read(part_size * 1024 * 1024)
-            if not part_data:
-                break
-            part_file = f"{file_path}.7z.{part_num:03d}"
-            with open(part_file, 'wb') as part:
-                part.write(part_data)
-            parts.append(part_file)
-            part_num += 1
-    return parts
-
-
-video_settings = {
-    'resolution': '640x480',
-    'crf': '28',
-    'audio_bitrate': '64k',
-    'fps': '30',
-    'preset': 'fast',
-    'codec': 'libx264'
-}
 
 async def handle_compress(client, message, username):
     global bot_in_use
@@ -497,44 +432,85 @@ async def handle_message(client, message):
     username = message.from_user.username
     chat_id = message.chat.id
     user_id = message.from_user.id
-    
+
+    # Verificar si el user_id está en la lista de usuarios permitidos
     if user_id in allowed_users:
+        # El usuario tiene acceso en todos los chats
         pass
     else:
+        # Verificar si el chat_id está en la lista de chats permitidos
         if chat_id not in allowed_users:
-            return
+            return  # No hacer nada si el chat no está permitido
+
+        # Verificar si el user_id está en la lista de usuarios bloqueados
         if user_id in ban_users:
             return
 
-    if text.startswith(('/start', '.start')):
-        await handle_start(client, message)
-    elif text.startswith(('/convert', '.convert')):
+    if message.text.startswith(('start', '.start', '/start')):
+        await message.reply("Funcionando")
+    elif text.startswith('/convert'):
         await compress_video(client, message)
-    elif text.startswith(('/calidad', '.calidad')):
-        await update_video_settings(client, message)
-    elif text.startswith(('/adduser', '.adduser')):
-        await add_user(client, message)
-    elif text.startswith(('/remuser', '.remuser')):
-        await remove_user(client, message)
-    elif text.startswith(('/addchat', '.addchat')):
-        await add_chat(client, message)
-    elif text.startswith(('/remchat', '.remchat')):
-        await remove_chat(client, message)
-    elif text.startswith(('/banuser', '.banuser')):
-        await ban_user(client, message)
-    elif text.startswith(('/debanuser', '.debanuser')):
-        await deban_user(client, message)
-    elif text.startswith(('/up', '.up')):
+    elif text.startswith('/calidad'):
+        update_video_settings(text[len('/calidad '):])
+        await message.reply(f"Configuración de video actualizada: {video_settings}")
+    elif message.text.startswith('/adduser'):
+        if user_id in admin_users:
+            new_user_id = int(message.text.split()[1])
+            temp_users.append(new_user_id)
+            allowed_users.append(new_user_id)
+            await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
+        else:
+            return
+    elif message.text.startswith('/remuser'):
+        if user_id in admin_users:
+            rem_user_id = int(message.text.split()[1])
+            if rem_user_id in temp_users:
+                temp_users.remove(rem_user_id)
+                allowed_users.remove(rem_user_id)
+                await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
+            else:
+                await message.reply("Usuario no encontrado en la lista temporal.")
+        else:
+            return
+    elif message.text.startswith('/addchat'):
+        if user_id in admin_users:
+            temp_chats.append(chat_id)
+            allowed_users.append(chat_id)
+            await message.reply(f"Chat {chat_id} añadido temporalmente.")
+    elif message.text.startswith('/remchat'):
+        if user_id in admin_users:
+            if chat_id in temp_chats:
+                temp_chats.remove(chat_id)
+                allowed_users.remove(chat_id)
+                await message.reply(f"Chat {chat_id} eliminado temporalmente.")
+            else:
+                await message.reply("Chat no encontrado en la lista temporal.")
+    elif message.text.startswith('/banuser'):
+        if user_id in admin_users:
+            ban_user_id = int(message.text.split()[1])
+            if ban_user_id not in admin_users:
+                ban_users.append(ban_user_id)
+                await message.reply(f"Usuario {ban_user_id} baneado.")
+    elif message.text.startswith('/debanuser'):
+        if user_id in admin_users:
+            deban_user_id = int(message.text.split()[1])
+            if deban_user_id in ban_users:
+                ban_users.remove(deban_user_id)
+                await message.reply(f"Usuario {deban_user_id} desbaneado.")
+            else:
+                await message.reply("Usuario no encontrado en la lista de baneados.")
+    elif text.startswith('/up'):
         await handle_up(client, message)
-    elif text.startswith(('/compress', '.compress')):
+    elif text.startswith('/compress'):
         await handle_compress(client, message, username)
-    elif text.startswith(('/setsize', '.setsize')):
-        await set_size(client, message)
-    elif text.startswith(('/setmail', '.setmail')):
-        await set_mail(client, message)
-    elif text.startswith(('/rename', '.rename')):
-        await rename(client, message)
-        
+    elif text.startswith("/setsize"):
+        valor = text.split(" ")[1]
+        user_comp[username] = int(valor)
+        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+    elif text.startswith('/setmail'):
+        email = text.split(' ', 1)[1]
+        user_emails[user_id] = email
+        await message.reply("Correo electrónico registrado correctamente.")
 
     elif text.startswith('/sendmail'):
         if user_id not in user_emails:
@@ -570,6 +546,10 @@ async def handle_message(client, message):
             finally:
                 shutil.rmtree('mailtemp')
                 os.mkdir('mailtemp')
+    elif message.text.startswith('/rename'):
+        await handle_listo(client, message)
+
+
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
