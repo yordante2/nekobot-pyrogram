@@ -6,4 +6,3 @@ py7zr
 tgcrypto
 cryptg
 ffmpeg-python
-collections
