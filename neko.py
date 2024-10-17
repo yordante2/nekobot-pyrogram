@@ -514,6 +514,55 @@ async def rename(client, message):
     else:
         await message.reply('Ejecute el comando respondiendo a un archivo')
 
+async def set_size(client, message):
+    valor = int(message.text.split(" ")[1])
+    username = message.from_user.username
+    user_comp[username] = valor
+    await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+
+async def set_mail(client, message):
+    email = message.text.split(' ', 1)[1]
+    user_id = message.from_user.id
+    user_emails[user_id] = email
+    await message.reply("Correo electrónico registrado correctamente.")
+
+async def send_mail(client, message):
+    user_id = message.from_user.id
+    if user_id not in user_emails:
+        await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
+        return
+    
+    email = user_emails[user_id]
+    if message.reply_to_message:
+        msg = EmailMessage()
+        msg['Subject'] = 'Mensaje de Telegram'
+        msg['From'] = os.getenv('DISMAIL')
+        msg['To'] = email
+
+        if message.reply_to_message.text:
+            msg.set_content(message.reply_to_message.text)
+        elif message.reply_to_message.media:
+            media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
+            if os.path.getsize(media) < 59 * 1024 * 1024:  # 59 MB
+                with open(media, 'rb') as f:
+                    msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
+            else:
+                await message.reply("El archivo supera el límite de lo permitido (59 MB).")
+                return
+        
+        try:
+            with smtplib.SMTP('disroot.org', 587) as server:
+                server.starttls()
+                server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+                server.send_message(msg)
+            await message.reply("Correo electrónico enviado correctamente.")
+        except Exception as e:
+            await message.reply(f"Error al enviar el correo: {e}")
+        finally:
+            shutil.rmtree('mailtemp')
+            os.mkdir('mailtemp')
+
+
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
@@ -567,45 +616,10 @@ async def handle_message(client, message):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
         await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
-    elif text.startswith('/setmail'):
-        email = text.split(' ', 1)[1]
-        user_emails[user_id] = email
-        await message.reply("Correo electrónico registrado correctamente.")
-
-    elif text.startswith('/sendmail'):
-        if user_id not in user_emails:
-            await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
-            return
-
-        email = user_emails[user_id]
-        if message.reply_to_message:
-            msg = EmailMessage()
-            msg['Subject'] = 'Mensaje de Telegram'
-            msg['From'] = os.getenv('DISMAIL')
-            msg['To'] = email
-
-            if message.reply_to_message.text:
-                msg.set_content(message.reply_to_message.text)
-            elif message.reply_to_message.media:
-                media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
-                if os.path.getsize(media) < 59 * 1024 * 1024:  # 59 MB
-                    with open(media, 'rb') as f:
-                        msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
-                else:
-                    await message.reply("El archivo supera el límite de lo permitido (59 MB).")
-                    return
-
-            try:
-                with smtplib.SMTP('disroot.org', 587) as server:
-                    server.starttls()
-                    server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
-                    server.send_message(msg)
-                await message.reply("Correo electrónico enviado correctamente.")
-            except Exception as e:
-                await message.reply(f"Error al enviar el correo: {e}")
-            finally:
-                shutil.rmtree('mailtemp')
-                os.mkdir('mailtemp')
+    elif text.startswith(('/setmail', '.setmail')):
+        await set_mail(client, message)
+    elif text.startswith(('/sendmail', '.sendmail')):
+        await send_mail(client, message)
 
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
