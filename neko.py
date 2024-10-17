@@ -110,7 +110,6 @@ def update_video_settings(user_id, command: str):
         #key, value = setting.split('=')
         #video_settings[key] = value
 
-@app.on_message(filters.command("convert"))
 async def compress_video(client, message: Message):  # Cambiar a async
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
@@ -729,7 +728,7 @@ async def handle_message(client, message):
     elif text.startswith(('/convert', '.convert')):
         await compress_video(client, message)
     elif text.startswith(('/calidad', '.calidad')):
-        update_video_settings(text[len('/calidad '):])
+        update_video_settings(text[len('/calidad '):], user_id,command)
         await message.reply(f"Configuración de video actualizada: {video_settings}")
     elif text.startswith(('/adduser', '.adduser')):
         if user_id in admin_users:
