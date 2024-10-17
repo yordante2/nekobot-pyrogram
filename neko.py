@@ -14,7 +14,7 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
-from nekocmd import rename
+from nekocmd import rename, handle_start
 
 # Configuracion del bot
 api_id = os.getenv('API_ID')
