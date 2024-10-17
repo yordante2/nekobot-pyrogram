@@ -603,10 +603,6 @@ async def resume_txt_codes(client, message):
 
 
 async def handle_scan(client, message):
-    if bot_in_use:
-        await message.reply("El bot está en uso actualmente, espere un poco")
-        return
-    bot_in_use = True
     url = message.text.split(' ', 1)[1]
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -641,7 +637,6 @@ async def handle_scan(client, message):
             await message.reply("No se encontraron enlaces de páginas web.")
     except Exception as e:
         await message.reply(f"Error al escanear la página: {e}")
-    bot_in_use = False
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
