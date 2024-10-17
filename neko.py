@@ -599,7 +599,6 @@ async def resume_txt_codes(client, message):
         os.remove(file_name)
     else:
         await message.reply("No hay códigos para resumir")
-            @app.on_message(filters.text)
 
 
 
@@ -643,7 +642,8 @@ async def handle_scan(client, message):
     except Exception as e:
         await message.reply(f"Error al escanear la página: {e}")
     bot_in_use = False
-    
+
+@app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
     username = message.from_user.username
