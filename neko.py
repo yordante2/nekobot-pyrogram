@@ -14,7 +14,6 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
-from collections import defaultdict
 
 
 # Configuracion del bot
@@ -82,34 +81,13 @@ video_settings = {
     'codec': 'libx264'
 }
 
-video_settings_default = {
-    'resolution': '640x480',
-    'crf': '28',
-    'audio_bitrate': '64k',
-    'fps': '30',
-    'preset': 'fast',
-    'codec': 'libx264'
-}
-
-# Crear un diccionario para almacenar la configuración de cada usuario, inicializado con valores predeterminados
-user_video_settings = defaultdict(lambda: video_settings_default.copy())
-
-def update_video_settings(user_id, command: str):
+def update_video_settings(command: str):
     settings = command.split()
-    user_settings = user_video_settings[user_id]  # Obtener o inicializar configuraciones del usuario
     for setting in settings:
         key, value = setting.split('=')
-        if key in user_settings:
-            user_settings[key] = value
-    user_video_settings[user_id] = user_settings  # Guardar configuraciones actualizadas para el usuario
+        video_settings[key] = value
 
-
-#def update_video_settings(command: str):
-    #settings = command.split()
-    #for setting in settings:
-        #key, value = setting.split('=')
-        #video_settings[key] = value
-
+@app.on_message(filters.command("convert"))
 async def compress_video(client, message: Message):  # Cambiar a async
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
@@ -119,9 +97,9 @@ async def compress_video(client, message: Message):  # Cambiar a async
         compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
         ffmpeg_command = [
             'ffmpeg', '-y', '-i', original_video_path,
-            '-s', user_video_settings['resolution'], '-crf', user_video_settings['crf'],
-            '-b:a', user_video_settings['audio_bitrate'], '-r', user_video_settings['fps'],
-            '-preset', user_video_settings['preset'], '-c:v', user_video_settings['codec'],
+            '-s', video_settings['resolution'], '-crf', video_settings['crf'],
+            '-b:a', video_settings['audio_bitrate'], '-r', video_settings['fps'],
+            '-preset', video_settings['preset'], '-c:v', video_settings['codec'],
             compressed_video_path
         ]
         try:
@@ -728,7 +706,7 @@ async def handle_message(client, message):
     elif text.startswith(('/convert', '.convert')):
         await compress_video(client, message)
     elif text.startswith(('/calidad', '.calidad')):
-        update_video_settings(text[len('/calidad '):], user_id,command)
+        update_video_settings(text[len('/calidad '):])
         await message.reply(f"Configuración de video actualizada: {video_settings}")
     elif text.startswith(('/adduser', '.adduser')):
         if user_id in admin_users:
