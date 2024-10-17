@@ -599,8 +599,51 @@ async def resume_txt_codes(client, message):
         os.remove(file_name)
     else:
         await message.reply("No hay códigos para resumir")
-            
-@app.on_message(filters.text)
+            @app.on_message(filters.text)
+
+
+
+async def handle_scan(client, message):
+    if bot_in_use:
+        await message.reply("El bot está en uso actualmente, espere un poco")
+        return
+    bot_in_use = True
+    url = message.text.split(' ', 1)[1]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        links = soup.find_all('a', href=True)
+        results = []
+        for link in links:
+            href = link['href']
+            if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
+                page_name = link.get_text(strip=True)
+                if page_name:
+                    results.append(f"{page_name}\n{href}\n")
+        # Process results to check and modify links
+        final_results = []
+        for result in results:
+            lines = result.split('\n')
+            if len(lines) > 1:
+                href = lines[1]
+                if not href.startswith('http'):
+                    base_url = '/'.join(url.split('/')[:3])
+                    href = f"{base_url}{href}"
+                final_results.append(f"{lines[0]}\n{href}\n")
+        if final_results:
+            with open('results.txt', 'w') as f:
+                f.write("\n".join(final_results))
+            await message.reply_document('results.txt')
+            os.remove('results.txt')
+        else:
+            await message.reply("No se encontraron enlaces de páginas web.")
+    except Exception as e:
+        await message.reply(f"Error al escanear la página: {e}")
+    bot_in_use = False
+    
 async def handle_message(client, message):
     text = message.text
     username = message.from_user.username
@@ -682,109 +725,6 @@ async def handle_message(client, message):
         await resume_codes(client, message)
     elif message.text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
         await resume_txt_codes(client, message)
-        
     elif message.text.startswith(('/scan', '.scan', 'scan')):
-        if bot_in_use:
-            await message.reply("El bot está en uso actualmente, espere un poco")
-            return
-
-        bot_in_use = True
-        url = message.text.split(' ', 1)[1]
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-
-        try:
-            response = requests.get(url, headers=headers)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            links = soup.find_all('a', href=True)
-
-            results = []
-            for link in links:
-                href = link['href']
-                if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
-                    page_name = link.get_text(strip=True)
-                    if page_name:
-                        results.append(f"{page_name}\n{href}\n")
-
-            # Process results to check and modify links
-            final_results = []
-            for result in results:
-                lines = result.split('\n')
-                if len(lines) > 1:
-                    href = lines[1]
-                    if not href.startswith('http'):
-                        base_url = '/'.join(url.split('/')[:3])
-                        href = f"{base_url}{href}"
-                    final_results.append(f"{lines[0]}\n{href}\n")
-
-            if final_results:
-                with open('results.txt', 'w') as f:
-                    f.write("\n".join(final_results))
-                await message.reply_document('results.txt')
-                os.remove('results.txt')
-            else:
-                await message.reply("No se encontraron enlaces de páginas web.")
-
-        except Exception as e:
-            await message.reply(f"Error al escanear la página: {e}")
-
-        bot_in_use = False
-    elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
-        if bot_in_use:
-            await message.reply("El bot está en uso actualmente, espere un poco")
-            return
-
-        bot_in_use = True
-        parts = message.text.split(' ')
-
-        if len(parts) < 4:
-            await message.reply("Por favor, proporcione todos los parámetros necesarios: URL base, inicio y fin.")
-            bot_in_use = False
-            return
-
-        base_url = parts[1]
-        try:
-            start = int(parts[2])
-            end = int(parts[3])
-        except ValueError:
-            await message.reply("Los parámetros de inicio y fin deben ser números enteros.")
-            bot_in_use = False
-            return
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-
-        all_results = set()
-
-        try:
-            for i in range(start, end + 1):
-                url = f"{base_url}{i}"
-                response = requests.get(url, headers=headers)
-                soup = BeautifulSoup(response.content, 'html.parser')
-                links = soup.find_all('a', href=True)
-
-                for link in links:
-                    href = link['href']
-                    if not href.endswith(('.pdf', '.jpg', '.png', '.doc', '.docx', '.xls', '.xlsx')):
-                        page_name = link.get_text(strip=True)
-                        if page_name:
-                            if not href.startswith('http'):
-                                href = f"{base_url}{href}"
-                            all_results.add(f"{page_name}\n{href}\n")
-
-            if all_results:
-                with open('results.txt', 'w') as f:
-                    f.write("\n".join(all_results))
-                await message.reply_document('results.txt')
-                os.remove('results.txt')
-            else:
-                await message.reply("No se encontraron enlaces de páginas web.")
-
-        except Exception as e:
-            await message.reply(f"Error al escanear las páginas: {e}")
-
-        bot_in_use = False
+        await handle_scan(client, message)
 app.run()
