@@ -81,11 +81,33 @@ video_settings = {
     'codec': 'libx264'
 }
 
-def update_video_settings(command: str):
+video_settings_default = {
+    'resolution': '640x480',
+    'crf': '28',
+    'audio_bitrate': '64k',
+    'fps': '30',
+    'preset': 'fast',
+    'codec': 'libx264'
+}
+
+# Crear un diccionario para almacenar la configuración de cada usuario, inicializado con valores predeterminados
+user_video_settings = defaultdict(lambda: video_settings_default.copy())
+
+def update_video_settings(user_id, command: str):
     settings = command.split()
+    user_settings = user_video_settings[user_id]  # Obtener o inicializar configuraciones del usuario
     for setting in settings:
         key, value = setting.split('=')
-        video_settings[key] = value
+        if key in user_settings:
+            user_settings[key] = value
+    user_video_settings[user_id] = user_settings  # Guardar configuraciones actualizadas para el usuario
+
+
+#def update_video_settings(command: str):
+    #settings = command.split()
+    #for setting in settings:
+        #key, value = setting.split('=')
+        #video_settings[key] = value
 
 @app.on_message(filters.command("convert"))
 async def compress_video(client, message: Message):  # Cambiar a async
@@ -97,9 +119,9 @@ async def compress_video(client, message: Message):  # Cambiar a async
         compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
         ffmpeg_command = [
             'ffmpeg', '-y', '-i', original_video_path,
-            '-s', video_settings['resolution'], '-crf', video_settings['crf'],
-            '-b:a', video_settings['audio_bitrate'], '-r', video_settings['fps'],
-            '-preset', video_settings['preset'], '-c:v', video_settings['codec'],
+            '-s', user_video_settings['resolution'], '-crf', user_video_settings['crf'],
+            '-b:a', user_video_settings['audio_bitrate'], '-r', user_video_settings['fps'],
+            '-preset', user_video_settings['preset'], '-c:v', user_video_settings['codec'],
             compressed_video_path
         ]
         try:
