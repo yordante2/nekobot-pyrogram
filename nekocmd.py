@@ -15,6 +15,300 @@ import datetime
 import subprocess
 from pyrogram.types import Message
 
+compression_size = 10  # Tamaño de compresión por defecto en MB
+file_counter = 0
+bot_in_use = False
+
+user_emails = {}
+image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
+
+
+video_settings = {
+    'resolution': '640x480',
+    'crf': '28',
+    'audio_bitrate': '64k',
+    'fps': '30',
+    'preset': 'fast',
+    'codec': 'libx264'
+}
+
+def compressfile(file_path, part_size):
+    parts = []
+    with open(file_path, 'rb') as f:
+        part_num = 1
+        while True:
+            part_data = f.read(part_size * 1024 * 1024)
+            if not part_data:
+                break
+            part_file = f"{file_path}.7z.{part_num:03d}"
+            with open(part_file, 'wb') as part:
+                part.write(part_data)
+            parts.append(part_file)
+            part_num += 1
+    return parts
+
+
+
+async def handle_compress(client, message, username):
+    global bot_in_use
+    if bot_in_use:
+        await message.reply("El comando está en uso actualmente, espere un poco")
+        return
+    try:
+        bot_in_use = True
+        os.system("rm -rf ./server/*")
+        await message.reply("Descargando el archivo para comprimirlo...")
+
+        def get_file_name(message):
+            if message.reply_to_message.document:
+                return os.path.basename(message.reply_to_message.document.file_name)[:50]
+            elif message.reply_to_message.photo:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".jpg"
+            elif message.reply_to_message.audio:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp3"
+            elif message.reply_to_message.video:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp4"
+            elif message.reply_to_message.sticker:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".webp"
+            else:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20))
+
+        # Descargar archivo
+        file_name = get_file_name(message)
+        file_path = await client.download_media(
+            message.reply_to_message,
+            file_name=file_name
+        )
+        await message.reply("Comprimiendo el archivo...")
+        sizd = user_comp.get(username, 10)
+        # Comprimir archivo
+        parts = compressfile(file_path, sizd)
+        await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+        # Enviar partes
+        for part in parts:
+            try:
+                await client.send_document(message.chat.id, part)
+            except:
+                pass
+        await message.reply("Esas son todas las partes")
+        shutil.rmtree('server')
+        os.mkdir('server')
+        bot_in_use = False
+    except Exception as e:
+        await message.reply(f'Error: {str(e)}')
+    finally:
+        bot_in_use = False
+
+
+async def handle_up(client, message):
+    if message.reply_to_message:
+        await message.reply("Descargando...")
+        file_path = await client.download_media(message.reply_to_message.document.file_id)
+        await message.reply("Subiendo a la nube...")
+        link = upload_token(file_path, os.getenv("NUBETOKEN"), os.getenv("NUBELINK"))
+        await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
+        # Borrar el archivo después de subirlo
+        os.remove(file_path)
+
+async def cover3h_operation(client, message, codes):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
+    for code in codes:
+        url = f"https://es.3hentai.net/d/{code}/"
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            continue
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
+        page_name = re.sub(r'[^a-zA-Z0-9\[\] ]', '', title_tag.text.strip()) if title_tag else clean_string(code) + code
+
+        img_url = f"https://es.3hentai.net/d/{code}/1/"
+        try:
+            response = requests.get(img_url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"Error al acceder a la página de la imagen: {str(e)}")
+            continue
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+        if img_tag:
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_data = requests.get(img_url, headers=headers).content
+
+            img_filename = f"1{img_extension}"
+            with open(img_filename, 'wb') as img_file:
+                img_file.write(img_data)
+
+            await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}")
+        else:
+            await message.reply(f"No se encontró ninguna imagen para el código {code}")
+
+async def h3_operation(client, message, codes):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
+    for code in codes:
+        url = f"https://es.3hentai.net/d/{code}/"
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            continue
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
+        folder_name = os.path.join("h3dl", clean_string(title_tag.text.strip()) if title_tag else clean_string(code))
+
+        os.makedirs(folder_name, exist_ok=True)
+
+        page_number = 1
+        while True:
+            page_url = f"https://es.3hentai.net/d/{code}/{page_number}/"
+            try:
+                response = requests.get(page_url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                if page_number == 1:
+                    await message.reply(f"Error al acceder a la página: {str(e)}")
+                break
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+            if not img_tag:
+                break
+
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_data = requests.get(img_url, headers=headers).content
+
+            img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
+            with open(img_filename, 'wb') as img_file:
+                img_file.write(img_data)
+
+            page_number += 1
+
+        zip_filename = os.path.join(f"{folder_name}.cbz")
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for root, _, files in os.walk(folder_name):
+                for file in files:
+                    zipf.write(os.path.join(root, file), arcname=file)
+
+        await client.send_document(message.chat.id, zip_filename)
+
+async def nh_operation(client, message, codes):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
+    for code in codes:
+        url = f"https://nhentai.net/g/{code}/"
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            continue
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
+        folder_name = os.path.join("h3dl", clean_string(title_tag.text.strip()) if title_tag else clean_string(code))
+
+        os.makedirs(folder_name, exist_ok=True)
+
+        page_number = 1
+        while True:
+            page_url = f"https://nhentai.net/g/{code}/{page_number}/"
+            try:
+                response = requests.get(page_url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                if page_number == 1:
+                    await message.reply(f"Error al acceder a la página: {str(e)}")
+                break
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+            if not img_tag:
+                break
+
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_data = requests.get(img_url, headers=headers).content
+
+            img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
+            with open(img_filename, 'wb') as img_file:
+                img_file.write(img_data)
+
+            page_number += 1
+
+        zip_filename = os.path.join(f"{folder_name}.cbz")
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for root, _, files in os.walk(folder_name):
+                for file in files:
+                    zipf.write(os.path.join(root, file), arcname=file)
+
+        await client.send_document(message.chat.id, zip_filename)
+
+async def covernh_operation(client, message, codes):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
+    for code in codes:
+        url = f"https://nhentai.net/g/{code}/"
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            continue
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
+        page_name = re.sub(r'[^a-zA-Z0-9\[\] ]', '', title_tag.text.strip()) if title_tag else clean_string(code) + code
+
+        img_url = f"https://nhentai.net/g/{code}/1/"
+        try:
+            response = requests.get(img_url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"Error al acceder a la página de la imagen: {str(e)}")
+            continue
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+        if img_tag:
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_data = requests.get(img_url, headers=headers).content
+
+            img_filename = f"1{img_extension}"
+            with open(img_filename, 'wb') as img_file:
+                img_file.write(img_data)
+
+
+            try:
+                await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
+
+            except Exception as e:
+                await client.send_document(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
+            #else:
+                #await message.reply(f"No se encontró ninguna imagen para el código {code}")
+            
+
+
+
+    
 async def handle_start(client, message):
     await message.reply("Funcionando")
 
