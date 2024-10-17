@@ -444,15 +444,6 @@ user_comp = {}
 async def handle_start(client, message):
     await message.reply("Funcionando")
 
-async def compress_video(client, message):
-    # Lógica para comprimir video
-    await message.reply("Video comprimido")
-
-async def update_video_settings(settings):
-    # Actualizar configuración de video
-    global video_settings
-    video_settings.update(settings)
-
 async def add_user(client, message):
     new_user_id = int(message.text.split()[1])
     temp_users.append(new_user_id)
