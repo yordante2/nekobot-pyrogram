@@ -38,6 +38,23 @@ bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
+async def rename(client, message):
+    reply_message = message.reply_to_message
+    if reply_message and reply_message.media:
+        try:
+            await message.reply("Descargando el archivo para renombrarlo...")
+            new_name = message.text.split(' ', 1)[1]
+            file_path = await client.download_media(reply_message)
+            new_file_path = os.path.join(os.path.dirname(file_path), new_name)
+            os.rename(file_path, new_file_path)
+            await message.reply("Subiendo el archivo con nuevo nombre...")
+            await client.send_document(message.chat.id, new_file_path)
+            os.remove(new_file_path)
+        except Exception as e:
+            await message.reply(f'Error: {str(e)}')
+    else:
+        await message.reply('Ejecute el comando respondiendo a un archivo')
+
 
 def compressfile(file_path, part_size):
     parts = []
@@ -502,6 +519,8 @@ async def handle_message(client, message):
         await handle_up(client, message)
     elif text.startswith('/compress'):
         await handle_compress(client, message, username)
+    elif text.startswith('/rename'):
+        await rename(client, message)
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
@@ -545,64 +564,6 @@ async def handle_message(client, message):
             finally:
                 shutil.rmtree('mailtemp')
                 os.mkdir('mailtemp')
-    elif text.startswith('/rename'):
-        if bot_in_use:
-            await message.reply("El bot está en uso, espere un poco")
-            return
-
-        bot_in_use = True
-
-        if not message.reply_to_message or not message.reply_to_message.media:
-            await message.reply("Debe usar el comando respondiendo a un archivo")
-            bot_in_use = False
-            return
-
-        command = text.split()
-        if len(command) < 2:
-            await message.reply("Introduzca un nuevo nombre")
-            bot_in_use = False
-            return
-
-        new_name = command[1]
-        media = message.reply_to_message
-
-        # Determinar el tipo de medio y obtener el file_id correspondiente
-        if media.photo:
-            file_id = media.photo.file_id
-        elif media.video:
-            file_id = media.video.file_id
-        elif media.document:
-            file_id = media.document.file_id
-        elif media.audio:
-            file_id = media.audio.file_id
-        else:
-            await message.reply("Tipo de archivo no soportado")
-            bot_in_use = False
-            return
-
-        # Descargar el archivo
-        file_path = await client.download_media(file_id, file_name=f"temprename/{file_id}")
-
-        # Obtener la extensión del archivo original
-        file_extension = os.path.splitext(file_path)[1]
-
-        # Crear el nuevo nombre con la extensión original
-        new_file_path = f"temprename/{new_name}{file_extension}"
-
-        # Renombrar el archivo
-        os.rename(file_path, new_file_path)
-
-        # Enviar el archivo renombrado
-        await client.send_document(message.chat.id, new_file_path)
-
-        # Limpiar la variable de estado
-        bot_in_use = False
-
-        # Eliminar el archivo temporal
-        os.remove(new_file_path)
-        shutil.rmtree('temprename')
-        os.mkdir('temprename')
-
 
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
