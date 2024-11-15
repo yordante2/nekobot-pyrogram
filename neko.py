@@ -40,7 +40,8 @@ image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
 
 
-
+NUBE_FOLDER = "Nube" 
+DRIVE_FOLDER = "/content/drive/MyDrive/Nube"
 
 def save_nube(client, message):
     if not os.path.exists(NUBE_FOLDER):
