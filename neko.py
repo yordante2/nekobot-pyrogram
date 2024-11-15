@@ -38,6 +38,36 @@ bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
+
+
+
+
+def save_nube(client, message):
+    if not os.path.exists(NUBE_FOLDER):
+        os.mkdir(NUBE_FOLDER)
+    
+    file_id = message.reply_to_message.media
+    file = client.download_media(file_id, file_name=os.path.join(NUBE_FOLDER, file_id.file_id))
+    message.reply_text("Archivo guardado en Nube.")
+
+def del_nube(client, message):
+    if os.path.exists(NUBE_FOLDER):
+        shutil.rmtree(NUBE_FOLDER)
+        message.reply_text("Carpeta Nube borrada.")
+    else:
+        message.reply_text("La carpeta Nube no existe.")
+
+def drive_nube(client, message):
+    if os.path.exists(NUBE_FOLDER):
+        if not os.path.exists(DRIVE_FOLDER):
+            os.makedirs(DRIVE_FOLDER)
+        shutil.move(NUBE_FOLDER, DRIVE_FOLDER)
+        message.reply_text("Carpeta Nube movida a Google Drive.")
+    else:
+        message.reply_text("La carpeta Nube no existe o está vacía.")
+
+
+
 async def rename(client, message):
     reply_message = message.reply_to_message
     if reply_message and reply_message.media:
@@ -768,8 +798,16 @@ async def handle_message(client, message):
         await resume_txt_codes(client, message)
     elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
         await handle_multiscan(client, message)
+    elif text.startswith('/savenube'):
+        save_nube(client, message)
+    elif text.startswith('/delnube'):
+        del_nube(client, message)
+    elif text.startswith('/drivenube'):
+        drive_nube(client, message)
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(client, message)
+
+
 
 
 print('Bot iniciado')
