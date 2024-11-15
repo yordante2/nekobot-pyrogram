@@ -772,5 +772,5 @@ async def handle_message(client, message):
         await handle_scan(client, message)
 
 
-
+print('Bot iniciado')
 app.run()
