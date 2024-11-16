@@ -43,13 +43,20 @@ image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 NUBE_FOLDER = "Nube" 
 DRIVE_FOLDER = "/content/drive/MyDrive/Nube"
 
-def save_nube(client, message):
+async def save_nube(client, message):
     if not os.path.exists(NUBE_FOLDER):
         os.mkdir(NUBE_FOLDER)
+
+    reply_message = message.reply_to_message
+    file_path = await client.download_media(reply_message)
     
-    file_id = message.reply_to_message.media
-    file = client.download_media(file_id, file_name=os.path.join(NUBE_FOLDER, file_id.file_id))
-    message.reply_text("Archivo guardado en Nube.")
+    if file_path:
+        new_file_path = os.path.join(NUBE_FOLDER, os.path.basename(file_path))
+        os.rename(file_path, new_file_path)
+        await message.reply_text("Archivo guardado en Nube.")
+    else:
+        await message.reply_text("Fallo al descargar el archivo.")
+
 
 def del_nube(client, message):
     if os.path.exists(NUBE_FOLDER):
