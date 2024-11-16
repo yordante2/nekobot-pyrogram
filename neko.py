@@ -57,7 +57,6 @@ async def save_nube(client, message):
     else:
         await message.reply_text("Fallo al descargar el archivo.")
 
-
 def del_nube(client, message):
     if os.path.exists(NUBE_FOLDER):
         shutil.rmtree(NUBE_FOLDER)
