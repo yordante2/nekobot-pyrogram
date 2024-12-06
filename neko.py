@@ -275,8 +275,6 @@ async def h3_operation(client, message, codes):
             else:
                 print(f"Error al crear el directorio: {e}")
 
-        os.makedirs(folder_name, exist_ok=True)
-
         page_number = 1
         while True:
             page_url = f"https://es.3hentai.net/d/{code}/{page_number}/"
@@ -309,7 +307,12 @@ async def h3_operation(client, message, codes):
                 for file in files:
                     zipf.write(os.path.join(root, file), arcname=file)
 
+        os.rmdir(folder_name)
+
         await client.send_document(message.chat.id, zip_filename)
+        os.remove(zip_filename)
+
+
 
 async def nh_operation(client, message, codes):
     headers = {
@@ -371,7 +374,10 @@ async def nh_operation(client, message, codes):
                 for file in files:
                     zipf.write(os.path.join(root, file), arcname=file)
 
+        os.rmdir(folder_name)
+
         await client.send_document(message.chat.id, zip_filename)
+        os.remove(zip_filename)
 
 async def covernh_operation(client, message, codes):
     headers = {
