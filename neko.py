@@ -145,6 +145,15 @@ async def compress_video(client, message: Message):  # Cambiar a async
 
         
 
+def borrar_carpeta_no_vacia(folder_name):
+    for root, dirs, files in os.walk(folder_name, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.rmdir(os.path.join(root, name))
+    os.rmdir(folder_name)
+
+
 async def handle_compress(client, message, username):
     global bot_in_use
     if bot_in_use:
@@ -309,6 +318,7 @@ async def h3_operation(client, message, codes):
 
 
         await client.send_document(message.chat.id, zip_filename)
+        borrar_carpeta_no_vacia('h3dl')
 
 
 
@@ -373,6 +383,7 @@ async def nh_operation(client, message, codes):
                     zipf.write(os.path.join(root, file), arcname=file)
                     
         await client.send_document(message.chat.id, zip_filename)
+        borrar_carpeta_no_vacia('h3dl')
 
 async def covernh_operation(client, message, codes):
     headers = {
