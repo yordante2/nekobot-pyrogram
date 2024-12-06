@@ -87,7 +87,7 @@ def update_video_settings(command: str):
         key, value = setting.split('=')
         video_settings[key] = value
 
-@app.on_message(filters.command("convert"))
+
 async def compress_video(client, message: Message):  # Cambiar a async
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
