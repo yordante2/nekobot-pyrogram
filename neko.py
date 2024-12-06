@@ -307,10 +307,8 @@ async def h3_operation(client, message, codes):
                 for file in files:
                     zipf.write(os.path.join(root, file), arcname=file)
 
-        os.rmdir(folder_name)
 
         await client.send_document(message.chat.id, zip_filename)
-        os.remove(zip_filename)
 
 
 
@@ -373,11 +371,8 @@ async def nh_operation(client, message, codes):
             for root, _, files in os.walk(folder_name):
                 for file in files:
                     zipf.write(os.path.join(root, file), arcname=file)
-
-        os.rmdir(folder_name)
-
+                    
         await client.send_document(message.chat.id, zip_filename)
-        os.remove(zip_filename)
 
 async def covernh_operation(client, message, codes):
     headers = {
