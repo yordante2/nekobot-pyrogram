@@ -265,6 +265,16 @@ async def h3_operation(client, message, codes):
         title_tag = soup.find('title')
         folder_name = os.path.join("h3dl", clean_string(title_tag.text.strip()) if title_tag else clean_string(code))
 
+        try:
+            os.makedirs(folder_name, exist_ok=True)
+
+        except OSError as e:
+            if "File name too long" in str(e):
+                folder_name = folder_name[:50]
+                os.makedirs(folder_name, exist_ok=True)
+            else:
+                print(f"Error al crear el directorio: {e}")
+
         os.makedirs(folder_name, exist_ok=True)
 
         page_number = 1
