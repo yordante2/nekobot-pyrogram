@@ -144,8 +144,10 @@ async def compress_video(client, message: Message):  # Cambiar a async
 
 
         
+import os
 
-def borrar_carpeta_no_vacia(folder_name):
+def borrar_carpeta_h3dl():
+    folder_name = 'h3dl'
     for root, dirs, files in os.walk(folder_name, topdown=False):
         for name in files:
             os.remove(os.path.join(root, name))
@@ -318,7 +320,7 @@ async def h3_operation(client, message, codes):
 
 
         await client.send_document(message.chat.id, zip_filename)
-        borrar_carpeta_no_vacia('h3dl')
+        borrar_carpeta_h3dl()
 
 
 
@@ -383,7 +385,7 @@ async def nh_operation(client, message, codes):
                     zipf.write(os.path.join(root, file), arcname=file)
                     
         await client.send_document(message.chat.id, zip_filename)
-        borrar_carpeta_no_vacia('h3dl')
+        borrar_carpeta_h3dl()
 
 async def covernh_operation(client, message, codes):
     headers = {
