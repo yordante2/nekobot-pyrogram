@@ -638,7 +638,15 @@ async def handle_multiscan(client, message):
     try:
         parts = message.text.split(' ')
         base_url = parts[1]
-        numbers = [int(n) for n in parts[2:]]
+        
+        numbers = []
+        for part in parts[2:]:
+            if '-' in part:
+                start, end = part.split('-')
+                numbers.extend(range(int(start), int(end) + 1))
+            else:
+                numbers.append(int(part))
+                
     except IndexError:
         await message.reply("Envié el link base seguido de los números de páginas a escanear.")
         return
@@ -683,6 +691,7 @@ async def handle_multiscan(client, message):
         os.remove('results.txt')
     else:
         await message.reply("No se encontraron enlaces de páginas web.")
+
 
 
 
