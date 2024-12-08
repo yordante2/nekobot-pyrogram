@@ -724,7 +724,24 @@ async def handle_multiscan(client, message):
     else:
         await message.reply("No se encontraron enlaces de páginas web.")
 
+# Obtener la palabra secreta de la variable de entorno
+CODEWORD = os.getenv("CODEWORD")
 
+@app.on_message(filters.command("access") & filters.private)
+def access_command(client, message):
+    # Verificar si el mensaje contiene la palabra secreta
+    if len(message.command) > 1 and message.command[1] == CODEWORD:
+        # Obtener el ID del usuario remitente
+        user_id = message.from_user.id
+        
+        # Añadir el ID del usuario a la lista temp_users si no está ya añadido
+        if user_id not in temp_users:
+            temp_users.append(user_id)
+            message.reply("Acceso concedido.")
+        else:
+            message.reply("Ya estás en la lista de acceso temporal.")
+    else:
+        message.reply("Palabra secreta incorrecta.")
 
 
 @app.on_message(filters.text)
