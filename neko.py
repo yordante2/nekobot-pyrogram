@@ -787,6 +787,7 @@ async def download_file(client, message):
     os.remove(filename)
 
 @app.on_message(filters.text)
+asyncio.run(handle_message(client, message))
 async def handle_message(client, message):
     text = message.text
     username = message.from_user.username
