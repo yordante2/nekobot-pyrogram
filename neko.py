@@ -886,7 +886,7 @@ async def handle_message(client, message):
 
 async def main():
     await app.start()
-    await app.idle()
+    await app.run()
 
 if __name__ == "__main__":
     asyncio.run(main())
