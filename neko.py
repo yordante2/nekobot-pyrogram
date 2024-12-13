@@ -88,7 +88,9 @@ def update_video_settings(command: str):
         video_settings[key] = value
 
 
-async def compress_video(client, message: Message):  # Cambiar a async
+async def compress_video(client, message: Message):
+    await asyncio.sleep(2)
+    # Cambiar a async
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
         original_size = os.path.getsize(original_video_path)
@@ -146,7 +148,8 @@ async def compress_video(client, message: Message):  # Cambiar a async
         
 import os
 
-def borrar_carpeta_h3dl():
+async def borrar_carpeta_h3dl():
+    await asyncio.sleep(2)
     folder_name = 'h3dl'
     for root, dirs, files in os.walk(folder_name, topdown=False):
         for name in files:
@@ -218,6 +221,7 @@ async def handle_up(client, message):
         os.remove(file_path)
 
 async def cover3h_operation(client, message, codes):
+    await asyncio.sleep(2)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -259,6 +263,7 @@ async def cover3h_operation(client, message, codes):
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
 async def h3_operation(client, message, codes):
+    await asyncio.sleep(2)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -320,11 +325,13 @@ async def h3_operation(client, message, codes):
 
 
         await client.send_document(message.chat.id, zip_filename)
-        borrar_carpeta_h3dl()
+        task6 = asyncio.create_task(borrar_carpeta_h3dl())
+        await task6
 
 
 
 async def nh_operation(client, message, codes):
+    await asyncio.sleep(2)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -385,9 +392,11 @@ async def nh_operation(client, message, codes):
                     zipf.write(os.path.join(root, file), arcname=file)
                     
         await client.send_document(message.chat.id, zip_filename)
-        borrar_carpeta_h3dl()
+        task6 = asyncio.create_task(borrar_carpeta_h3dl())
+        await task6
 
 async def covernh_operation(client, message, codes):
+    await asyncio.sleep(2)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -794,7 +803,9 @@ async def handle_message(client, message):
     if text.startswith(('/start', '.start', '/start')):
         await handle_start(client, message)
     elif text.startswith(('/convert', '.convert')):
-        await compress_video(client, message)
+        task = asyncio.create_task(compress_video(client, message))
+        print(f"Task created for message: {message}")
+        await task
     elif text.startswith(('/calidad', '.calidad')):
         update_video_settings(text[len('/calidad '):])
         await message.reply(f"Configuración de video actualizada: {video_settings}")
@@ -835,8 +846,10 @@ async def handle_message(client, message):
     elif text.startswith(('/3h', '.3h', '3h')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
-            await cover3h_operation(client, message, [code])
-            await h3_operation(client, message, [code])
+            task2 = asyncio.create_task(cover3h_operation(client, message, [code]))
+            task3 = asyncio.create_task(h3_operation(client, message, [code]))
+            await task2
+            await task3
     elif text.startswith(('/cover3h', '.cover3h')):
         codes = [code.strip() for code in text.split()[1].split(',')]
         for code in codes:
@@ -848,8 +861,10 @@ async def handle_message(client, message):
     elif text.startswith(('/nh', '.nh', 'nh')):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
-            await covernh_operation(client, message, [code])
-            await nh_operation(client, message, [code])
+            task4 = asyncio.create_task(covernh_operation(client, message, [code]))
+            task5 = asyncio.create_task(nh_operation(client, message, [code]))
+            await task4
+            await task5
     elif message.text.startswith('/compare'):
         await handle_compare(message)
     elif message.text.startswith('/listo'):
