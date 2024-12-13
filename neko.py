@@ -14,6 +14,7 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
+import asyncio
 
 
 # Configuracion del bot
