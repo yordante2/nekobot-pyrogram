@@ -787,7 +787,6 @@ async def download_file(client, message):
     os.remove(filename)
 
 @app.on_message(filters.text)
-asyncio.run(handle_message(client, message))
 async def handle_message(client, message):
     text = message.text
     username = message.from_user.username
@@ -885,5 +884,9 @@ async def handle_message(client, message):
         await handle_scan(client, message)
 
 
+async def main():
+    await app.start()
+    await app.idle()
 
-app.run()
+if __name__ == "__main__":
+    asyncio.run(main())
