@@ -744,6 +744,38 @@ def access_command(client, message):
         message.reply("Palabra secreta incorrecta.")
             
 
+async def download_file(client, message):
+    url = message.text.split(maxsplit=1)[1]
+    filename = url.split('/')[-1]
+    status_message = await message.reply(f"Descargando {filename}...")
+
+    # Descargar el archivo con progreso
+    response = requests.get(url, stream=True)
+    total_size = int(response.headers.get('content-length', 0))
+    block_size = 1024  # 1 Kilobyte
+    wrote = 0
+
+    with open(filename, 'wb') as f:
+        for data in response.iter_content(block_size):
+            wrote += len(data)
+            f.write(data)
+            progress = (wrote / total_size) * 100
+            await status_message.edit(f"Descargando {filename}... {wrote // (1024 * 1024)}MB de {total_size // (1024 * 1024)}MB ({progress:.2f}%)")
+
+    # Enviar el archivo al chat con progreso
+    await client.send_document(
+        chat_id=message.chat.id,
+        document=filename,
+        progress=lambda current, total: asyncio.create_task(
+            status_message.edit(
+                f"Enviando {filename}... {current // (1024 * 1024)}MB de {total // (1024 * 1024)}MB ({(current / total) * 100:.2f}%)"
+            )
+        )
+    )
+
+    # Eliminar el archivo local después de enviarlo
+    os.remove(filename)
+
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
@@ -828,6 +860,10 @@ async def handle_message(client, message):
         await resume_txt_codes(client, message)
     elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
         await handle_multiscan(client, message)
+
+    elif text.startswith('/dl'):
+        await download_file(client, message)
+        
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(client, message)
 
