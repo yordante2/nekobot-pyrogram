@@ -748,6 +748,32 @@ import aiohttp
 import aiofiles
 from pyrogram import Client, filters
 
+async def send_document(client, message, filename):
+    if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        await client.send_photo(
+            chat_id=message.chat.id,
+            photo=filename,
+            caption="Enviado desde el archivo descargado."
+        )
+    elif filename.lower().endswith(('.mp3', '.wav', '.flac')):
+        await client.send_audio(
+            chat_id=message.chat.id,
+            audio=filename,
+            caption="Enviado desde el archivo descargado."
+        )
+    elif filename.lower().endswith(('.mp4', '.mkv', '.avi')):
+        await client.send_video(
+            chat_id=message.chat.id,
+            video=filename,
+            caption="Enviado desde el archivo descargado."
+        )
+    else:
+        await client.send_document(
+            chat_id=message.chat.id,
+            document=filename,
+            caption="Enviado desde el archivo descargado."
+        )
+
 async def download_single_file(client, message, url):
     filename = url.split('/')[-1]
     status_message = await message.reply(f"Descargando {filename}...")
@@ -768,16 +794,7 @@ async def download_single_file(client, message, url):
                         await status_message.edit(f"Descargando {filename}... {wrote // (1024 * 1024)}MB de {total_size // (1024 * 1024)}MB ({progress:.2f}%)")
         
         await status_message.edit(f"Descarga de {filename} completada.")
-        
-        async def progress_callback(current, total):
-            await status_message.edit(
-                f"Enviando {filename}... {current // (1024 * 1024)}MB de {total // (1024 * 1024)}MB ({(current / total) * 100:.2f}%)"
-            )
-        
-        await client.send_document(
-            chat_id=message.chat.id,
-            document=filename
-        )
+        await send_document(client, message, filename)
 
     except aiohttp.ClientError as e:
         await status_message.edit(f"Error al descargar {filename}: {e}")
@@ -801,6 +818,7 @@ async def download_file(client, message):
     else:
         url = message.text.split(maxsplit=1)[1]
         await download_single_file(client, message, url)
+
 
 
 
