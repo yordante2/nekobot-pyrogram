@@ -743,43 +743,43 @@ def access_command(client, message):
     else:
         message.reply("Palabra secreta incorrecta.")
             
-
 import os
-import asyncio
-import requests
+import aiohttp
 import aiofiles
+from pyrogram import Client, filters
 
 async def download_single_file(client, message, url):
     filename = url.split('/')[-1]
     status_message = await message.reply(f"Descargando {filename}...")
 
     try:
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        total_size = int(response.headers.get('content-length', 0))
-        block_size = 1024  # 1 Kilobyte
-        wrote = 0
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response.raise_for_status()
+                total_size = int(response.headers.get('Content-Length', 0))
+                block_size = 1024  # 1 Kilobyte
+                wrote = 0
 
-        async with aiofiles.open(filename, 'wb') as f:
-            for data in response.iter_content(block_size):
-                wrote += len(data)
-                await f.write(data)
-                progress = (wrote / total_size) * 100
-                await status_message.edit(f"Descargando {filename}... {wrote // (1024 * 1024)}MB de {total_size // (1024 * 1024)}MB ({progress:.2f}%)")
-    
+                async with aiofiles.open(filename, 'wb') as f:
+                    async for data in response.content.iter_chunked(block_size):
+                        wrote += len(data)
+                        await f.write(data)
+                        progress = (wrote / total_size) * 100
+                        await status_message.edit(f"Descargando {filename}... {wrote // (1024 * 1024)}MB de {total_size // (1024 * 1024)}MB ({progress:.2f}%)")
+        
         await status_message.edit(f"Descarga de {filename} completada.")
-
+        
         async def progress_callback(current, total):
             await status_message.edit(
                 f"Enviando {filename}... {current // (1024 * 1024)}MB de {total // (1024 * 1024)}MB ({(current / total) * 100:.2f}%)"
             )
-
+        
         await client.send_document(
             chat_id=message.chat.id,
             document=filename
         )
 
-    except requests.RequestException as e:
+    except aiohttp.ClientError as e:
         await status_message.edit(f"Error al descargar {filename}: {e}")
 
     finally:
@@ -787,7 +787,8 @@ async def download_single_file(client, message, url):
             os.remove(filename)
 
 async def download_file(client, message):
-    if message.reply_to_message and message.reply_to_message.document and '.txt' in message.reply_to_message.document.file_name:
+    if (message.reply_to_message and message.reply_to_message.document 
+        and message.reply_to_message.document.file_name.endswith('.txt')):
         file_path = await client.download_media(message.reply_to_message.document)
         
         async with aiofiles.open(file_path, 'r') as f:
@@ -800,6 +801,8 @@ async def download_file(client, message):
     else:
         url = message.text.split(maxsplit=1)[1]
         await download_single_file(client, message, url)
+
+
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
