@@ -746,33 +746,6 @@ def access_command(client, message):
 import os
 import aiohttp
 import aiofiles
-from pyrogram import Client, filters
-
-async def send_document(client, message, filename):
-    if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-        await client.send_photo(
-            chat_id=message.chat.id,
-            photo=filename,
-            caption="Enviado desde el archivo descargado."
-        )
-    elif filename.lower().endswith(('.mp3', '.wav', '.flac')):
-        await client.send_audio(
-            chat_id=message.chat.id,
-            audio=filename,
-            caption="Enviado desde el archivo descargado."
-        )
-    elif filename.lower().endswith(('.mp4', '.mkv', '.avi')):
-        await client.send_video(
-            chat_id=message.chat.id,
-            video=filename,
-            caption="Enviado desde el archivo descargado."
-        )
-    else:
-        await client.send_document(
-            chat_id=message.chat.id,
-            document=filename,
-            caption="Enviado desde el archivo descargado."
-        )
 
 async def download_single_file(client, message, url):
     filename = url.split('/')[-1]
@@ -785,16 +758,32 @@ async def download_single_file(client, message, url):
                 total_size = int(response.headers.get('Content-Length', 0))
                 block_size = 1024  # 1 Kilobyte
                 wrote = 0
-
+                last_progress_message = None
+                
                 async with aiofiles.open(filename, 'wb') as f:
                     async for data in response.content.iter_chunked(block_size):
                         wrote += len(data)
                         await f.write(data)
                         progress = (wrote / total_size) * 100
-                        await status_message.edit(f"Descargando {filename}... {wrote // (1024 * 1024)}MB de {total_size // (1024 * 1024)}MB ({progress:.2f}%)")
+                        progress_message = f"Descargando {filename}... {wrote // (1024 * 1024)}MB de {total_size // (1024 * 1024)}MB ({progress:.2f}%)"
+                        
+                        if progress_message != last_progress_message:
+                            await status_message.edit(progress_message)
+                            last_progress_message = progress_message
         
         await status_message.edit(f"Descarga de {filename} completada.")
-        await send_document(client, message, filename)
+        
+        async def progress_callback(current, total):
+            progress_message = f"Enviando {filename}... {current // (1024 * 1024)}MB de {total // (1024 * 1024)}MB ({(current / total) * 100:.2f}%)"
+            
+            if progress_message != last_progress_message:
+                await status_message.edit(progress_message)
+                last_progress_message = progress_message
+        
+        await client.send_document(
+            chat_id=message.chat.id,
+            document=filename
+        )
 
     except aiohttp.ClientError as e:
         await status_message.edit(f"Error al descargar {filename}: {e}")
@@ -818,8 +807,6 @@ async def download_file(client, message):
     else:
         url = message.text.split(maxsplit=1)[1]
         await download_single_file(client, message, url)
-
-
 
 
 @app.on_message(filters.text)
