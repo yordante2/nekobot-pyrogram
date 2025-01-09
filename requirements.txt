@@ -1,6 +1,7 @@
 pyrogram
 requests
 aiofiles
+aoihttp
 beautifulsoup4
 lxml
 py7zr
