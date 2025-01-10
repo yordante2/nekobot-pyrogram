@@ -810,7 +810,8 @@ async def download_file(client, message):
 
 
 
-# Diccionario para rastrear mensajes enviados y sus remitentes
+
+
 sent_messages = {}
 
 async def handle_send(client, message):
@@ -827,7 +828,7 @@ async def handle_send(client, message):
             # Enviar mensaje a usuario por @username
             try:
                 user = await client.get_users(target)
-                sent_message = await client.send_message(user.id, msg)
+                sent_message = await client.send_message(user.id, f"Mensaje de @{message.from_user.username}: {msg}")
                 sent_messages[sent_message.id] = {"user_id": message.from_user.id}
             except Exception as e:
                 await message.reply("Error al enviar el mensaje: " + str(e))
@@ -835,7 +836,7 @@ async def handle_send(client, message):
             # Enviar mensaje al ChatID
             chat_id = int(target)
             if chat_id in allowed_users:
-                sent_message = await client.send_message(chat_id, msg)
+                sent_message = await client.send_message(chat_id, f"Mensaje de @{message.from_user.username}: {msg}")
                 sent_messages[sent_message.id] = {"user_id": message.from_user.id}
             else:
                 await message.reply("El bot no está en el chat indicado")
@@ -935,12 +936,11 @@ async def handle_message(client, message):
         if user_id in admin_users:
             await handle_send(client, message)  
 
-    # Manejar respuestas a mensajes enviados
     if message.reply_to_message:
         original_message = sent_messages.get(message.reply_to_message.id)
         if original_message:
             user_id = original_message["user_id"]
-            await client.send_message(user_id, message.text)
+            await client.send_message(user_id, f"Respuesta de @{message.from_user.username}: {message.text}")
 
 app.run()
     
