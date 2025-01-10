@@ -809,6 +809,9 @@ async def download_file(client, message):
         await download_single_file(client, message, url)
 
 
+# Diccionario para rastrear mensajes enviados y sus remitentes
+sent_messages = {}
+
 async def handle_send(client, message):
     try:
         parts = message.text.split(maxsplit=2)
@@ -823,23 +826,22 @@ async def handle_send(client, message):
             # Enviar mensaje a usuario por @username
             try:
                 user = await client.get_users(target)
-                await client.send_message(user.id, msg)
+                sent_message = await client.send_message(user.id, msg)
+                sent_messages[sent_message.message_id] = {"user_id": message.from_user.id}
                 await message.reply(f"Mensaje enviado a @{user.username}")
             except Exception as e:
                 await message.reply("Error al enviar el mensaje: " + str(e))
         else:
-        # Enviar mensaje al ChatID
+            # Enviar mensaje al ChatID
             chat_id = int(target)
             if chat_id in allowed_users:
-                await client.send_message(chat_id, msg)
+                sent_message = await client.send_message(chat_id, msg)
+                sent_messages[sent_message.message_id] = {"user_id": message.from_user.id}
                 await message.reply(f"Mensaje enviado al Chat ID {chat_id}")
             else:
                 await message.reply("El bot no está en el chat indicado")
     except Exception as e:
         await message.reply("Error al procesar el comando: " + str(e))
-
-
-
 
 @app.on_message(filters.text)
 async def handle_message(client, message):
@@ -933,5 +935,12 @@ async def handle_message(client, message):
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
         if user_id in admin_users:
             await handle_send(client, message)  
+
+    # Manejar respuestas a mensajes enviados
+    if message.reply_to_message:
+        original_message = sent_messages.get(message.reply_to_message.message_id)
+        if original_message:
+            user_id = original_message["user_id"]
+            await client.send_message(user_id, message.text)
 
 app.run()
