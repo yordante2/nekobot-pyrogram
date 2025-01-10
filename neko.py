@@ -809,6 +809,38 @@ async def download_file(client, message):
         await download_single_file(client, message, url)
 
 
+async def handle_send(client, message):
+    try:
+        parts = message.text.split(maxsplit=2)
+        if len(parts) < 3:
+            await message.reply("Uso correcto: /send ChatID/@username Mensaje")
+            return
+        
+        target = parts[1]
+        msg = parts[2]
+        
+        if target.startswith('@'):
+            # Enviar mensaje a usuario por @username
+            try:
+                user = await client.get_users(target)
+                await client.send_message(user.id, msg)
+                await message.reply(f"Mensaje enviado a @{user.username}")
+            except Exception as e:
+                await message.reply("Error al enviar el mensaje: " + str(e))
+        else:
+        # Enviar mensaje al ChatID
+            chat_id = int(target)
+            if chat_id in allowed_users:
+                await client.send_message(chat_id, msg)
+                await message.reply(f"Mensaje enviado al Chat ID {chat_id}")
+            else:
+                await message.reply("El bot no está en el chat indicado")
+    except Exception as e:
+        await message.reply("Error al procesar el comando: " + str(e))
+
+
+
+
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
@@ -893,13 +925,13 @@ async def handle_message(client, message):
         await resume_txt_codes(client, message)
     elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
         await handle_multiscan(client, message)
-
     elif text.startswith('/dl'):
         await download_file(client, message)
-        
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(client, message)
 
-
+    elif text.startswith(('/send', '.send')):  # Añadido el comando /send
+        if user_id in admin_users:
+            await handle_send(client, message)  
 
 app.run()
