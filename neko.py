@@ -829,7 +829,6 @@ async def handle_send(client, message):
                 user = await client.get_users(target)
                 sent_message = await client.send_message(user.id, msg)
                 sent_messages[sent_message.id] = {"user_id": message.from_user.id}
-                await message.reply(f"Mensaje enviado a @{user.username}")
             except Exception as e:
                 await message.reply("Error al enviar el mensaje: " + str(e))
         else:
@@ -838,7 +837,6 @@ async def handle_send(client, message):
             if chat_id in allowed_users:
                 sent_message = await client.send_message(chat_id, msg)
                 sent_messages[sent_message.id] = {"user_id": message.from_user.id}
-                await message.reply(f"Mensaje enviado al Chat ID {chat_id}")
             else:
                 await message.reply("El bot no está en el chat indicado")
     except Exception as e:
