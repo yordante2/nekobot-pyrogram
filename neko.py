@@ -743,6 +743,7 @@ def access_command(client, message):
     else:
         message.reply("Palabra secreta incorrecta.")
 
+import os
 import string
 import random
 from pyrogram import Client, filters
@@ -769,11 +770,11 @@ def access_command(client, message):
     else:
         message.reply("Palabra secreta incorrecta.")
 
-@app.on_start
 async def send_initial_message(app):
     await app.send_message("@" + CODEWORDCHANNEL, f"Bot Reiniciado, escriba\n/access2 \"{CODEWORD2}\"\nPara obtener acceso")
+    
 
-        
+
 import os
 import aiohttp
 import aiofiles
@@ -973,4 +974,12 @@ async def handle_message(client, message):
             sender_info = f"Respuesta de @{message.from_user.username}" if message.from_user.username else f"Respuesta de user ID: {message.from_user.id}"
             await client.send_message(user_id, f"{sender_info}: {message.text}")
 
-app.run()
+
+
+# Inicia el bot
+if __name__ == "__main__":
+    app.start()  # Iniciar la sesión del bot
+    app.loop.run_until_complete(send_initial_message(app))  # Enviar el mensaje inicial
+    app.run()  # Ejecutar el bot
+    
+#app.run()
