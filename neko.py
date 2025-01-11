@@ -964,7 +964,7 @@ async def handle_message(client, message):
 
     elif message.text.startswith(('/publicword')):
         if user_id in admin_users:
-            send_initial_message(app)
+            await send_initial_message(app)
 
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
         if user_id in admin_users:
