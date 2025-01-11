@@ -962,7 +962,7 @@ async def handle_message(client, message):
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(client, message)
 
-    elif message.text.startwith(('/publicword')):
+    elif message.text.startswith(('/publicword')):
         if user_id in admin_users:
             send_initial_message(app)
 
