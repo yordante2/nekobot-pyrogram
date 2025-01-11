@@ -975,9 +975,11 @@ async def handle_message(client, message):
             await client.send_message(user_id, f"{sender_info}: {message.text}")
 
 
+if __name__ == "__main__":
+    await send_initial_message(app)
+    app.run()
 
-await send_initial_message(app)
-app.run()
+
 
 # Inicia el bot
 #if __name__ == "__main__":
