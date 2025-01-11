@@ -975,11 +975,11 @@ async def handle_message(client, message):
             await client.send_message(user_id, f"{sender_info}: {message.text}")
 
 
-async if __name__ == "__main__":
+async def startbot():
     await send_initial_message(app)
     app.run()
 
-
+starbot()
 
 # Inicia el bot
 #if __name__ == "__main__":
