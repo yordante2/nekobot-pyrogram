@@ -978,8 +978,11 @@ async def handle_message(client, message):
 async def startbot():
     await send_initial_message(app)
     app.run()
+    
+if __name__ == "__main__":
+    starbot()
 
-starbot()
+
 
 # Inicia el bot
 #if __name__ == "__main__":
