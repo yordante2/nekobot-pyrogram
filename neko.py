@@ -742,7 +742,25 @@ def access_command(client, message):
             message.reply("Ya estás en la lista de acceso temporal.")
     else:
         message.reply("Palabra secreta incorrecta.")
-            
+
+
+CODEWORD2 = os.getenv("CODEWORD2")
+@app.on_message(filters.command("access2") & filters.private)
+def access_command(client, message):
+    user_id = message.from_user.id
+    
+    # Verificar si el mensaje contiene la palabra secreta
+    if len(message.command) > 1 and message.command[1] == CODEWORD2:
+        # Añadir el ID del usuario a la lista temp_users si no está ya añadido
+        if user_id not in temp_users:
+            temp_users.append(user_id)
+            allowed_users.append(user_id)  # Añadir también a allowed_users
+            message.reply("Acceso concedido.")
+        else:
+            message.reply("Ya estás en la lista de acceso temporal.")
+    else:
+        message.reply("Palabra secreta incorrecta.")
+        
 import os
 import aiohttp
 import aiofiles
