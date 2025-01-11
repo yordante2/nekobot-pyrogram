@@ -976,10 +976,13 @@ async def handle_message(client, message):
 
 
 
+send_initial_message(app)
+app.run()
+
 # Inicia el bot
-if __name__ == "__main__":
-    app.start()  # Iniciar la sesión del bot
-    app.loop.run_until_complete(send_initial_message(app))  # Enviar el mensaje inicial
-    app.run()  # Ejecutar el bot
+#if __name__ == "__main__":
+    #app.start()  # Iniciar la sesión del bot
+    #app.loop.run_until_complete(send_initial_message(app))  # Enviar el mensaje inicial
+    #app.run()  # Ejecutar el bot
     
 #app.run()
