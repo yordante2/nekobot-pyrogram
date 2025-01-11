@@ -962,6 +962,10 @@ async def handle_message(client, message):
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(client, message)
 
+    elif message.text.startwith(('/publicword')):
+        if user_id in admin_users:
+            send_initial_message(app)
+
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
         if user_id in admin_users:
             await handle_send(client, message)  
@@ -975,12 +979,7 @@ async def handle_message(client, message):
             await client.send_message(user_id, f"{sender_info}: {message.text}")
 
 
-async def startbot():
-    await send_initial_message(app)
-    app.run()
-    
-if __name__ == "__main__":
-    starbot()
+app.run()
 
 
 
