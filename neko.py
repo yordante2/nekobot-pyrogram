@@ -976,7 +976,7 @@ async def handle_message(client, message):
 
 
 
-send_initial_message(app)
+await send_initial_message(app)
 app.run()
 
 # Inicia el bot
