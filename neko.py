@@ -976,7 +976,7 @@ async def handle_message(client, message):
 
 
 if __name__ == "__main__":
-    await send_initial_message(app)
+    send_initial_message(app)
     app.run()
 
 
