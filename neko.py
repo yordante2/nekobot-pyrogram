@@ -743,29 +743,35 @@ def access_command(client, message):
     else:
         message.reply("Palabra secreta incorrecta.")
 
+import string
+import random
+from pyrogram import Client, filters
 
-channel_username = "@nekobotchannel"
+def generate_random_code(length):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-def is_subscribed(client, user_id, channel_username):
-    try:
-        member = client.get_chat_member(channel_username, user_id)
-        return member.status in ["member", "administrator", "creator"]
-    except Exception as e:
-        return False
+CODEWORD2 = generate_random_code(6)
+CODEWORDCHANNEL = os.getenv("CODEWORDCHANNEL")
 
 @app.on_message(filters.command("access2") & filters.private)
 def access_command(client, message):
     user_id = message.from_user.id
     
-    if is_subscribed(client, user_id, channel_username):
+    # Verificar si el mensaje contiene la palabra secreta
+    if len(message.command) > 1 and message.command[1] == CODEWORD2:
+        # Añadir el ID del usuario a la lista temp_users si no está ya añadido
         if user_id not in temp_users:
             temp_users.append(user_id)
-            allowed_users.append(user_id)
+            allowed_users.append(user_id)  # Añadir también a allowed_users
             message.reply("Acceso concedido.")
         else:
             message.reply("Ya estás en la lista de acceso temporal.")
     else:
-        message.reply("Suscríbase a este canal para usar el bot: @nekobotchannel")
+        message.reply("Palabra secreta incorrecta.")
+
+@app.on_start
+async def send_initial_message(app):
+    await app.send_message("@" + CODEWORDCHANNEL, f"Bot Reiniciado, escriba\n/access2 \"{CODEWORD2}\"\nPara obtener acceso")
 
         
 import os
