@@ -868,6 +868,11 @@ async def handle_send(client, message):
             if chat_id in allowed_users:
                 sent_message = await client.send_message(chat_id, msg)
                 sent_messages[sent_message.id] = {"user_id": message.from_user.id}
+
+            elif chat_id not in allowed_users:
+                sent_message = await client.send_message(chat_id, msg)
+                sent_messages[sent_message.id] = {"user_id": message.from_user.id}
+                
             else:
                 await message.reply("El bot no está en el chat indicado")
     except Exception as e:
