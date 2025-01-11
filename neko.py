@@ -771,7 +771,7 @@ def access_command(client, message):
         message.reply("Palabra secreta incorrecta.")
 
 async def send_initial_message(app):
-    await app.send_message("@" + CODEWORDCHANNEL, f"Bot Reiniciado, escriba\n/access2 \"{CODEWORD2}\"\nPara obtener acceso")
+    await app.send_message("@" + CODEWORDCHANNEL, f"Bot Reiniciado, escriba\n\n ``` /access2 {CODEWORD2}``` \n\nPara obtener acceso")
     
 
 
