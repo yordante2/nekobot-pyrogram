@@ -38,6 +38,96 @@ bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
+import os
+import hashlib
+import py7zr
+import shutil
+from pyrogram import Client
+
+def compressfile(file_path, part_size):
+    parts = []
+    part_size *= 1024 * 1024  # Convert to bytes
+    archive_path = f"{file_path}.7z"
+    
+    with py7zr.SevenZipFile(archive_path, 'w') as archive:
+        archive.write(file_path, os.path.basename(file_path))
+    
+    with open(archive_path, 'rb') as archive:
+        part_num = 1
+        while True:
+            part_data = archive.read(part_size)
+            if not part_data:
+                break
+            part_file = f"{archive_path}.{part_num:03d}"
+            with open(part_file, 'wb') as part:
+                part.write(part_data)
+            parts.append(part_file)
+            part_num += 1
+    
+    return parts
+
+def hash_file(file_path):
+    hasher = hashlib.md5()
+    with open(file_path, 'rb') as f:
+        buf = f.read()
+        hasher.update(buf)
+    return hasher.hexdigest()
+
+async def handle_compress(client, message, username):
+    try:
+        os.system("rm -rf ./server/*")
+        await message.reply("Descargando el archivo para comprimirlo...")
+
+        def get_file_name(message):
+            if message.reply_to_message.document:
+                return os.path.basename(message.reply_to_message.document.file_name)[:50]
+            elif message.reply_to_message.photo:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".jpg"
+            elif message.reply_to_message.audio:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp3"
+            elif message.reply_to_message.video:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp4"
+            elif message.reply_to_message.sticker:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".webp"
+            else:
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=20))
+
+        # Descargar archivo
+        file_name = get_file_name(message)
+        file_path = await client.download_media(
+            message.reply_to_message,
+            file_name=file_name
+        )
+        await message.reply("Comprimiendo el archivo...")
+        sizd = user_comp.get(username, 10)
+
+        # Comprimir archivo
+        parts = compressfile(file_path, sizd)
+
+        # Generar hashes de las partes
+        original_hashes = [hash_file(part) for part in parts]
+        
+        await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+
+        # Enviar partes
+        for part, original_hash in zip(parts, original_hashes):
+            try:
+                await client.send_document(message.chat.id, part)
+                received_hash = hash_file(part)  # Suponiendo que partes son recibidas y verificadas
+                if received_hash != original_hash:
+                    await message.reply(f"El archivo {part} recibido está corrupto.")
+            except Exception as e:
+                print(f"Error al enviar la parte {part}: {e}")
+                await message.reply(f"Error al enviar la parte {part}: {e}")
+
+        await message.reply("Esas son todas las partes")
+        shutil.rmtree('server')
+        os.mkdir('server')
+
+    except Exception as e:
+        await message.reply(f'Error: {str(e)}')
+
+
 async def rename(client, message):
     reply_message = message.reply_to_message
     if reply_message and reply_message.media:
@@ -55,21 +145,6 @@ async def rename(client, message):
     else:
         await message.reply('Ejecute el comando respondiendo a un archivo')
 
-
-def compressfile(file_path, part_size):
-    parts = []
-    with open(file_path, 'rb') as f:
-        part_num = 1
-        while True:
-            part_data = f.read(part_size * 1024 * 1024)
-            if not part_data:
-                break
-            part_file = f"{file_path}.7z.{part_num:03d}"
-            with open(part_file, 'wb') as part:
-                part.write(part_data)
-            parts.append(part_file)
-            part_num += 1
-    return parts
 
 
 video_settings = {
@@ -156,55 +231,7 @@ def borrar_carpeta_h3dl():
     os.rmdir(folder_name)
 
 
-async def handle_compress(client, message, username):
-    global bot_in_use
-    if bot_in_use:
-        await message.reply("El comando está en uso actualmente, espere un poco")
-        return
-    try:
-        bot_in_use = True
-        os.system("rm -rf ./server/*")
-        await message.reply("Descargando el archivo para comprimirlo...")
 
-        def get_file_name(message):
-            if message.reply_to_message.document:
-                return os.path.basename(message.reply_to_message.document.file_name)[:50]
-            elif message.reply_to_message.photo:
-                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".jpg"
-            elif message.reply_to_message.audio:
-                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp3"
-            elif message.reply_to_message.video:
-                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".mp4"
-            elif message.reply_to_message.sticker:
-                return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".webp"
-            else:
-                return ''.join(random.choices(string.ascii_letters + string.digits, k=20))
-
-        # Descargar archivo
-        file_name = get_file_name(message)
-        file_path = await client.download_media(
-            message.reply_to_message,
-            file_name=file_name
-        )
-        await message.reply("Comprimiendo el archivo...")
-        sizd = user_comp.get(username, 10)
-        # Comprimir archivo
-        parts = compressfile(file_path, sizd)
-        await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
-        # Enviar partes
-        for part in parts:
-            try:
-                await client.send_document(message.chat.id, part)
-            except:
-                pass
-        await message.reply("Esas son todas las partes")
-        shutil.rmtree('server')
-        os.mkdir('server')
-        bot_in_use = False
-    except Exception as e:
-        await message.reply(f'Error: {str(e)}')
-    finally:
-        bot_in_use = False
 
 
 async def handle_up(client, message):
