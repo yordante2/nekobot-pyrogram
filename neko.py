@@ -878,6 +878,11 @@ async def handle_send(client, message):
     except Exception as e:
         await message.reply("Error al procesar el comando: " + str(e))
 
+BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
+
+def is_bot_public():
+    return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
+
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
@@ -885,14 +890,12 @@ async def handle_message(client, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
 
-    if user_id in allowed_users:
-        pass
-    else:
-        if chat_id not in allowed_users:
-            return
-        if user_id in ban_users:
-            return
+    if not is_bot_public():
+        if user_id not in allowed_users:
+            if chat_id not in allowed_users or user_id in ban_users:
+                return
 
+    # Aquí puedes continuar con el resto de tu lógica de manejo de mensajes.
     if text.startswith(('/start', '.start', '/start')):
         await handle_start(client, message)
     elif text.startswith(('/convert', '.convert')):
@@ -966,14 +969,12 @@ async def handle_message(client, message):
         await download_file(client, message)
     elif message.text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(client, message)
-
     elif message.text.startswith(('/publicword')):
         if user_id in admin_users:
             await send_initial_message(app)
-
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
         if user_id in admin_users:
-            await handle_send(client, message)  
+            await handle_send(client, message)
 
     # Manejar respuestas a mensajes enviados
     if message.reply_to_message:
@@ -982,7 +983,7 @@ async def handle_message(client, message):
             user_id = original_message["user_id"]
             sender_info = f"Respuesta de @{message.from_user.username}" if message.from_user.username else f"Respuesta de user ID: {message.from_user.id}"
             await client.send_message(user_id, f"{sender_info}: {message.text}")
-
+            
 
 app.run()
 
