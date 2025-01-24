@@ -281,7 +281,10 @@ async def cover3h_operation(client, message, codes):
             with open(img_filename, 'wb') as img_file:
                 img_file.write(img_data)
 
-            await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}", spoiler=True)
+            await client.send_photo(message.chat.id, photo=open(img_filename, 'rb'), caption=f"https://es.3hentai.net/d/{code} {page_name}", spoiler=True)
+        
+        #await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}", spoiler=True)
+        
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
@@ -453,7 +456,9 @@ async def covernh_operation(client, message, codes):
 
 
             try:
-                await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}", spoiler=True)
+                await client.send_photo(message.chat.id, photo=open(img_filename, 'rb'), caption=f"https://nhentai.net/g/{code} {page_name}", spoiler=True)
+                
+                #await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}", spoiler=True)
 
             except Exception as e:
                 await client.send_document(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
