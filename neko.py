@@ -281,7 +281,7 @@ async def cover3h_operation(client, message, codes):
             with open(img_filename, 'wb') as img_file:
                 img_file.write(img_data)
 
-            await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}")
+            await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}", spoiler=True)
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
@@ -321,7 +321,7 @@ async def h3_operation(client, message, codes):
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
                 if page_number == 1:
-                    await message.reply(f"Error al acceder a la página: {str(e)}")
+                    await message.reply(f"Error al acceder a la páina: {str(e)}")
                 break
 
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -453,7 +453,7 @@ async def covernh_operation(client, message, codes):
 
 
             try:
-                await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
+                await client.send_photo(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}", spoiler=True)
 
             except Exception as e:
                 await client.send_document(message.chat.id, img_filename, caption=f"https://nhentai.net/g/{code} {page_name}")
