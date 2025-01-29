@@ -7,7 +7,7 @@ import random
 import string
 import smtplib
 from email.message import EmailMessage
-import requests
+from curl_cffi import requests
 from bs4 import BeautifulSoup
 import re
 from moodleclient import upload_token
@@ -361,7 +361,8 @@ async def nh_operation(client, message, codes):
     for code in codes:
         url = f"https://nhentai.net/g/{code}/"
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, impersonate="chrome")
+            )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             await message.reply(f"El código {code} es erróneo: {str(e)}")
@@ -424,7 +425,7 @@ async def covernh_operation(client, message, codes):
     for code in codes:
         url = f"https://nhentai.net/g/{code}/"
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers,  impersonate="chrome")
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             await message.reply(f"El código {code} es erróneo: {str(e)}")
