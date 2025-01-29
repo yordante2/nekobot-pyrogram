@@ -910,25 +910,40 @@ async def handle_send(client, message):
     except Exception as e:
         await message.reply("Error al procesar el comando: " + str(e))
 
+async def handle_resend(client, message, target_id=None):
+    if message.reply_to_message:
+        if target_id:
+            # Reenviar el mensaje al chat con el target_id
+            sent_message = await client.send_copy(target_id, message.reply_to_message)
+            return sent_message.message_id
+        else:
+            # Descargar y reenviar el archivo en el chat actual
+            file_path = await client.download_media(message.reply_to_message)
+            await client.send_document(message.chat.id, file_path)
+            # Eliminar el archivo descargado
+            import os
+            os.remove(file_path)
+    else:
+        await message.reply("Por favor, usa `/resend` respondiendo a otro mensaje.")
+
+
+
 BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
 
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
-
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
     username = message.from_user.username
-    chat_id = message.chat.id
     user_id = message.from_user.id
 
     if not is_bot_public():
         if user_id not in allowed_users:
-            if chat_id not in allowed_users or user_id in ban_users:
+            if message.chat.id not in allowed_users or user_id in ban_users:
                 return
 
-    # Aquí puedes continuar con el resto de tu lógica de manejo de mensajes.
-    if text.startswith(('/start', '.start', '/start')):
+    if text.startswith(('/start', '.start')):
         await handle_start(client, message)
     elif text.startswith(('/convert', '.convert')):
         await compress_video(client, message)
@@ -959,8 +974,6 @@ async def handle_message(client, message):
         await handle_up(client, message)
     elif text.startswith('/compress'):
         await handle_compress(client, message, username)
-    elif text.startswith('/rename'):
-        await rename(client, message)
     elif text.startswith("/setsize"):
         valor = text.split(" ")[1]
         user_comp[username] = int(valor)
@@ -987,23 +1000,40 @@ async def handle_message(client, message):
         for code in codes:
             await covernh_operation(client, message, [code])
             await nh_operation(client, message, [code])
-    elif message.text.startswith('/compare'):
+    elif text.startswith('/compare'):
         await handle_compare(message)
-    elif message.text.startswith('/listo'):
+    elif text.startswith('/listo'):
         await handle_listo(message)
-    elif message.text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
+    elif text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
         await resume_codes(client, message)
-    elif message.text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
+    elif text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
         await resume_txt_codes(client, message)
-    elif message.text.startswith(('/multiscan', '.multiscan', 'multiscan')):
+    elif text.startswith(('/multiscan', '.multiscan', 'multiscan')):
         await handle_multiscan(client, message)
     elif text.startswith('/dl'):
         await download_file(client, message)
-    elif message.text.startswith(('/scan', '.scan', 'scan')):
+    elif text.startswith(('/scan', '.scan', 'scan')):
         await handle_scan(client, message)
-    elif message.text.startswith(('/publicword')):
+    elif text.startswith(('/publicword')):
         if user_id in admin_users:
             await send_initial_message(app)
+    elif text.startswith(('/resend', '.resend')):
+        command_parts = text.split(maxsplit=1)
+        if message.reply_to_message:
+            if len(command_parts) == 2:
+                target = command_parts[1]
+                if target.startswith('@'):
+                    target_username = target
+                    target_id = (await client.get_users(target_username)).id
+                    await handle_resend(client, message, target_id)
+                else:
+                    target_id = int(target)
+                    await handle_resend(client, message, target_id)
+            else:
+                await handle_resend(client, message)
+        else:
+            await message.reply("Por favor, usa `/resend` respondiendo a otro mensaje.")
+                    
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
         if user_id in admin_users:
             await handle_send(client, message)
