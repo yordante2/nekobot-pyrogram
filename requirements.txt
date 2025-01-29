@@ -8,4 +8,4 @@ py7zr
 tgcrypto
 cryptg
 ffmpeg-python
-
+curl_cffi
