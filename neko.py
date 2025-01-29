@@ -948,13 +948,10 @@ def is_bot_public():
 chats = {}
 ongoing_chats = {}
 
-async def handle_chat_with(client, message, target_id=None):
-    if target_id:
-        chats[message.chat.id] = target_id
-        ongoing_chats[target_id] = message.chat.id
-        await message.reply(f"Chateando con el usuario: {target_id}")
-    else:
-        await message.reply("Por favor, proporciona un @username o UserID para comenzar la conversación.")
+async def handle_chat_with(client, message, target_id):
+    chats[message.chat.id] = target_id
+    ongoing_chats[target_id] = message.chat.id
+    await message.reply(f"Chateando con el usuario: {target_id}")
 
 async def handle_end_chat(client, message):
     if message.chat.id in chats:
@@ -971,13 +968,12 @@ async def handle_message(client, message):
     text = message.text
     username = message.from_user.username
     user_id = message.from_user.id
-    chat_id = message.chat.id
 
-    if chat_id in ongoing_chats:
-        target_id = ongoing_chats[chat_id]
+    if message.chat.id in ongoing_chats:
+        target_id = ongoing_chats[message.chat.id]
         await handle_resend(client, message, target_id)
-    elif chat_id in chats:
-        target_id = chats[chat_id]
+    elif message.chat.id in chats:
+        target_id = chats[message.chat.id]
         await handle_resend(client, message, target_id)
 
     if text.startswith(('/start', '.start')):
@@ -1069,21 +1065,15 @@ async def handle_message(client, message):
     elif text.startswith(('/endchat', '.endchat')):
         await handle_end_chat(client, message)
     elif text.startswith(('/resend', '.resend')):
-        command_parts = text.split(maxsplit=1)
-        if message.reply_to_message:
-          if len(command_parts) == 2:
-              target = command_parts[1]
-              if target.startswith('@'):
-                  target_id = (await client.get_users(target)).id
-                  await handle_resend(client, message, target_id)
-              else:
-                  target_id = int(target)
-                  await handle_resend(client, message, target_id)
-          else:
-              await handle_resend(client, message)
+        if message.chat.id in ongoing_chats:
+            target_id = ongoing_chats[message.chat.id]
+            await handle_resend(client, message, target_id)
+        elif message.chat.id in chats:
+            target_id = chats[message.chat.id]
+            await handle_resend(client, message, target_id)
         else:
-          await message.reply("Por favor, usa `/resend` respondiendo a otro mensaje.")
-                              
+            await message.reply("Por favor, usa `/resend` respondiendo a otro mensaje.")
+            
     
                 
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
