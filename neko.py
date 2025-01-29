@@ -910,23 +910,34 @@ async def handle_send(client, message):
     except Exception as e:
         await message.reply("Error al procesar el comando: " + str(e))
 
+import os
+
 async def handle_resend(client, message, target_id=None):
     if message.reply_to_message:
+        original_message = message.reply_to_message
+
         if target_id:
-            # Reenviar el mensaje al chat con el target_id
-            sent_message = await client.send_copy(target_id, message.reply_to_message)
-            return sent_message.message_id
+            chat_id = target_id
         else:
-            # Descargar y reenviar el archivo en el chat actual
-            file_path = await client.download_media(message.reply_to_message)
-            await client.send_document(message.chat.id, file_path)
-            # Eliminar el archivo descargado
-            import os
+            chat_id = message.chat.id
+
+        if original_message.text:
+            await client.send_message(chat_id, original_message.text)
+        elif original_message.photo:
+            file_path = await client.download_media(original_message)
+            await client.send_photo(chat_id, file_path)
             os.remove(file_path)
+        elif original_message.document:
+            file_path = await client.download_media(original_message)
+            await client.send_document(chat_id, file_path)
+            os.remove(file_path)
+        elif original_message.sticker:
+            await client.send_sticker(chat_id, original_message.sticker.file_id)
+        else:
+            await message.reply("Lo siento, este tipo de mensaje no es soportado para reenviar.")
     else:
         await message.reply("Por favor, usa `/resend` respondiendo a otro mensaje.")
-
-
+        
 
 BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
 
