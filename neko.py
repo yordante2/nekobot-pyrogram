@@ -943,10 +943,50 @@ BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
 
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
+
+active_chats = {}
+
+async def handle_startchat(client, message, target_id):
+    user_id = message.from_user.id
+    active_chats[user_id] = target_id
+    await message.reply(f"Comenzando comunicación con el chat {target_id}. Usa /endchat para finalizar.")
+    
+    if message.reply_to_message:
+        await forward_message(client, message, target_id)
+
+async def handle_endchat(client, message):
+    user_id = message.from_user.id
+    if user_id in active_chats:
+        del active_chats[user_id]
+        await message.reply("Comunicación finalizada.")
+    else:
+        await message.reply("No hay ninguna comunicación activa.")
+
+def is_chat_active(user_id):
+    return user_id in active_chats
+
+async def forward_message(client, message, target_id):
+    original_message = message.reply_to_message
+
+    if original_message.text:
+        await client.send_message(target_id, original_message.text)
+    elif original_message.photo:
+        file_path = await client.download_media(original_message)
+        await client.send_photo(target_id, file_path)
+        os.remove(file_path)
+    elif original_message.document:
+        file_path = await client.download_media(original_message)
+        await client.send_document(target_id, file_path)
+        os.remove(file_path)
+    elif original_message.sticker:
+        await client.send_sticker(target_id, original_message.sticker.file_id)
+    else:
+        await message.reply("Este tipo de mensaje no es compatible para reenviar.")
+        
+
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text
-    username = message.from_user.username
     user_id = message.from_user.id
 
     if not is_bot_public():
@@ -954,81 +994,81 @@ async def handle_message(client, message):
             if message.chat.id not in allowed_users or user_id in ban_users:
                 return
 
-    if text.startswith(('/start', '.start')):
+    if text.startswith('/start'):
         await handle_start(client, message)
-    elif text.startswith(('/convert', '.convert')):
+    elif text.startswith('/convert'):
         await compress_video(client, message)
-    elif text.startswith(('/calidad', '.calidad')):
-        update_video_settings(text[len('/calidad '):])
+    elif text.startswith('/calidad'):
+        update_video_settings(text[len('calidad '):])
         await message.reply(f"Configuración de video actualizada: {video_settings}")
-    elif text.startswith(('/adduser', '.adduser')):
+    elif text.startswith('/adduser'):
         if user_id in admin_users:
             await add_user(client, message)
-    elif text.startswith(('/remuser', '.remuser')):
+    elif text.startswith('/remuser'):
         if user_id in admin_users:
             await remove_user(client, message)
-    elif text.startswith(('/addchat', '.addchat')):
+    elif text.startswith('/addchat'):
         if user_id in admin_users:
             await add_chat(client, message)
-    elif text.startswith(('/remchat', '.remchat')):
+    elif text.startswith('/remchat'):
         if user_id in admin_users:
             await remove_chat(client, message)
-    elif text.startswith(('/banuser', '.banuser')):
+    elif text.startswith('/banuser'):
         if user_id in admin_users:
             await ban_user(client, message)
-    elif text.startswith(('/debanuser', '.debanuser')):
+    elif text.startswith('/debanuser'):
         if user_id in admin_users:
             await deban_user(client, message)
-    elif text.startswith(('/rename', '.rename')):
+    elif text.startswith('/rename'):
         await rename(client, message)
     elif text.startswith('/up'):
         await handle_up(client, message)
     elif text.startswith('/compress'):
-        await handle_compress(client, message, username)
-    elif text.startswith("/setsize"):
-        valor = text.split(" ")[1]
+        await handle_compress(client, message)
+    elif text.startswith('/setsize'):
+        valor = text.split()[1]
         user_comp[username] = int(valor)
         await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
-    elif text.startswith(('/setmail', '.setmail')):
+    elif text.startswith('/setmail'):
         await set_mail(client, message)
-    elif text.startswith(('/sendmail', '.sendmail')):
+    elif text.startswith('/sendmail'):
         await send_mail(client, message)
-    elif text.startswith(('/3h', '.3h', '3h')):
+    elif text.startswith('/3h'):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
             await cover3h_operation(client, message, [code])
             await h3_operation(client, message, [code])
-    elif text.startswith(('/cover3h', '.cover3h')):
+    elif text.startswith('/cover3h'):
         codes = [code.strip() for code in text.split()[1].split(',')]
         for code in codes:
             await cover3h_operation(client, message, [code])
-    elif text.startswith(('/covernh', '.covernh')):
+    elif text.startswith('/covernh'):
         codes = [code.strip() for code in text.split()[1].split(',')]
         for code in codes:
             await covernh_operation(client, message, [code])
-    elif text.startswith(('/nh', '.nh', 'nh')):
+    elif text.startswith('/nh'):
         codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
         for code in codes:
-            await covernh_operation(client, message, [code])
+            await covernh_operation(client, message,    [code])
             await nh_operation(client, message, [code])
     elif text.startswith('/compare'):
         await handle_compare(message)
     elif text.startswith('/listo'):
         await handle_listo(message)
-    elif text.startswith(('/resumecodes', '.resumecodes', 'resumecodes')):
+    elif text.startswith('/resumecodes'):
         await resume_codes(client, message)
-    elif text.startswith(('/resumetxtcodes', '.resumetxtcodes', 'resumetxtcodes')):
+    elif text.startswith('/resumetxtcodes'):
         await resume_txt_codes(client, message)
-    elif text.startswith(('/multiscan', '.multiscan', 'multiscan')):
+    elif text.startswith('/multiscan'):
         await handle_multiscan(client, message)
     elif text.startswith('/dl'):
         await download_file(client, message)
-    elif text.startswith(('/scan', '.scan', 'scan')):
+    elif text.startswith('/scan'):
         await handle_scan(client, message)
-    elif text.startswith(('/publicword')):
+    elif text.startswith('/publicword'):
         if user_id in admin_users:
             await send_initial_message(app)
-    elif text.startswith(('/resend', '.resend')):
+    elif text.startswith('/resend'):
         command_parts = text.split(maxsplit=1)
         if message.reply_to_message:
             if len(command_parts) == 2:
@@ -1044,7 +1084,14 @@ async def handle_message(client, message):
                 await handle_resend(client, message)
         else:
             await message.reply("Por favor, usa `/resend` respondiendo a otro mensaje.")
-                    
+    elif text.startswith('/chatwith'):
+        if len(text.split()) != 2:
+            await message.reply("Por favor, especifica un `@username` o `UserID` después de `/startchat`.")
+        else:
+            target = text.split()[1]
+            if target.startswith('@'):
+                target_id = (await client.get_users(target)).id
+                
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
         if user_id in admin_users:
             await handle_send(client, message)
