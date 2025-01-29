@@ -362,7 +362,6 @@ async def nh_operation(client, message, codes):
         url = f"https://nhentai.net/g/{code}/"
         try:
             response = requests.get(url, headers=headers, impersonate="chrome")
-            )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             await message.reply(f"El código {code} es erróneo: {str(e)}")
