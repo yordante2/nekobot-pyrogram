@@ -985,7 +985,10 @@ async def handle_message(client, message):
         await compress_video(client, message)
 
     elif text.startswith(('Hola', 'hola')):
-        await handle_pendejo(client, message)
+        if message.chat.type == 'private':
+            await handle_pendejo(client, message)
+    
+        
     elif text.startswith(('/calidad', '.calidad')):
         update_video_settings(text[len('/calidad '):])
         await message.reply(f"Configuración de video actualizada: {video_settings}")
