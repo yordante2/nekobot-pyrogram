@@ -280,7 +280,7 @@ async def cover3h_operation(client, message, codes):
             with open(img_filename, 'wb') as img_file:
                 img_file.write(img_data)
 
-            await client.send_photo(message.chat.id, photo=open(img_filename, 'rb'), caption=f"https://es.3hentai.net/d/{code} {page_name})
+            await client.send_photo(message.chat.id, photo=open(img_filename, 'rb'), caption=f"https://es.3hentai.net/d/{code} {page_name}")
         
 
        
