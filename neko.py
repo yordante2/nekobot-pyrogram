@@ -7,7 +7,7 @@ import random
 import string
 import smtplib
 from email.message import EmailMessage
-from curl_cffi import requests
+import requests
 from bs4 import BeautifulSoup
 import re
 from moodleclient import upload_token
@@ -282,8 +282,8 @@ async def cover3h_operation(client, message, codes):
 
             await client.send_photo(message.chat.id, photo=open(img_filename, 'rb'), caption=f"https://es.3hentai.net/d/{code} {page_name})
         
-        #await client.send_photo(message.chat.id, img_filename, caption=f"https://es.3hentai.net/d/{code} {page_name}", spoiler=True)
-        
+
+       
         else:
             await message.reply(f"No se encontró ninguna imagen para el código {code}")
 
@@ -361,7 +361,7 @@ async def nh_operation(client, message, codes):
     for code in codes:
         url = f"https://nhentai.net/g/{code}/"
         try:
-            response = requests.get(url, headers=headers, impersonate="chrome")
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             await message.reply(f"El código {code} es erróneo: {str(e)}")
@@ -424,7 +424,7 @@ async def covernh_operation(client, message, codes):
     for code in codes:
         url = f"https://nhentai.net/g/{code}/"
         try:
-            response = requests.get(url, headers=headers,  impersonate="chrome")
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             await message.reply(f"El código {code} es erróneo: {str(e)}")
@@ -980,6 +980,9 @@ async def handle_message(client, message):
         await handle_start(client, message)
     elif text.startswith(('/convert', '.convert')):
         await compress_video(client, message)
+
+    elif text.startswith(('Hola', 'hola')):
+        await handle_pendejo(client, message)
     elif text.startswith(('/calidad', '.calidad')):
         update_video_settings(text[len('/calidad '):])
         await message.reply(f"Configuración de video actualizada: {video_settings}")
