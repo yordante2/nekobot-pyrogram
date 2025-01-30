@@ -507,6 +507,9 @@ user_comp = {}
 async def handle_start(client, message):
     await message.reply("Funcionando")
 
+async def handle_pendejo(client, message):
+    await message.reply("Hola, soy un bot, estoy bien gracias pero no puedo pensar, por favor no escribas mamadas")
+    
 async def add_user(client, message):
     new_user_id = int(message.text.split()[1])
     temp_users.append(new_user_id)
