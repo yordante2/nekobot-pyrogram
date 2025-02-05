@@ -67,9 +67,6 @@ def compressfile(file_path, part_size):
     return parts
 
 
-import os
-import zipfile
-from pyrogram import Client, filters
 
 def create_txt(message):
     try:
@@ -82,10 +79,9 @@ def create_txt(message):
         end, extension = end_ext.split(".")
 
         start, end = int(start), int(end)
-        server_dir = os.path.join(os.getcwd(), "server")
-        os.makedirs(server_dir, exist_ok=True)
-        file_path = os.path.join(server_dir, f"{file_name}.txt")
-
+        folder_path = os.path.join(os.getcwd(), "server")
+        os.makedirs(folder_path, exist_ok=True)
+        file_path = os.path.join(folder_path, f"{file_name}.txt")
         with open(file_path, "w") as file:
             for i in range(start, end + 1):
                 file.write(f"{base_url}{i}.{extension}\n")
@@ -93,6 +89,7 @@ def create_txt(message):
         return file_path
     except Exception as e:
         return f"Ocurrió un error: {e}"
+        
 
 def download_links(client, message):
     try:
