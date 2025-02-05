@@ -66,6 +66,7 @@ def compressfile(file_path, part_size):
     
     return parts
 
+
 import os
 from pyrogram import Client, filters
 
@@ -92,8 +93,10 @@ async def create_txt(client, message):
         await client.send_document(message.chat.id, file_path)
     except Exception as e:
         await message.reply(f"Ocurrió un error: {e}")
-        
-        
+
+
+
+
 import os
 import zipfile
 from pyrogram import Client, filters
@@ -134,7 +137,6 @@ async def download_links(client, message):
         os.remove(zip_filename)
     except Exception as e:
         await message.reply(f"Ocurrió un error: {e}")
-        
         
         
 
@@ -1087,7 +1089,7 @@ async def handle_message(client, message):
             user_id = original_message["user_id"]
             sender_info = f"Respuesta de @{message.from_user.username}" if message.from_user.username else f"Respuesta de user ID: {message.from_user.id}"
             await client.send_message(user_id, f"{sender_info}: {message.text}")
-    
+        
             
 
 app.run()
