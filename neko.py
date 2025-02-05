@@ -66,43 +66,48 @@ def compressfile(file_path, part_size):
     
     return parts
 
+import os
+from pyrogram import Client, filters
 
-
-def create_txt(message):
+async def create_txt(client, message):
     try:
         parts = message.text.split(", ")
         if len(parts) != 3:
-            return "Uso: /txtcr Nombre_del_archivo, URL_base, rango.extensión"
+            await message.reply("Uso: /txtcr Nombre_del_archivo, URL_base, rango.extensión")
+            return
 
         file_name, base_url, range_ext = parts
         start, end_ext = range_ext.split("-")
         end, extension = end_ext.split(".")
 
         start, end = int(start), int(end)
-        folder_path = os.path.join(os.getcwd(), "server")
+        folder_path = os.path.join("server")
         os.makedirs(folder_path, exist_ok=True)
         file_path = os.path.join(folder_path, f"{file_name}.txt")
+        
         with open(file_path, "w") as file:
             for i in range(start, end + 1):
                 file.write(f"{base_url}{i}.{extension}\n")
         
-        return file_path
+        await client.send_document(message.chat.id, file_path)
     except Exception as e:
-        return f"Ocurrió un error: {e}"
+        await message.reply(f"Ocurrió un error: {e}")
         
+        
+import os
+import zipfile
+from pyrogram import Client, filters
 
-def download_links(client, message):
+async def download_links(client, message):
     try:
-        if not message.reply_to_message.document:
-            return "Responde a un archivo TXT con el comando /txtdl."
+        if not message.reply_to_message or not message.reply_to_message.document:
+            await message.reply("Responde a un archivo TXT con el comando /txtdl.")
+            return
 
         file_id = message.reply_to_message.document.file_id
-        server_dir = os.path.join(os.getcwd(), "server")
-        os.makedirs(server_dir, exist_ok=True)
-        file_path = client.download_media(file_id, file_name=os.path.join(server_dir, message.reply_to_message.document.file_name))
-        
+        file_path = await client.download_media(file_id)
         folder_name = os.path.splitext(os.path.basename(file_path))[0]
-        folder_path = os.path.join(server_dir, folder_name)
+        folder_path = os.path.join("server", folder_name)
         os.makedirs(folder_path, exist_ok=True)
 
         with open(file_path, "r") as file:
@@ -111,22 +116,25 @@ def download_links(client, message):
         for link in links:
             link = link.strip()
             file_name = os.path.basename(link)
-            client.download_media(link, file_name=os.path.join(folder_path, file_name))
+            file_path = os.path.join(folder_path, file_name)
+            await client.download_media(link, file_path)
 
-        zip_filename = os.path.join(server_dir, f"{folder_name}.cbz")
+        zip_filename = os.path.join("server", f"{folder_name}.cbz")
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for root, _, files in os.walk(folder_path):
                 for file in files:
                     zipf.write(os.path.join(root, file), arcname=file)
         
-        client.send_document(message.chat.id, zip_filename)
+        await client.send_document(message.chat.id, zip_filename)
+        
         # Limpieza de archivos
         for file in os.listdir(folder_path):
             os.remove(os.path.join(folder_path, file))
         os.rmdir(folder_path)
         os.remove(zip_filename)
     except Exception as e:
-        return f"Ocurrió un error: {e}"
+        await message.reply(f"Ocurrió un error: {e}")
+        
         
         
 
