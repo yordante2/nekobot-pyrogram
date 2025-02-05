@@ -1076,15 +1076,9 @@ async def handle_message(client, message):
         if user_id in admin_users:
             await handle_send(client, message)
     elif text.startswith('/txtcr'):
-        file_name = create_txt(message)
-        if "Ocurrió un error" not in file_name:
-            await client.send_document(chat_id, f"{file_name}.txt")
-        else:
-            await message.reply(file_name)
+        await create_txt(client, message)
     elif text.startswith('/txtdl'):
-        result = download_links(client, message)
-        if result:
-            await message.reply(result)
+        await download_links(client, message)
 
     # Manejar respuestas a mensajes enviados
     if message.reply_to_message:
