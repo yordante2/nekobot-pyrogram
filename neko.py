@@ -66,6 +66,7 @@ def compressfile(file_path, part_size):
     
     return parts
 
+
 import os
 import zipfile
 from pyrogram import Client, filters
@@ -81,7 +82,10 @@ def create_txt(message):
         end, extension = end_ext.split(".")
 
         start, end = int(start), int(end)
-        file_path = os.path.join(os.getcwd(), f"{file_name}.txt")
+        server_dir = os.path.join(os.getcwd(), "server")
+        os.makedirs(server_dir, exist_ok=True)
+        file_path = os.path.join(server_dir, f"{file_name}.txt")
+
         with open(file_path, "w") as file:
             for i in range(start, end + 1):
                 file.write(f"{base_url}{i}.{extension}\n")
@@ -96,9 +100,13 @@ def download_links(client, message):
             return "Responde a un archivo TXT con el comando /txtdl."
 
         file_id = message.reply_to_message.document.file_id
-        file_path = client.download_media(file_id)
+        server_dir = os.path.join(os.getcwd(), "server")
+        os.makedirs(server_dir, exist_ok=True)
+        file_path = client.download_media(file_id, file_name=os.path.join(server_dir, message.reply_to_message.document.file_name))
+        
         folder_name = os.path.splitext(os.path.basename(file_path))[0]
-        os.makedirs(folder_name, exist_ok=True)
+        folder_path = os.path.join(server_dir, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
 
         with open(file_path, "r") as file:
             links = file.readlines()
@@ -106,24 +114,23 @@ def download_links(client, message):
         for link in links:
             link = link.strip()
             file_name = os.path.basename(link)
-            file_path = os.path.join(folder_name, file_name)
-            client.download_media(link, file_path)
+            client.download_media(link, file_name=os.path.join(folder_path, file_name))
 
-        zip_filename = f"{folder_name}.cbz"
+        zip_filename = os.path.join(server_dir, f"{folder_name}.cbz")
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
-            for root, _, files in os.walk(folder_name):
+            for root, _, files in os.walk(folder_path):
                 for file in files:
                     zipf.write(os.path.join(root, file), arcname=file)
         
         client.send_document(message.chat.id, zip_filename)
         # Limpieza de archivos
-        for file in os.listdir(folder_name):
-            os.remove(os.path.join(folder_name, file))
-        os.rmdir(folder_name)
+        for file in os.listdir(folder_path):
+            os.remove(os.path.join(folder_path, file))
+        os.rmdir(folder_path)
         os.remove(zip_filename)
     except Exception as e:
         return f"Ocurrió un error: {e}"
-                
+        
         
 
 def hash_file(file_path):
@@ -139,6 +146,7 @@ async def handle_compress(client, message, username):
         await message.reply("Descargando el archivo para comprimirlo...")
 
         def get_file_name(message):
+  
             if message.reply_to_message.document:
                 return os.path.basename(message.reply_to_message.document.file_name)[:50]
             elif message.reply_to_message.photo:
