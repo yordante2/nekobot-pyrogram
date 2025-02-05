@@ -82,7 +82,7 @@ async def create_txt(client, message):
         end, extension = end_ext.split(".")
 
         start, end = int(start), int(end)
-        folder_path = os.path.join("server")
+        folder_path = os.path.join(os.getcwd(), "server")
         os.makedirs(folder_path, exist_ok=True)
         file_path = os.path.join(folder_path, f"{file_name}.txt")
         
@@ -93,7 +93,7 @@ async def create_txt(client, message):
         await client.send_document(message.chat.id, file_path)
     except Exception as e:
         await message.reply(f"Ocurrió un error: {e}")
-
+        
 
 
 
@@ -110,7 +110,7 @@ async def download_links(client, message):
         file_id = message.reply_to_message.document.file_id
         file_path = await client.download_media(file_id)
         folder_name = os.path.splitext(os.path.basename(file_path))[0]
-        folder_path = os.path.join("server", folder_name)
+        folder_path = os.path.join(os.getcwd(), "server", folder_name)
         os.makedirs(folder_path, exist_ok=True)
 
         with open(file_path, "r") as file:
@@ -122,7 +122,7 @@ async def download_links(client, message):
             file_path = os.path.join(folder_path, file_name)
             await client.download_media(link, file_path)
 
-        zip_filename = os.path.join("server", f"{folder_name}.cbz")
+        zip_filename = os.path.join(os.getcwd(), "server", f"{folder_name}.cbz")
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for root, _, files in os.walk(folder_path):
                 for file in files:
@@ -1089,7 +1089,8 @@ async def handle_message(client, message):
             user_id = original_message["user_id"]
             sender_info = f"Respuesta de @{message.from_user.username}" if message.from_user.username else f"Respuesta de user ID: {message.from_user.id}"
             await client.send_message(user_id, f"{sender_info}: {message.text}")
-        
+                           
+
             
 
 app.run()
