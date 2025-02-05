@@ -81,11 +81,12 @@ def create_txt(message):
         end, extension = end_ext.split(".")
 
         start, end = int(start), int(end)
-        with open(f"{file_name}.txt", "w") as file:
+        file_path = os.path.join(os.getcwd(), f"{file_name}.txt")
+        with open(file_path, "w") as file:
             for i in range(start, end + 1):
                 file.write(f"{base_url}{i}.{extension}\n")
         
-        return file_name
+        return file_path
     except Exception as e:
         return f"Ocurrió un error: {e}"
 
@@ -122,6 +123,7 @@ def download_links(client, message):
         os.remove(zip_filename)
     except Exception as e:
         return f"Ocurrió un error: {e}"
+                
         
 
 def hash_file(file_path):
