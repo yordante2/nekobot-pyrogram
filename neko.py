@@ -66,6 +66,64 @@ def compressfile(file_path, part_size):
     
     return parts
 
+import os
+import zipfile
+from pyrogram import Client, filters
+
+def create_txt(message):
+    try:
+        parts = message.text.split(", ")
+        if len(parts) != 3:
+            return "Uso: /txtcr Nombre_del_archivo, URL_base, rango.extensión"
+
+        file_name, base_url, range_ext = parts
+        start, end_ext = range_ext.split("-")
+        end, extension = end_ext.split(".")
+
+        start, end = int(start), int(end)
+        with open(f"{file_name}.txt", "w") as file:
+            for i in range(start, end + 1):
+                file.write(f"{base_url}{i}.{extension}\n")
+        
+        return file_name
+    except Exception as e:
+        return f"Ocurrió un error: {e}"
+
+def download_links(client, message):
+    try:
+        if not message.reply_to_message.document:
+            return "Responde a un archivo TXT con el comando /txtdl."
+
+        file_id = message.reply_to_message.document.file_id
+        file_path = client.download_media(file_id)
+        folder_name = os.path.splitext(os.path.basename(file_path))[0]
+        os.makedirs(folder_name, exist_ok=True)
+
+        with open(file_path, "r") as file:
+            links = file.readlines()
+
+        for link in links:
+            link = link.strip()
+            file_name = os.path.basename(link)
+            file_path = os.path.join(folder_name, file_name)
+            client.download_media(link, file_path)
+
+        zip_filename = f"{folder_name}.cbz"
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for root, _, files in os.walk(folder_name):
+                for file in files:
+                    zipf.write(os.path.join(root, file), arcname=file)
+        
+        client.send_document(message.chat.id, zip_filename)
+        # Limpieza de archivos
+        for file in os.listdir(folder_name):
+            os.remove(os.path.join(folder_name, file))
+        os.rmdir(folder_name)
+        os.remove(zip_filename)
+    except Exception as e:
+        return f"Ocurrió un error: {e}"
+        
+
 def hash_file(file_path):
     hasher = hashlib.md5()
     with open(file_path, 'rb') as f:
@@ -1002,6 +1060,16 @@ async def handle_message(client, message):
     elif text.startswith(('/send', '.send')):  # Añadido el comando /send
         if user_id in admin_users:
             await handle_send(client, message)
+    elif text.startswith('/txtcr'):
+        file_name = create_txt(message)
+        if "Ocurrió un error" not in file_name:
+            await client.send_document(chat_id, f"{file_name}.txt")
+        else:
+            await message.reply(file_name)
+    elif text.startswith('/txtdl'):
+        result = download_links(client, message)
+        if result:
+            await message.reply(result)
 
     # Manejar respuestas a mensajes enviados
     if message.reply_to_message:
@@ -1010,6 +1078,7 @@ async def handle_message(client, message):
             user_id = original_message["user_id"]
             sender_info = f"Respuesta de @{message.from_user.username}" if message.from_user.username else f"Respuesta de user ID: {message.from_user.id}"
             await client.send_message(user_id, f"{sender_info}: {message.text}")
+    
             
 
 app.run()
