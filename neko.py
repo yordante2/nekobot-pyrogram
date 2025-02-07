@@ -432,7 +432,7 @@ async def nh_operation(client, message, codes):
     }
 
     for code in codes:
-        url = f"https://nhentai.net/g/{code}/"
+        url = f"https://nhentai.to/g/{code}/"
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -456,7 +456,7 @@ async def nh_operation(client, message, codes):
 
         page_number = 1
         while True:
-            page_url = f"https://nhentai.net/g/{code}/{page_number}/"
+            page_url = f"https://nhentai.to/g/{code}/{page_number}/"
             try:
                 response = requests.get(page_url, headers=headers)
                 response.raise_for_status()
@@ -495,7 +495,7 @@ async def covernh_operation(client, message, codes):
     }
 
     for code in codes:
-        url = f"https://nhentai.net/g/{code}/"
+        url = f"https://nhentai.to/g/{code}/"
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -507,7 +507,7 @@ async def covernh_operation(client, message, codes):
         title_tag = soup.find('title')
         page_name = re.sub(r'[^a-zA-Z0-9\[\] ]', '', title_tag.text.strip()) if title_tag else clean_string(code) + code
 
-        img_url = f"https://nhentai.net/g/{code}/1/"
+        img_url = f"https://nhentai.to/g/{code}/1/"
         try:
             response = requests.get(img_url, headers=headers)
             response.raise_for_status()
