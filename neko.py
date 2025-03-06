@@ -997,32 +997,34 @@ async def create_imgchest_post(client, message):
         response = requests.post(
             "https://api.imgchest.com/v1/post",
             headers={"Authorization": f"Bearer {IMG_CHEST_API_KEY}"},
-            files={"images[]": file},  # Subir una o más imágenes
+            files={"images[]": file},
             data={
-                "title": "Mi Post en Imgchest",  # Opcional: título del post
-                "privacy": "hidden",  # Opcional: valores pueden ser public, hidden o secret
-                #"anonymous": "false",  # Opcional: establece como falso si deseas que esté atado al usuario
-                "nsfw": "false"  # Opcional: indica si es contenido NSFW
+                "title": "Mi Post en Imgchest",
+                "privacy": "hidden",
+                #"anonymous": "false",
+                "nsfw": "true"
             }
         )
     
     if response.status_code == 201:  # Éxito
         imgchest_data = response.json()
-        imgchest_link = imgchest_data["data"]["url"]  # Obtén el enlace del post
+        post_link = f"https://imgchest.com/p/{imgchest_data['data']['id']}"  # Enlace del post (álbum)
+        photo_link = imgchest_data["data"]["images"][0]["link"]  # Enlace de la foto individual
         await client.send_message(
             chat_id=message.from_user.id,
-            text=f"Tu post ha sido creado exitosamente: {imgchest_link}"
+            text=f"Tu post ha sido creado exitosamente:\n\n"
+                 f"📁 Enlace del Álbum: {post_link}\n"
+                 f"🖼️ Enlace de la Foto: {photo_link}"
         )
     else:
-        error_details = response.text  # Extraer detalles del error
+        error_details = response.text  # Detalles del error
         await client.send_message(
             chat_id=message.from_user.id,
             text=f"No se pudo crear el post. Detalles del error:\n"
                  f"Estado: {response.status_code}\n"
                  f"Respuesta: {error_details}"
-                             )
-    
-
+        )
+        
 
 
 
