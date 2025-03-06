@@ -1018,8 +1018,8 @@ async def create_imgchest_post(client, message):
             data={
                 "title": "Mi Post en Imgchest",
                 "privacy": "hidden",
-                "anonymous": "false",
-                "nsfw": "false"
+                #"anonymous": "false",
+                "nsfw": "true"
             }
         )
     
