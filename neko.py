@@ -1001,7 +1001,7 @@ async def create_imgchest_post(client, message):
             data={
                 "title": "Mi Post en Imgchest",  # Opcional: título del post
                 "privacy": "hidden",  # Opcional: valores pueden ser public, hidden o secret
-                "anonymous": "false",  # Opcional: establece como falso si deseas que esté atado al usuario
+                #"anonymous": "false",  # Opcional: establece como falso si deseas que esté atado al usuario
                 "nsfw": "false"  # Opcional: indica si es contenido NSFW
             }
         )
