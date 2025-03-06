@@ -1078,7 +1078,7 @@ async def handle_message(client, message):
         await send_mail(client, message)
     elif text.startswith(("/imgchest", ".imgchest", ",imgchest")):
         if message.reply_to_message and message.reply_to_message.photo:
-            await upload_to_imgchest(client, message)
+            await create_imgchest_post(client, message)
         else:
             await message.reply("Por favor, usa el comando respondiendo a una foto.")
             
