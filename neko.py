@@ -998,7 +998,7 @@ async def upload_to_imgchest(client, message):
             "https://api.imgchest.com/v1/images",
             headers={"Authorization": f"Bearer {IMG_CHEST_API_KEY}"},
             files={"file": file},
-            data={"privacy": "private"}  # Configura la privacidad como "privada"
+            #data={"privacy": "private"}  # Configura la privacidad como "privada"
         )
     
     if response.status_code == 201:  # Éxito
