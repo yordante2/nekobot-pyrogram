@@ -989,13 +989,28 @@ def is_bot_public():
 IMG_CHEST_API_KEY = os.getenv("IMGAPI")  # Asegúrate de definir IMGAPI en tus variables de entorno
 
 # Función para subir imágenes a Imgchest
+from PIL import Image
+import re
+
 import re
 
 async def create_imgchest_post(client, message):
     photo = message.reply_to_message.photo
     photo_file = await client.download_media(photo)
 
-    with open(photo_file, "rb") as file:
+    # Convertir la imagen a PNG
+    png_file = photo_file.rsplit(".", 1)[0] + ".png"
+    try:
+        with Image.open(photo_file) as img:
+            img.convert("RGBA").save(png_file, "PNG")  # Convertir y guardar como PNG
+    except Exception as e:
+        await client.send_message(
+            chat_id=message.from_user.id,
+            text=f"No se pudo convertir la imagen a PNG. Error: {str(e)}"
+        )
+        return
+
+    with open(png_file, "rb") as file:
         response = requests.post(
             "https://api.imgchest.com/v1/post",
             headers={"Authorization": f"Bearer {IMG_CHEST_API_KEY}"},
@@ -1003,8 +1018,8 @@ async def create_imgchest_post(client, message):
             data={
                 "title": "Mi Post en Imgchest",
                 "privacy": "hidden",
-                #"anonymous": "false",
-                "nsfw": "true"
+                "anonymous": "false",
+                "nsfw": "false"
             }
         )
     
@@ -1018,8 +1033,8 @@ async def create_imgchest_post(client, message):
         )
     elif response.status_code == 200:  # Estado 200 pero con error aparente
         try:
-            # Buscar el segundo enlace HTTP en la respuesta
-            match = re.search(r'https:\\/\\/cdn\.imgchest\.com\\/files\\/[\w]+\.jpg', response.text)
+            # Buscar un enlace HTTP con cualquier extensión de imagen
+            match = re.search(r'https:\\/\\/cdn\.imgchest\.com\\/files\\/[\w]+\.(jpg|jpeg|png|gif)', response.text)
             if match:
                 image_link = match.group(0).replace("\\/", "/")  # Ajustar el formato del enlace
                 await client.send_message(
@@ -1044,7 +1059,12 @@ async def create_imgchest_post(client, message):
                  f"Estado: {response.status_code}\n"
                  f"Respuesta: {error_details}"
         )
-        
+
+    # Eliminar los archivos locales después de subir
+    os.remove(photo_file)
+    os.remove(png_file)
+                
+
         
 
 
@@ -1054,7 +1074,8 @@ async def create_imgchest_post(client, message):
 async def handle_message(client, message):
     text = message.text.strip().lower()  # Convertimos el texto a minúsculas para ignorar diferencias
     user_id = message.from_user.id
-    username = message.from_user.username
+    username = message.from_user.
+    username
     chat_id = message.chat.id
 
     # Verifica si el usuario está en la lista de baneados
