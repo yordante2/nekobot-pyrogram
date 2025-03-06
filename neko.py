@@ -1074,8 +1074,7 @@ async def create_imgchest_post(client, message):
 async def handle_message(client, message):
     text = message.text.strip().lower()  # Convertimos el texto a minúsculas para ignorar diferencias
     user_id = message.from_user.id
-    username = message.from_user.
-    username
+    username = message.from_user.username
     chat_id = message.chat.id
 
     # Verifica si el usuario está en la lista de baneados
