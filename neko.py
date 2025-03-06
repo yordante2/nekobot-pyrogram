@@ -989,6 +989,8 @@ def is_bot_public():
 IMG_CHEST_API_KEY = os.getenv("IMGAPI")  # Asegúrate de definir IMGAPI en tus variables de entorno
 
 # Función para subir imágenes a Imgchest
+import re
+
 async def create_imgchest_post(client, message):
     photo = message.reply_to_message.photo
     photo_file = await client.download_media(photo)
@@ -1008,14 +1010,32 @@ async def create_imgchest_post(client, message):
     
     if response.status_code == 201:  # Éxito
         imgchest_data = response.json()
-        post_link = f"https://imgchest.com/p/{imgchest_data['data']['id']}"  # Enlace del post (álbum)
-        photo_link = imgchest_data["data"]["images"][0]["link"]  # Enlace de la foto individual
+        post_link = f"https://imgchest.com/p/{imgchest_data['data']['id']}"  # Enlace del post
         await client.send_message(
             chat_id=message.from_user.id,
             text=f"Tu post ha sido creado exitosamente:\n\n"
-                 f"📁 Enlace del Álbum: {post_link}\n"
-                 f"🖼️ Enlace de la Foto: {photo_link}"
+                 f"📁 Enlace del Álbum: {post_link}"
         )
+    elif response.status_code == 200:  # Estado 200 pero con error aparente
+        try:
+            # Buscar el segundo enlace HTTP en la respuesta
+            match = re.search(r'https:\\/\\/cdn\.imgchest\.com\\/files\\/[\w]+\.jpg', response.text)
+            if match:
+                image_link = match.group(0).replace("\\/", "/")  # Ajustar el formato del enlace
+                await client.send_message(
+                    chat_id=message.from_user.id,
+                    text=f"Link: {image_link}"
+                )
+            else:
+                await client.send_message(
+                    chat_id=message.from_user.id,
+                    text="No se encontró un enlace de imagen en la respuesta del servidor."
+                )
+        except Exception as e:
+            await client.send_message(
+                chat_id=message.from_user.id,
+                text=f"Ocurrió un error al procesar la respuesta:\n{str(e)}"
+            )
     else:
         error_details = response.text  # Detalles del error
         await client.send_message(
@@ -1024,6 +1044,7 @@ async def create_imgchest_post(client, message):
                  f"Estado: {response.status_code}\n"
                  f"Respuesta: {error_details}"
         )
+        
         
 
 
