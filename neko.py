@@ -997,8 +997,7 @@ async def upload_to_imgchest(client, message):
         response = requests.post(
             "https://api.imgchest.com/v1/images",
             headers={"Authorization": f"Bearer {IMG_CHEST_API_KEY}"},
-            files={"file": file},
-            #data={"privacy": "private"}  # Configura la privacidad como "privada"
+            files={"file": file}
         )
     
     if response.status_code == 201:  # Éxito
@@ -1006,13 +1005,18 @@ async def upload_to_imgchest(client, message):
         imgchest_link = imgchest_data["data"]["url"]  # Obtén el enlace
         await client.send_message(
             chat_id=message.from_user.id,
-            text=f"Tu imagen privada ha sido subida exitosamente: {imgchest_link}"
+            text=f"Tu imagen ha sido subida exitosamente: {imgchest_link}"
         )
     else:
+        error_details = response.text  # Extraer detalles del error
         await client.send_message(
             chat_id=message.from_user.id,
-            text="No se pudo subir la imagen como privada. Por favor, intenta nuevamente."
-        )
+            text=f"No se pudo subir la imagen. Detalles del error:\n"
+                 f"Estado: {response.status_code}\n"
+                 f"Respuesta: {error_details}"
+            )
+
+
 
 # Manejador principal de mensajes
 @app.on_message(filters.text)
