@@ -9,3 +9,4 @@ tgcrypto
 cryptg
 ffmpeg-python
 curl_cffi
+PIL
