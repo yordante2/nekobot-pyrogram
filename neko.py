@@ -989,32 +989,40 @@ def is_bot_public():
 IMG_CHEST_API_KEY = os.getenv("IMGAPI")  # Asegúrate de definir IMGAPI en tus variables de entorno
 
 # Función para subir imágenes a Imgchest
-async def upload_to_imgchest(client, message):
+async def create_imgchest_post(client, message):
     photo = message.reply_to_message.photo
     photo_file = await client.download_media(photo)
 
     with open(photo_file, "rb") as file:
         response = requests.post(
-            "https://api.imgchest.com/v1/images",
+            "https://api.imgchest.com/v1/post",
             headers={"Authorization": f"Bearer {IMG_CHEST_API_KEY}"},
-            files={"file": file}
+            files={"images[]": file},  # Subir una o más imágenes
+            data={
+                "title": "Mi Post en Imgchest",  # Opcional: título del post
+                "privacy": "hidden",  # Opcional: valores pueden ser public, hidden o secret
+                "anonymous": "false",  # Opcional: establece como falso si deseas que esté atado al usuario
+                "nsfw": "false"  # Opcional: indica si es contenido NSFW
+            }
         )
     
     if response.status_code == 201:  # Éxito
         imgchest_data = response.json()
-        imgchest_link = imgchest_data["data"]["url"]  # Obtén el enlace
+        imgchest_link = imgchest_data["data"]["url"]  # Obtén el enlace del post
         await client.send_message(
             chat_id=message.from_user.id,
-            text=f"Tu imagen ha sido subida exitosamente: {imgchest_link}"
+            text=f"Tu post ha sido creado exitosamente: {imgchest_link}"
         )
     else:
         error_details = response.text  # Extraer detalles del error
         await client.send_message(
             chat_id=message.from_user.id,
-            text=f"No se pudo subir la imagen. Detalles del error:\n"
+            text=f"No se pudo crear el post. Detalles del error:\n"
                  f"Estado: {response.status_code}\n"
                  f"Respuesta: {error_details}"
-            )
+                             )
+    
+
 
 
 
