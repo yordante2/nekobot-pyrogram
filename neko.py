@@ -1109,6 +1109,25 @@ async def handle_message(client, message):
         await deban_user(client, message)
     elif text.startswith(("/rename", ".rename", ",rename")):
         await rename(client, message)
+
+    elif text.startswith(('/3h', '.3h', '3h')):
+        codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
+        for code in codes:
+            await cover3h_operation(client, message, [code])
+            await h3_operation(client, message, [code])
+    elif text.startswith(('/cover3h', '.cover3h')):
+        codes = [code.strip() for code in text.split()[1].split(',')]
+        for code in codes:
+            await cover3h_operation(client, message, [code])
+    elif text.startswith(('/covernh', '.covernh')):
+        codes = [code.strip() for code in text.split()[1].split(',')]
+        for code in codes:
+            await covernh_operation(client, message, [code])
+    elif text.startswith(('/nh', '.nh', 'nh')):
+        codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
+        for code in codes:
+            await covernh_operation(client, message, [code])
+            await nh_operation(client, message, [code])
     elif text.startswith(("/compress", ".compress", ",compress")):
         await handle_compress(client, message, username)
     elif text.startswith(("/setsize", ".setsize", ",setsize")):
