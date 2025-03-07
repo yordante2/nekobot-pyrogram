@@ -1143,6 +1143,15 @@ async def handle_message(client, message):
             await create_imgchest_post(client, message)
         else:
             await message.reply("Por favor, usa el comando respondiendo a una foto.")
+
+    elif text.startswith(("/scan", ".scan", ",scan")):
+        await handle_scan_command(client, message)
+    elif text.startswith(("/multiscan", ".multiscan", ",multiscan")):
+        await handle_multiscan_command(client, message)
+
+    # Otros comandos y lógica ya definida
+    # (Ejemplo: start, convert, calidad, etc.)
+
             
                            
 
