@@ -995,8 +995,8 @@ import re
 import re
 
 async def create_imgchest_post(client, message):
-    photo = message.reply_to_message.photo
-    photo_file = await client.download_media(photo)
+    photo = message.reply_to_message.photo or message.reply_to_message.file
+    photo_file = await client.download_media(photo) or client.download_media(file)
 
     # Convertir la imagen a PNG
     png_file = photo_file.rsplit(".", 1)[0] + ".png"
@@ -1139,7 +1139,7 @@ async def handle_message(client, message):
     elif text.startswith(("/sendmail", ".sendmail", ",sendmail")):
         await send_mail(client, message)
     elif text.startswith(("/imgchest", ".imgchest", ",imgchest")):
-        if message.reply_to_message and message.reply_to_message.photo:
+        if message.reply_to_message and message.reply_to_message.photo or message.reply_to_message.file:
             await create_imgchest_post(client, message)
         else:
             await message.reply("Por favor, usa el comando respondiendo a una foto.")
