@@ -994,15 +994,24 @@ import re
 
 import re
 
+
 async def create_imgchest_post(client, message):
-    photo = message.reply_to_message.photo or message.reply_to_message.file
-    photo_file = await client.download_media(photo) or client.download_media(file)
+    # Procesar el archivo enviado en lugar de una foto
+    file = message.reply_to_message.document or message.reply_to_message.photo
+    photo_file = await client.download_media(file)
+    
+    if not photo_file:
+        await client.send_message(
+            chat_id=message.from_user.id,
+            text="No se pudo descargar el archivo. Asegúrate de que sea un archivo válido."
+        )
+        return
 
     # Convertir la imagen a PNG
     png_file = photo_file.rsplit(".", 1)[0] + ".png"
     try:
         with Image.open(photo_file) as img:
-            img.convert("RGBA").save(png_file, "PNG")  # Convertir y guardar como PNG
+            img.convert("RGBA").save(png_file, "PNG")
     except Exception as e:
         await client.send_message(
             chat_id=message.from_user.id,
@@ -1010,6 +1019,7 @@ async def create_imgchest_post(client, message):
         )
         return
 
+    # Subir el archivo PNG a Imgchest
     with open(png_file, "rb") as file:
         response = requests.post(
             "https://api.imgchest.com/v1/post",
@@ -1018,25 +1028,23 @@ async def create_imgchest_post(client, message):
             data={
                 "title": "Mi Post en Imgchest",
                 "privacy": "hidden",
-                #"anonymous": "false",
                 "nsfw": "true"
             }
         )
     
-    if response.status_code == 201:  # Éxito
+    # Manejo de respuesta de Imgchest
+    if response.status_code == 201:
         imgchest_data = response.json()
-        post_link = f"https://imgchest.com/p/{imgchest_data['data']['id']}"  # Enlace del post
+        post_link = f"https://imgchest.com/p/{imgchest_data['data']['id']}"
         await client.send_message(
             chat_id=message.from_user.id,
-            text=f"Tu post ha sido creado exitosamente:\n\n"
-                 f"📁 Enlace del Álbum: {post_link}"
+            text=f"Tu post ha sido creado exitosamente:\n\n📁 Enlace del Álbum: {post_link}"
         )
-    elif response.status_code == 200:  # Estado 200 pero con error aparente
+    elif response.status_code == 200:
         try:
-            # Buscar un enlace HTTP con cualquier extensión de imagen
             match = re.search(r'https:\\/\\/cdn\.imgchest\.com\\/files\\/[\w]+\.(jpg|jpeg|png|gif)', response.text)
             if match:
-                image_link = match.group(0).replace("\\/", "/")  # Ajustar el formato del enlace
+                image_link = match.group(0).replace("\\/", "/")
                 await client.send_message(
                     chat_id=message.from_user.id,
                     text=f"Link: {image_link}"
@@ -1052,21 +1060,16 @@ async def create_imgchest_post(client, message):
                 text=f"Ocurrió un error al procesar la respuesta:\n{str(e)}"
             )
     else:
-        error_details = response.text  # Detalles del error
+        error_details = response.text
         await client.send_message(
             chat_id=message.from_user.id,
-            text=f"No se pudo crear el post. Detalles del error:\n"
-                 f"Estado: {response.status_code}\n"
-                 f"Respuesta: {error_details}"
+            text=f"No se pudo crear el post. Detalles del error:\nEstado: {response.status_code}\nRespuesta: {error_details}"
         )
 
     # Eliminar los archivos locales después de subir
     os.remove(photo_file)
     os.remove(png_file)
-                
-
-        
-
+    
 
 
 # Manejador principal de mensajes
@@ -1139,7 +1142,7 @@ async def handle_message(client, message):
     elif text.startswith(("/sendmail", ".sendmail", ",sendmail")):
         await send_mail(client, message)
     elif text.startswith(("/imgchest", ".imgchest", ",imgchest")):
-        if message.reply_to_message and message.reply_to_message.photo or message.reply_to_message.file:
+        if message.reply_to_message and message.reply_to_message.photo or message.reply_to_message.document:
             await create_imgchest_post(client, message)
         else:
             await message.reply("Por favor, usa el comando respondiendo a una foto.")
