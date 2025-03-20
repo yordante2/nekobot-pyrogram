@@ -852,8 +852,7 @@ async def handle_message(client, message):
         if is_command_allowed("webtools") or (is_admin_command_allowed("webtools") and user_id in admin_users):
             if text.startswith("/scan"):
                 await handle_scan(client, message)
-            elif t
-            ext.startswith("/multiscan"):
+            elif text.startswith("/multiscan"):
                 await handle_multiscan(client, message)
         else:
             await message.reply("El comando está desactivado o restringido para admins.")
