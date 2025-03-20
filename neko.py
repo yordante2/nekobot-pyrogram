@@ -249,6 +249,12 @@ async def handle_up(client, message):
         await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
         os.remove(file_path)
 async def nh_combined_operation(client, message, codes, base_url, operation_type="download"):
+    
+    if link_type = "nh":
+        base_url = "nhentai.net/g"
+    elif link_type = "3h":
+        base_url = "3hentai.net/d"
+    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -797,17 +803,13 @@ async def handle_message(client, message):
             command = parts[0]
             codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
 
-            # Define el {base_url} según el comando
-            if command in ("/nh", "/covernh"):
-                base_url = "nhentai.net/g"
-            elif command in ("/3h", "/cover"):
-                base_url = "3hentai.net/d"
-
             # Determina el tipo de operación
             operation_type = "download" if command in ("/nh", "/3h") else "cover"
+            link_type = "nh" if command in ("/nh", "/coverh") else "34"
+            
 
             # Llama a la función combinada
-            await nh_combined_operation(client, message, codes, base_url, operation_type)
+            await nh_combined_operation(client, message, codes, link_type, operation_type)
         else:
             await message.reply("El comando está desactivado o restringido para admins.")
     
