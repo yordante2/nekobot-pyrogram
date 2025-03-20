@@ -806,7 +806,7 @@ async def handle_message(client, message):
             # Determina el tipo de operación
             operation_type = "download" if command in ("/nh", "/3h") else "cover"
             global link_type
-            link_type = "nh" if command in ("/nh", "/coverh") else "3h"
+            link_type = "nh" if command in ("/nh", "/covernh") else "3h"
             
 
             # Llama a la función combinada
