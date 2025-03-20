@@ -253,7 +253,7 @@ async def nh_combined_operation(client, message, codes, base_url, operation_type
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     for code in codes:
-        url = f"https://{base_url}{code}/"
+        url = f"https://{base_url}/{code}/"
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -280,7 +280,7 @@ async def nh_combined_operation(client, message, codes, base_url, operation_type
             
             page_number = 1
             while True:
-                page_url = f"https://{base_url}{code}/{page_number}/"
+                page_url = f"https://{base_url}/{code}/{page_number}/"
                 try:
                     response = requests.get(page_url, headers=headers)
                     response.raise_for_status()
@@ -315,7 +315,7 @@ async def nh_combined_operation(client, message, codes, base_url, operation_type
         
         elif operation_type == "cover":
             # Descargar la portada
-            img_url = f"https://{base_url}{code}/1/"
+            img_url = f"https://{base_url}/{code}/1/"
             try:
                 response = requests.get(img_url, headers=headers)
                 response.raise_for_status()
@@ -336,9 +336,9 @@ async def nh_combined_operation(client, message, codes, base_url, operation_type
                     img_file.write(img_data)
                 
                 try:
-                    await client.send_photo(message.chat.id, img_filename, caption=f"https://{base_url}{code} {name}")
+                    await client.send_photo(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
                 except Exception as e:
-                    await client.send_document(message.chat.id, img_filename, caption=f"https://{base_url}{code} {name}")
+                    await client.send_document(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
 def sanitize_input(input_string):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 def clean_string(s):
