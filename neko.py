@@ -250,9 +250,9 @@ async def handle_up(client, message):
         os.remove(file_path)
 async def nh_combined_operation(client, message, codes, base_url, operation_type="download"):
     
-    if link_type = "nh":
+    if link_type == "nh":
         base_url = "nhentai.net/g"
-    elif link_type = "3h":
+    elif link_type == "3h":
         base_url = "3hentai.net/d"
     
     headers = {
