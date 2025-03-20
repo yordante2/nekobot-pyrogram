@@ -1069,105 +1069,119 @@ async def create_imgchest_post(client, message):
     # Eliminar los archivos locales después de subir
     os.remove(photo_file)
     os.remove(png_file)
-    
 
 
 # Manejador principal de mensajes
 @app.on_message(filters.text)
 async def handle_message(client, message):
-    text = message.text.strip().lower()  # Convertimos el texto a minúsculas para ignorar diferencias
+    text = message.text.strip().lower()
     user_id = message.from_user.id
     username = message.from_user.username
     chat_id = message.chat.id
 
     # Verifica si el usuario está en la lista de baneados
     if user_id in ban_users:
-        return  # Si el usuario está baneado, se detiene el manejo del mensaje.
+        return
 
     # Verificaciones iniciales para bots privados
     if not is_bot_public():
-        if user_id not in allowed_users:
-            if chat_id not in allowed_users:
-                return
+        if user_id not in allowed_users and chat_id not in allowed_users:
+            return
 
-    # Manejo de comandos (independiente de /, . o , y mayúsculas/minúsculas)
-    if text.startswith(("/start", ".start", ",start")):
-        await handle_start(client, message)
-    elif text.startswith(("/convert", ".convert", ",convert")):
-        await compress_video(client, message)
-    elif text.startswith(("/calidad", ".calidad", ",calidad")):
-        update_video_settings(text[len('/calidad '):])
-        await message.reply(f"Configuración de video actualizada: {video_settings}")
-    elif text.startswith(("/adduser", ".adduser", ",adduser")) and user_id in admin_users:
-        await add_user(client, message)
-    elif text.startswith(("/remuser", ".remuser", ",remuser")) and user_id in admin_users:
-        await remove_user(client, message)
-    elif text.startswith(("/addchat", ".addchat", ",addchat")) and user_id in admin_users:
-        await add_chat(client, message)
-    elif text.startswith(("/remchat", ".remchat", ",remchat")) and user_id in admin_users:
-        await remove_chat(client, message)
-    elif text.startswith(("/banuser", ".banuser", ",banuser")) and user_id in admin_users:
-        await ban_user(client, message)
-    elif text.startswith(("/debanuser", ".debanuser", ",debanuser")) and user_id in admin_users:
-        await deban_user(client, message)
-    elif text.startswith(("/rename", ".rename", ",rename")):
-        await rename(client, message)
+    # Verifica las variables de entorno
+    active_cmd = os.getenv("ACTIVE_CMD", "").lower()
+    admin_cmd = os.getenv("ADMIN_CMD", "").lower()
 
-    elif text.startswith(('/3h', '.3h', '3h')):
-        codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
-        for code in codes:
-            await cover3h_operation(client, message, [code])
-            await h3_operation(client, message, [code])
-    elif text.startswith(('/cover3h', '.cover3h')):
-        codes = [code.strip() for code in text.split()[1].split(',')]
-        for code in codes:
-            await cover3h_operation(client, message, [code])
-    elif text.startswith(('/covernh', '.covernh')):
-        codes = [code.strip() for code in text.split()[1].split(',')]
-        for code in codes:
-            await covernh_operation(client, message, [code])
-    elif text.startswith(('/nh', '.nh', 'nh')):
-        codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
-        for code in codes:
-            await covernh_operation(client, message, [code])
-            await nh_operation(client, message, [code])
-    elif text.startswith(("/compress", ".compress", ",compress")):
-        await handle_compress(client, message, username)
-    elif text.startswith(("/setsize", ".setsize", ",setsize")):
-        valor = text.split(" ")[1]
-        user_comp[username] = int(valor)
-        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
-    elif text.startswith(("/setmail", ".setmail", ",setmail")):
-        await set_mail(client, message)
-    elif text.startswith(("/sendmail", ".sendmail", ",sendmail")):
-        await send_mail(client, message)
-    elif text.startswith(("/imgchest", ".imgchest", ",imgchest")):
-        if message.reply_to_message and message.reply_to_message.photo or message.reply_to_message.document:
-            await create_imgchest_post(client, message)
+    def is_command_allowed(command_env):
+        return active_cmd == "all" or command_env in active_cmd
+
+    def is_admin_command_allowed(command_env):
+        return admin_cmd == "all" or command_env in admin_cmd
+
+    # Comandos del entorno Htools
+    if text.startswith(("/nh", "/3h", "/cover")):
+        if is_command_allowed("htools") or (is_admin_command_allowed("htools") and user_id in admin_users):
+            codes = text.split(maxsplit=1)[1].split(',') if ',' in text.split(maxsplit=1)[1] else [text.split(maxsplit=1)[1]]
+            for code in codes:
+                await covernh_operation(client, message, [code])
+                await nh_operation(client, message, [code])
+                await cover3h_operation(client, message, [code])
         else:
-            await message.reply("Por favor, usa el comando respondiendo a una foto.")
+            await message.reply("El comando está desactivado o restringido para admins.")
 
-    elif text.startswith(("/scan", ".scan", ",scan")):
-        await handle_scan(client, message)
-    elif text.startswith(("/multiscan", ".multiscan", ",multiscan")):
-        await handle_multiscan(client, message)
+    # Comandos del entorno Mail tools
+    elif text.startswith(("/setmail", "/sendmail")):
+        if is_command_allowed("mailtools") or (is_admin_command_allowed("mailtools") and user_id in admin_users):
+            if text.startswith("/setmail"):
+                await set_mail(client, message)
+            elif text.startswith("/sendmail"):
+                await send_mail(client, message)
+        else:
+            await message.reply("El comando está desactivado o restringido para admins.")
 
-    # Otros comandos y lógica ya definida
-    # (Ejemplo: start, convert, calidad, etc.)
+    # Comandos del entorno File tools
+    elif text.startswith(("/compress", "/setsize", "/rename")):
+        if is_command_allowed("filetools") or (is_admin_command_allowed("filetools") and user_id in admin_users):
+            if text.startswith("/compress"):
+                await handle_compress(client, message, username)
+            elif text.startswith("/setsize"):
+                valor = text.split(" ")[1]
+                user_comp[username] = int(valor)
+                await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+            elif text.startswith("/rename"):
+                await rename(client, message)
+        else:
+            await message.reply("El comando está desactivado o restringido para admins.")
 
-            
+    # Comandos del entorno Videotools
+    elif text.startswith(("/convert", "/calidad")):
+        if is_command_allowed("videotools") or (is_admin_command_allowed("videotools") and user_id in admin_users):
+            if text.startswith("/convert"):
+                await compress_video(client, message)
+            elif text.startswith("/calidad"):
+                update_video_settings(text[len('/calidad '):])
+                await message.reply(f"Configuración de video actualizada: {video_settings}")
+        else:
+            await message.reply("El comando está desactivado o restringido para admins.")
+
+    # Comandos del entorno Imgchest
+    elif text.startswith("/imgchest"):
+        if is_command_allowed("imgchest") or (is_admin_command_allowed("imgchest") and user_id in admin_users):
+            if message.reply_to_message and (message.reply_to_message.photo or message.reply_to_message.document):
+                await create_imgchest_post(client, message)
+            else:
+                await message.reply("Por favor, usa el comando respondiendo a una foto.")
+        else:
+            await message.reply("El comando está desactivado o restringido para admins.")
+
+    # Comandos del entorno Webtools
+    elif text.startswith(("/scan", "/multiscan")):
+        if is_command_allowed("webtools") or (is_admin_command_allowed("webtools") and user_id in admin_users):
+            if text.startswith("/scan"):
+                await handle_scan(client, message)
+            elif text.startswith("/multiscan"):
+                await handle_multiscan(client, message)
+        else:
+            await message.reply("El comando está desactivado o restringido para admins.")
+
+    # Comandos administrativos sin cambios
+    elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
+        if text.startswith("/adduser"):
+            await add_user(client, message)
+        elif text.startswith("/remuser"):
+            await remove_user(client, message)
+        elif text.startswith("/addchat"):
+            await add_chat(client, message)
+        elif text.startswith("/remchat"):
+            await remove_chat(client, message)
+
+    # Si el comando no coincide con ninguno
+    else:
+        await message.reply("Comando no reconocido o no permitido.")
+
+
                            
 
             
 
 app.run()
-
-
-
-# Inicia el bot
-#if __name__ == "__main__":
-    #app.start()  # Iniciar la sesión del bot
-    #app.loop.run_until_complete(send_initial_message(app))  # Enviar el mensaje inicial
-    #app.run()  # Ejecutar el bot
-    
-#app.run()
