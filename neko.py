@@ -248,7 +248,7 @@ async def handle_up(client, message):
         link = upload_token(file_path, os.getenv("NUBETOKEN"), os.getenv("NUBELINK"))
         await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
         os.remove(file_path)
-async def nh_combined_operation(client, message, codes, operation_type="download"):
+async def nh_combined_operation(client, message, codes, base_url, operation_type="download"):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -807,7 +807,7 @@ async def handle_message(client, message):
             operation_type = "download" if command in ("/nh", "/3h") else "cover"
 
             # Llama a la función combinada
-            await nh_combined_operation(client, message, codes, operation_type)
+            await nh_combined_operation(client, message, codes, base_url, operation_type)
         else:
             await message.reply("El comando está desactivado o restringido para admins.")
     
