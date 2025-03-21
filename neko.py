@@ -812,7 +812,7 @@ async def handle_message(client, message):
             # Llama a la función combinada
             await nh_combined_operation(client, message, codes, link_type, operation_type)
         else:
-            await message.reply("El comando está desactivado o restringido para admins.")
+            return
     
     elif text.startswith(("/setmail", "/sendmail")):
         if is_command_allowed("mailtools") or (is_admin_command_allowed("mailtools") and user_id in admin_users):
@@ -821,7 +821,7 @@ async def handle_message(client, message):
             elif text.startswith("/sendmail"):
                 await send_mail(client, message)
         else:
-            await message.reply("El comando está desactivado o restringido para admins.")
+            return
     elif text.startswith(("/compress", "/setsize", "/rename")):
         if is_command_allowed("filetools") or (is_admin_command_allowed("filetools") and user_id in admin_users):
             if text.startswith("/compress"):
@@ -833,7 +833,7 @@ async def handle_message(client, message):
             elif text.startswith("/rename"):
                 await rename(client, message)
         else:
-            await message.reply("El comando está desactivado o restringido para admins.")
+            return
     elif text.startswith(("/convert", "/calidad")):
         if is_command_allowed("videotools") or (is_admin_command_allowed("videotools") and user_id in admin_users):
             if text.startswith("/convert"):
@@ -842,7 +842,7 @@ async def handle_message(client, message):
                 update_video_settings(text[len('/calidad '):])
                 await message.reply(f"Configuración de video actualizada: {video_settings}")
         else:
-            await message.reply("El comando está desactivado o restringido para admins.")
+            return
     elif text.startswith("/imgchest"):
         if is_command_allowed("imgchest") or (is_admin_command_allowed("imgchest") and user_id in admin_users):
             if message.reply_to_message and (message.reply_to_message.photo or message.reply_to_message.document):
@@ -850,7 +850,7 @@ async def handle_message(client, message):
             else:
                 await message.reply("Por favor, usa el comando respondiendo a una foto.")
         else:
-            await message.reply("El comando está desactivado o restringido para admins.")
+            return
     elif text.startswith(("/scan", "/multiscan")):
         if is_command_allowed("webtools") or (is_admin_command_allowed("webtools") and user_id in admin_users):
             if text.startswith("/scan"):
@@ -858,7 +858,7 @@ async def handle_message(client, message):
             elif text.startswith("/multiscan"):
                 await handle_multiscan(client, message)
         else:
-            await message.reply("El comando está desactivado o restringido para admins.")
+            return
     elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
         if text.startswith("/adduser"):
             await add_user(client, message)
@@ -868,6 +868,4 @@ async def handle_message(client, message):
             await add_chat(client, message)
         elif text.startswith("/remchat"):
             await remove_chat(client, message)
-    else:
-        await message.reply("Comando no reconocido o no permitido.")
 app.run()
