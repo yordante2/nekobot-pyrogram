@@ -14,6 +14,13 @@ from moodleclient import upload_token
 import datetime
 import subprocess
 from pyrogram.types import Message
+import asyncio
+import os
+import hashlib
+import py7zr
+import shutil
+from pyrogram import Client
+
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('TOKEN')
@@ -29,11 +36,7 @@ file_counter = 0
 bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
-import os
-import hashlib
-import py7zr
-import shutil
-from pyrogram import Client
+
 def compressfile(file_path, part_size):
     parts = []
     part_size *= 1024 * 1024  
