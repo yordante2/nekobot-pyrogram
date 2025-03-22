@@ -810,7 +810,7 @@ async def handle_message(client, message):
             
 
             # Llama a la función combinada
-            await nh_combined_operation(client, message, codes, link_type, operation_type)
+            await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, operation_type))
         else:
             return
     
