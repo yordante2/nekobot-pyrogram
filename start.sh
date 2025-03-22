@@ -1,4 +1,4 @@
-apt-get update && apt-get install -y chromium-browser
+pip install -r requirements.txt
 mkdir server
 python3 -m http.server -d server &
 python3 neko.py
