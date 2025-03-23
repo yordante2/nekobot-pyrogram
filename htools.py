@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 import asyncio
 
 
-async def nh_combined_operation(client, message, codes, base_url, operation_type="download"):
+async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
     
     if link_type == "nh":
         base_url = "nhentai.net/g"
