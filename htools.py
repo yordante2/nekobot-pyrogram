@@ -9,8 +9,16 @@ from bs4 import BeautifulSoup
 import asyncio
 import re
 
+def borrar_carpeta_h3dl():
+    folder_name = 'h3dl'
+    for root, dirs, files in os.walk(folder_name, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.rmdir(os.path.join(root, name))
+    os.rmdir(folder_name)
+
 async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
-    
     if link_type == "nh":
         base_url = "nhentai.net/g"
     elif link_type == "3h":
@@ -19,6 +27,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
+
     for code in codes:
         url = f"https://{base_url}/{code}/"
         try:
@@ -32,8 +41,34 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
         title_tag = soup.find('title')
         name = clean_string(title_tag.text.strip()) if title_tag else clean_string(code)
 
+        # Descargar y enviar la portada
+        img_url = f"https://{base_url}/{code}/1/"
+        try:
+            response = requests.get(img_url, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"Error al acceder a la página de la imagen: {str(e)}")
+            continue
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+        
+        if img_tag:
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_data = requests.get(img_url, headers=headers).content
+            img_filename = f"1{img_extension}"
+            
+            with open(img_filename, 'wb') as img_file:
+                img_file.write(img_data)
+            
+            try:
+                await client.send_photo(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
+            except Exception as e:
+                await client.send_document(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
+        
+        # Proseguir con la descarga si el tipo de operación es "download"
         if operation_type == "download":
-            # Crear carpeta
             folder_name = os.path.join("h3dl", name)
             try:
                 os.makedirs(folder_name, exist_ok=True)
@@ -71,7 +106,6 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                 
                 page_number += 1
             
-            # Crear archivo .cbz
             zip_filename = os.path.join(f"{folder_name}.cbz")
             with zipfile.ZipFile(zip_filename, 'w') as zipf:
                 for root, _, files in os.walk(folder_name):
@@ -79,38 +113,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                         zipf.write(os.path.join(root, file), arcname=file)
             await client.send_document(message.chat.id, zip_filename)
             borrar_carpeta_h3dl()
-        
-        elif operation_type == "cover":
-            # Descargar la portada
-            img_url = f"https://{base_url}/{code}/1/"
-            try:
-                response = requests.get(img_url, headers=headers)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                await message.reply(f"Error al acceder a la página de la imagen: {str(e)}")
-                continue
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
-            
-            if img_tag:
-                img_url = img_tag['src']
-                img_extension = os.path.splitext(img_url)[1]
-                img_data = requests.get(img_url, headers=headers).content
-                img_filename = f"1{img_extension}"
-                
-                with open(img_filename, 'wb') as img_file:
-                    img_file.write(img_data)
-                
-                try:
-                    await client.send_photo(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
-                except Exception as e:
-                    await client.send_document(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
-
-
-
-
-
+                    
 
 def sanitize_input(input_string):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
