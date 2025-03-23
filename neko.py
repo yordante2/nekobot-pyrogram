@@ -57,65 +57,7 @@ def compressfile(file_path, part_size):
             parts.append(part_file)
             part_num += 1
     return parts
-import os
-from pyrogram import Client, filters
-async def create_txt(client, message):
-    try:
-        parts = message.text.split(", ")
-        if len(parts) != 3:
-            await message.reply("Uso: /txtcr Nombre_del_archivo, URL_base, rango.extensión")
-            return
-        file_name, base_url, range_ext = parts
-        start, end_ext = range_ext.split("-")
-        end, extension = end_ext.split(".")
-        start, end = int(start), int(end)
-        folder_path = os.path.join(os.getcwd(), "server")
-        os.makedirs(folder_path, exist_ok=True)
-        file_path = os.path.join(folder_path, f"{file_name}.txt")
-        with open(file_path, "w") as file:
-            for i in range(start, end + 1):
-                file.write(f"{base_url}{i}.{extension}\n")
-        await client.send_document(message.chat.id, file_path)
-    except Exception as e:
-        await message.reply(f"Ocurrió un error: {e}")
-import os
-import zipfile
-from pyrogram import Client, filters
-async def download_links(client, message):
-    try:
-        if not message.reply_to_message or not message.reply_to_message.document:
-            await message.reply("Responde a un archivo TXT con el comando /txtdl.")
-            return
-        file_id = message.reply_to_message.document.file_id
-        file_path = await client.download_media(file_id)
-        folder_name = os.path.splitext(os.path.basename(file_path))[0]
-        folder_path = os.path.join(os.getcwd(), "server", folder_name)
-        os.makedirs(folder_path, exist_ok=True)
-        with open(file_path, "r") as file:
-            links = file.readlines()
-        for link in links:
-            link = link.strip()
-            file_name = os.path.basename(link)
-            file_path = os.path.join(folder_path, file_name)
-            await client.download_media(link, file_path)
-        zip_filename = os.path.join(os.getcwd(), "server", f"{folder_name}.cbz")
-        with zipfile.ZipFile(zip_filename, 'w') as zipf:
-            for root, _, files in os.walk(folder_path):
-                for file in files:
-                    zipf.write(os.path.join(root, file), arcname=file)
-        await client.send_document(message.chat.id, zip_filename)
-        for file in os.listdir(folder_path):
-            os.remove(os.path.join(folder_path, file))
-        os.rmdir(folder_path)
-        os.remove(zip_filename)
-    except Exception as e:
-        await message.reply(f"Ocurrió un error: {e}")
-def hash_file(file_path):
-    hasher = hashlib.md5()
-    with open(file_path, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-    return hasher.hexdigest()
+
 async def handle_compress(client, message, username):
     try:
         os.system("rm -rf ./server/*")
@@ -236,15 +178,7 @@ async def compress_video(client, message: Message):
                 os.remove(compressed_video_path)
     else:
         await app.send_message(chat_id=message.chat.id, text="Por favor, responde a un video para comprimirlo.")
-import os
-def borrar_carpeta_h3dl():
-    folder_name = 'h3dl'
-    for root, dirs, files in os.walk(folder_name, topdown=False):
-        for name in files:
-            os.remove(os.path.join(root, name))
-        for name in dirs:
-            os.rmdir(os.path.join(root, name))
-    os.rmdir(folder_name)
+
 async def handle_up(client, message):
     if message.reply_to_message:
         await message.reply("Descargando...")
@@ -257,10 +191,7 @@ async def handle_up(client, message):
 
 
 
-def sanitize_input(input_string):
-    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
-def clean_string(s):
-    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
+
 common_lines = None
 async def handle_compare(message):
     global common_lines
@@ -283,7 +214,7 @@ async def handle_listo(message):
         os.remove('resultado.txt')
         common_lines = None
     else:
-        await message.reply("No hay líneas comunes para enviar")
+        wait message.reply("No hay líneas comunes para enviar")
 user_comp = {}
 async def handle_start(client, message):
     await message.reply("Funcionando")
