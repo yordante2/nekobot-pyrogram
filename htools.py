@@ -7,7 +7,7 @@ import requests
 from pyrogram.types import Message
 from bs4 import BeautifulSoup
 import asyncio
-
+import re
 
 async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
     
