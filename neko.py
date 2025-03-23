@@ -189,33 +189,6 @@ async def handle_up(client, message):
         os.remove(file_path)
 
 
-
-
-
-common_lines = None
-async def handle_compare(message):
-    global common_lines
-    if message.reply_to_message and message.reply_to_message.document:
-        file_path = await message.reply_to_message.download()
-        with open(file_path, 'r') as f:
-            lines = set(f.readlines())
-        os.remove(file_path)
-        if common_lines is None:
-            common_lines = lines
-        else:
-            common_lines = common_lines.intersection(lines)
-        await message.reply("Archivo analizado, responda /compare a otro para seguir o /listo para terminar")
-async def handle_listo(message):
-    global common_lines
-    if common_lines is not None:
-        with open('resultado.txt', 'w') as f:
-            f.writelines(common_lines)
-        await message.reply_document('resultado.txt')
-        os.remove('resultado.txt')
-        common_lines = None
-    else:
-        wait message.reply("No hay líneas comunes para enviar")
-user_comp = {}
 async def handle_start(client, message):
     await message.reply("Funcionando")
 async def add_user(client, message):
