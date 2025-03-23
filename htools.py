@@ -106,3 +106,13 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                     await client.send_photo(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
                 except Exception as e:
                     await client.send_document(message.chat.id, img_filename, caption=f"https://{base_url}/{code} {name}")
+
+
+
+
+
+
+def sanitize_input(input_string):
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
+def clean_string(s):
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
