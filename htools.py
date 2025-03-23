@@ -3,7 +3,7 @@ import zipfile
 import shutil
 import random
 import os
-import request 
+import requests
 from pyrogram.types import Message
 from bs4 import BeautifulSoup
 import asyncio
