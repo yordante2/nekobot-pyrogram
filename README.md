@@ -11,6 +11,16 @@ ADMINS = Ingrese el User ID de los administradores del bot, separelos por coma
 USERS = Ingrese el User ID de los usuarios del bot, si no quiere colocar a nadie coloque 0 (No dejar vacio)
 ```
 
+### Extras
+```
+BOT_IS_PUBLIC = Coloque el valor "True" para que cualquiera pueda usar el bot (Aún asi, coloque 0 en USERS)
+CODEWORD = Coloque una contraseña para que otros usen el comanndo /access
+DISMAIL = Coloque un correo de @disroot.org para usar /sendmail
+DISPASS = Coloque la contraseña del correo anterior
+IMGAPI = Coloque su API de Imgchest para publicar fotos con el comando /imgchest
+```
+
+
 ## Comandos del bot
 
 Envie esto a BotFather para configurar los comandos:
@@ -27,7 +37,9 @@ nh - Descarga un manga hentai de Nhentai
 3h - Descarga un manga hentai de 3Hentai
 covernh - Obtener info de un manga hentai de Nhentai
 cover3h - Obtener info de un manga hentai de 3Hentai
-scan - Escanea los links dentro de un link indicando  
+scan - Escanea los links dentro de un link indicando
+imgchest - Publica una imagen en Imgchest
+access - Obten acceso al bot mediante una contraseña
 ```
 
 ## Comandos admin
