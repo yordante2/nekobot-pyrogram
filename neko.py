@@ -269,3 +269,4 @@ async def handle_message(client, message):
             await remove_chat(client, message, user_id, chat_id)
 
 app.run()
+app.start()
