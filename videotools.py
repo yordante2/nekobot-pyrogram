@@ -56,7 +56,7 @@ async def update_video_settings(client, message):
     except Exception as e:
         await message.reply_text(f"Error al procesar el comando: {e}")
 
-async def compress_video(client, message: Message):  
+async def compress_video(client, message):  
     if message.reply_to_message.video:
         original_video_path = await client.download_media(message.reply_to_message.video)
         original_size = os.path.getsize(original_video_path)
