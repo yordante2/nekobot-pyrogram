@@ -258,43 +258,6 @@ async def send_mail(client, message):
             shutil.rmtree('mailtemp')
             os.mkdir('mailtemp')
             
-async def resume_codes(client, message):
-    full_message = message.text
-    if message.reply_to_message and message.reply_to_message.document:
-        file_path = await message.reply_to_message.download()
-        with open(file_path, 'r') as f:
-            for line in f:
-                full_message += line
-        os.remove(file_path)
-    codes = re.findall(r'\d{6}', full_message)
-    if codes:
-        chunk_size = 550
-        chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
-        for chunk in chunks:
-            result = ','.join(chunk)
-            await message.reply(result)
-    else:
-        await message.reply("No hay códigos para resumir")
-        
-async def resume_txt_codes(client, message):
-    full_message = message.text
-    if message.reply_to_message and message.reply_to_message.document:
-        file_path = await message.reply_to_message.download()
-        with open(file_path, 'r') as f:
-            for line in f:
-                full_message += line
-        os.remove(file_path)
-    codes = re.findall(r'\d{6}', full_message)
-    if codes:
-        file_name = "codes.txt"
-        with open(file_name, 'w') as f:
-            for code in codes:
-                f.write(f"{code}\n")
-        await message.reply_document(file_name)
-        os.remove(file_name)
-    else:
-        await message.reply("No hay códigos para resumir")
-        
 async def handle_scan(client, message):
     try:
         url = message.text.split(' ', 1)[1]
