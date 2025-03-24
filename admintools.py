@@ -19,13 +19,10 @@ import os
 import hashlib
 import py7zr
 import shutil
-from htools import nh_combined_operation
 import string
 import random
 import aiohttp
 import aiofiles
-from PIL import Image
-from admintools import 
 
 async def add_user(client, message, user_id):
     new_user_id = int(message.text.split()[1])
