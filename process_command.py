@@ -4,13 +4,14 @@ from pyrogram import Client
 from pyrogram.types import Message
 
 # Importa las funciones específicas que se utilizan en la lógica de comandos
-from nh_operations import nh_combined_operation
-from mail_operations import set_mail, send_mail
-from file_operations import handle_compress, set_size, rename
-from video_operations import compress_video, update_video_settings
-from imgchest_operations import create_imgchest_post
-from web_operations import handle_scan, handle_multiscan
-from admin_operations import add_user, remove_user, add_chat, remove_chat
+from moodleclient import upload_token
+from htools import nh_combined_operation
+from admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user
+from imgtools import create_imgchest_post
+from webtools import handle_scan, handle_multiscan
+from mailtools import send_mail, set_mail
+from videotools import update_video_settings, compress_video
+from filetools import handle_compress, rename, set_size
 
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
     text = message.text.strip().lower()
