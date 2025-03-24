@@ -1,5 +1,15 @@
 # Neko Bot
 
+## Variables de Entorno
+
+### Necesarias
+```
+API_ID = Ingrese su API ID para acceder a Telegram.
+API_HASH = Ingrese la API HASH de su API ID
+TOKEN =  Ingrese el Token de su bot
+ADMINS = Ingrese el User ID de los administradores del bot, separelos por coma
+USERS = Ingrese el User ID de los usuarios del bot, si no quiere colocar a nadie coloque 0 (No dejar vacio)
+```
 
 ## Comandos del bot
 
