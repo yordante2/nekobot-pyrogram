@@ -1,8 +1,7 @@
 import os
 from pyrogram import Client, filters
-from process_command import process_command  # El archivo que maneja los comandos.
+from process_command import process_command
 
-# Configuración y variables globales
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('TOKEN')
@@ -50,5 +49,4 @@ async def handle_message(client, message):
 
     await process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id)
 
-# Inicio del bot
 app.run()
