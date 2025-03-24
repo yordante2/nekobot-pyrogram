@@ -57,7 +57,7 @@ async def update_video_settings(client, message):
         await message.reply_text(f"Error al procesar el comando: {e}")
 
 async def compress_video(client, message: Message, original_video_path):  
-    if original_video_path not is None:
+    if original_video_path is not None:
         original_size = os.path.getsize(original_video_path)
         await app.send_message(chat_id=message.chat.id, text=f"Iniciando la compresión del video...\n"
                                                               f"Tamaño original: {original_size // (1024 * 1024)} MB")
