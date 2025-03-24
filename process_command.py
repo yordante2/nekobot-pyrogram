@@ -66,7 +66,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         return
     
     elif text.startswith("/imgchest"):
-        if cmd("imgchest", user_id in admin_users):
+        if cmd("imgtools", user_id in admin_users):
             if message.reply_to_message and (message.reply_to_message.photo or message.reply_to_message.document):
                 await create_imgchest_post(client, message)
             else:
