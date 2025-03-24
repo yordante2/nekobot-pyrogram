@@ -51,6 +51,7 @@ async def handle_compress(client, message, username):
     try:
         os.system("rm -rf ./server/*")
         await message.reply("Descargando el archivo para comprimirlo...")
+        
         def get_file_name(message):
             if message.reply_to_message.document:
                 return os.path.basename(message.reply_to_message.document.file_name)[:50]
@@ -64,30 +65,32 @@ async def handle_compress(client, message, username):
                 return ''.join(random.choices(string.ascii_letters + string.digits, k=20)) + ".webp"
             else:
                 return ''.join(random.choices(string.ascii_letters + string.digits, k=20))
+        
         file_name = get_file_name(message)
         file_path = await client.download_media(
             message.reply_to_message,
             file_name=file_name
         )
         await message.reply("Comprimiendo el archivo...")
+        
         sizd = user_comp.get(username, 10)
         parts = compressfile(file_path, sizd)
-        original_hashes = [hash_file(part) for part in parts]
+        
         await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
-        for part, original_hash in zip(parts, original_hashes):
+        for part in parts:
             try:
                 await client.send_document(message.chat.id, part)
-                received_hash = hash_file(part)  
-                if received_hash != original_hash:
-                    await message.reply(f"El archivo {part} recibido está corrupto.")
             except Exception as e:
                 print(f"Error al enviar la parte {part}: {e}")
                 await message.reply(f"Error al enviar la parte {part}: {e}")
+        
         await message.reply("Esas son todas las partes")
         shutil.rmtree('server')
         os.mkdir('server')
+    
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
+
         
 async def rename(client, message):
     reply_message = message.reply_to_message
