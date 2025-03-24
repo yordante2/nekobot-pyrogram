@@ -39,7 +39,7 @@ video_settings = {
     'codec': 'libx264'
 }
 
-def update_video_settings(client, message):
+async def update_video_settings(client, message):
     global video_settings
     try:
         # Extraer parámetros del mensaje
