@@ -60,8 +60,8 @@ async def compress_video(client, message):
     if message.reply_to_message.video:
         original_video_path = await client.download_media(message.reply_to_message.video)
         original_size = os.path.getsize(original_video_path)
-        await app.send_message(chat_id=message.chat.id, text=f"Iniciando la compresión del video...\n"
-                                                              f"Tamaño original: {original_size // (1024 * 1024)} MB")
+        await client.send_message(chat_id=message.chat.id, text=f"Iniciando la compresión del video...\n"
+                                                                f"Tamaño original: {original_size // (1024 * 1024)} MB")
         compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
         ffmpeg_command = [
             'ffmpeg', '-y', '-i', original_video_path,
@@ -73,7 +73,7 @@ async def compress_video(client, message):
         try:
             start_time = datetime.datetime.now()
             process = subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
-            await app.send_message(chat_id=message.chat.id, text="Compresión en progreso...")
+            await client.send_message(chat_id=message.chat.id, text="Compresión en progreso...")
             while True:
                 output = process.stderr.readline()
                 if output == '' and process.poll() is not None:
@@ -96,13 +96,13 @@ async def compress_video(client, message):
                 f" Duración: {duration_str}\n"
                 f" ¡Muchas gracias por usar el bot!"
             )
-            await app.send_document(chat_id=message.chat.id, document=compressed_video_path, caption=description)
+            await client.send_document(chat_id=message.chat.id, document=compressed_video_path, caption=description)
         except Exception as e:
-            await app.send_message(chat_id=message.chat.id, text=f"Ocurrió un error al comprimir el video: {e}")
+            await client.send_message(chat_id=message.chat.id, text=f"Ocurrió un error al comprimir el video: {e}")
         finally:
             if os.path.exists(original_video_path):
                 os.remove(original_video_path)
             if os.path.exists(compressed_video_path):
                 os.remove(compressed_video_path)
     else:
-        await app.send_message(chat_id=message.chat.id, text="Por favor, responde a un video para comprimirlo.")
+        await client.send_message(chat_id=message.chat.id, text="Por favor, responde a un video para comprimirlo.")
