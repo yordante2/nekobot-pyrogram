@@ -32,7 +32,7 @@ video_settings = {
     'preset': 'fast',
     'codec': 'libx264'
 }
-def update_video_settings(command: str, message):
+async def update_video_settings(command: str, message):
     settings = command.split()
     for setting in settings:
         key, value = setting.split('=')
