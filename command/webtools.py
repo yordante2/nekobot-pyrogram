@@ -1,29 +1,9 @@
 import os
-import glob
-from pyrogram import Client, filters
-import zipfile
 import shutil
-import random
-import string
-import smtplib
 import requests
 import re
-import datetime
-import subprocess
-import asyncio
-import os
-import hashlib
-import py7zr
-import shutil
-import string
-import random
-import aiohttp
-import aiofiles
 from bs4 import BeautifulSoup
-from moodleclient import upload_token
-from email.message import EmailMessage
-from pyrogram.types import Message
-from PIL import Image
+from pyrogram import Client, filters
 
 async def handle_scan(client, message):
     try:
