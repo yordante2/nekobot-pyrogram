@@ -21,7 +21,9 @@ scan - Escanea los links dentro de un link indicando
 ```
 
 ## Comandos admin
+```
 adduser - Permite a un usuario usar el bot
 remuser - Quita el acceso
 addchat - Permite al chat actual el uso del bot
 remchat - Quita el acceso
+```
