@@ -28,6 +28,7 @@ from htools import nh_combined_operation
 from admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user
 from imgtools import create_imgchest_post
 from webtools import handle_scan, handle_multiscan
+from mailtools import send_mail, set_mail
 
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
