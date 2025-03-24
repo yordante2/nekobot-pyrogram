@@ -20,6 +20,17 @@ DISPASS = Coloque la contraseña del correo anterior
 IMGAPI = Coloque su API de Imgchest para publicar fotos con el comando /imgchest
 ```
 
+### Activar comandos
+
+Las variables de entorno **ACTIVE_CMD** o **ADMIN_CMD** no son necesarias para el arranque del bot, pero sin ellas el bot es inutil.
+Introdusca en esta variable, separado por comas, los nombres de los archivos de la carpeta [command](https://github.com/nakigeplayer/nekobot-pyrogram/tree/main/command)  para que el bot use estos comandos.
+Los **ACTIVE_CMD** son comandos para todos mientras **ADMIN_CMD** son comandos para admin
+
+```
+all - permite el uso de todos los comandos
+
+```
+
 
 ## Comandos del bot
 
