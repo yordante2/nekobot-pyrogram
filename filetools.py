@@ -25,6 +25,7 @@ from email.message import EmailMessage
 from pyrogram.types import Message
 from PIL import Image
 
+user_comp = {} 
 compression_size = 10  
 
 def compressfile(file_path, part_size):
