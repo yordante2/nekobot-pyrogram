@@ -237,7 +237,7 @@ async def handle_message(client, message):
             if text.startswith("/convert"):
                 await compress_video(client, message)
             elif text.startswith("/calidad"):
-                update_video_settings(text[len('/calidad '):], message)
+                update_video_settings(client , message)
                 
         else:
             return
