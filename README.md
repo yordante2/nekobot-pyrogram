@@ -28,7 +28,12 @@ Los **ACTIVE_CMD** son comandos para todos mientras **ADMIN_CMD** son comandos p
 
 ```
 all - permite el uso de todos los comandos
-
+videotools - permite el uso de /convert y /calidad
+mailtools - permite el uso de /sendmail y /setmail
+filetools - permite el uso de /rename, /compress y /setsize
+htools - permite el uso de /nh , /3h , /covernh y /cover3h
+webtools - permite el comando de /scan y /multiscan
+imgtools - permite el uso del comando /imgchest
 ```
 
 
