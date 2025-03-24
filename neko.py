@@ -30,7 +30,7 @@ from imgtools import create_imgchest_post
 from webtools import handle_scan, handle_multiscan
 from mailtools import send_mail, set_mail
 from videotools import update_video_settings, compress_video
-from filetools import handle_compress, rename
+from filetools import handle_compress, rename, set_size
 
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
@@ -59,30 +59,7 @@ async def handle_up(client, message):
 
 async def handle_start(client, message):
     await message.reply("Funcionando")
-        
-async def rename(client, message):
-    reply_message = message.reply_to_message
-    if reply_message and reply_message.media:
-        try:
-            await message.reply("Descargando el archivo para renombrarlo...")
-            new_name = message.text.split(' ', 1)[1]
-            file_path = await client.download_media(reply_message)
-            new_file_path = os.path.join(os.path.dirname(file_path), new_name)
-            os.rename(file_path, new_file_path)
-            await message.reply("Subiendo el archivo con nuevo nombre...")
-            await client.send_document(message.chat.id, new_file_path)
-            os.remove(new_file_path)
-        except Exception as e:
-            await message.reply(f'Error: {str(e)}')
-    else:
-        await message.reply('Ejecute el comando respondiendo a un archivo')
-        
-async def set_size(client, message):
-    valor = int(message.text.split(" ")[1])
-    username = message.from_user.username
-    user_comp[username] = valor
-    await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
-        
+    
 CODEWORD = os.getenv("CODEWORD")
 @app.on_message(filters.command("access") & filters.private)
 def access_command(client, message):
