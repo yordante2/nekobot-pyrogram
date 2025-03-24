@@ -126,9 +126,7 @@ async def handle_message(client, message):
             if text.startswith("/compress"):
                 await handle_compress(client, message, username)
             elif text.startswith("/setsize"):
-                valor = text.split(" ")[1]
-                user_comp[username] = int(valor)
-                await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+                await set_size(client, message)
             elif text.startswith("/rename"):
                 await rename(client, message)
         else:
