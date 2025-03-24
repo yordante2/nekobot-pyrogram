@@ -235,7 +235,7 @@ async def handle_message(client, message):
     elif text.startswith(("/convert", "/calidad")):
         if is_command_allowed("videotools") or (is_admin_command_allowed("videotools") and user_id in admin_users):
             if text.startswith("/convert") and message.reply_to_message and message.reply_to_message.video:
-                original_video_path = await app.download_media(message.reply_to_message.video)
+                original_video_path = await client.download_media(message.reply_to_message.video)
                 await compress_video(client, message, original_video_path)
             elif text.startswith("/calidad"):
                 await update_video_settings(client , message)
