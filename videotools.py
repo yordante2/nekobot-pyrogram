@@ -52,9 +52,9 @@ async def update_video_settings(client, message):
                 video_settings[key] = value
 
         # Responder con los nuevos valores actualizados
-        message.reply_text(f"Configuraciones de video actualizadas: {video_settings}")
+        await message.reply_text(f"Configuraciones de video actualizadas: {video_settings}")
     except Exception as e:
-        message.reply_text(f"Error al procesar el comando: {e}")
+        await message.reply_text(f"Error al procesar el comando: {e}")
 
 async def compress_video(client, message: Message):  
     if message.reply_to_message and message.reply_to_message.video:
