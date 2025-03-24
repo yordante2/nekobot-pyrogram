@@ -6,14 +6,12 @@ from pyrogram.types import Message
 # Importa las funciones específicas que se utilizan en la lógica de comandos
 from moodleclient import upload_token
 from htools import nh_combined_operation
-from admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user
+from admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, handle_start
 from imgtools import create_imgchest_post
 from webtools import handle_scan, handle_multiscan
 from mailtools import send_mail, set_mail
 from videotools import update_video_settings, compress_video
 from filetools import handle_compress, rename, set_size
-
-admin_users = list(map(int, os.getenv('ADMINS').split(',')))
 
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
     text = message.text.strip().lower()
@@ -24,8 +22,11 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             command_env in active_cmd or 
             (is_admin and (admin_cmd == "all" or command_env in admin_cmd))
         )
+
+    if text.startswith("/start"):
+        handle_start(client, message)
     
-    if text.startswith(("/nh", "/3h", "/cover", "/covernh")):
+    elif text.startswith(("/nh", "/3h", "/cover", "/covernh")):
         if cmd("htools", user_id in admin_users):
             parts = text.split(maxsplit=1)
             command = parts[0]
@@ -88,4 +89,5 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         elif text.startswith("/remchat"):
             await remove_chat(client, message, user_id, chat_id)
         return
-          
+
+            
