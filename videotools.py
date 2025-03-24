@@ -32,11 +32,12 @@ video_settings = {
     'preset': 'fast',
     'codec': 'libx264'
 }
-def update_video_settings(command: str):
+def update_video_settings(command: str, message):
     settings = command.split()
     for setting in settings:
         key, value = setting.split('=')
         video_settings[key] = value
+        await message.reply(f"Configuración de video actualizada: {video_settings}")
 async def compress_video(client, message: Message):  
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
