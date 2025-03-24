@@ -7,6 +7,8 @@ import requests
 import re
 from pyrogram import Client, filters
 from PIL import Image
+import datetime
+
 
 # Crear instancia del cliente
 app = Client("mi_bot")
