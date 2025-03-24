@@ -24,20 +24,38 @@ from moodleclient import upload_token
 from email.message import EmailMessage
 from pyrogram.types import Message
 from PIL import Image
+from pyrogram import Client, filters
+
+# Crear instancia del cliente
+app = Client("mi_bot")
+
+# Configuración inicial de video_settings
 video_settings = {
     'resolution': '640x480',
     'crf': '28',
     'audio_bitrate': '64k',
-    'fps': '30',
+    'fps': '25',
     'preset': 'fast',
     'codec': 'libx264'
 }
-async def update_video_settings(command: str, message):
-    settings = command.split()
-    for setting in settings:
-        key, value = setting.split('=')
-        video_settings[key] = value
-        await message.reply(f"Configuración de video actualizada: {video_settings}")
+
+def update_video_settings(client, message):
+    global video_settings
+    try:
+        # Extraer parámetros del mensaje
+        command_params = message.text.split()[1:]
+        params = dict(item.split('=') for item in command_params)
+
+        # Actualizar video_settings con los nuevos valores
+        for key, value in params.items():
+            if key in video_settings:
+                video_settings[key] = value
+
+        # Responder con los nuevos valores actualizados
+        message.reply_text(f"Configuraciones de video actualizadas: {video_settings}")
+    except Exception as e:
+        message.reply_text(f"Error al procesar el comando: {e}")
+
 async def compress_video(client, message: Message):  
     if message.reply_to_message and message.reply_to_message.video:
         original_video_path = await app.download_media(message.reply_to_message.video)
