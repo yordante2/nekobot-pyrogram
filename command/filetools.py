@@ -1,29 +1,9 @@
 import os
-import glob
-from pyrogram import Client, filters
-import zipfile
 import shutil
 import random
 import string
-import smtplib
-import requests
-import re
-import datetime
-import subprocess
-import asyncio
-import os
-import hashlib
 import py7zr
-import shutil
-import string
-import random
-import aiohttp
-import aiofiles
-from bs4 import BeautifulSoup
-from moodleclient import upload_token
-from email.message import EmailMessage
-from pyrogram.types import Message
-from PIL import Image
+from pyrogram import Client, filters
 
 user_comp = {} 
 compression_size = 10  
@@ -90,7 +70,6 @@ async def handle_compress(client, message, username):
     
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
-
         
 async def rename(client, message):
     reply_message = message.reply_to_message
@@ -109,10 +88,8 @@ async def rename(client, message):
     else:
         await message.reply('Ejecute el comando respondiendo a un archivo')
 
-
 async def set_size(client, message):
     valor = int(message.text.split(" ")[1])
     username = message.from_user.username
     user_comp[username] = valor
     await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
-          
