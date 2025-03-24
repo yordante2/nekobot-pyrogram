@@ -25,6 +25,8 @@ from email.message import EmailMessage
 from pyrogram.types import Message
 from PIL import Image
 
+compression_size = 10  
+
 def compressfile(file_path, part_size):
     parts = []
     part_size *= 1024 * 1024  
@@ -85,6 +87,7 @@ async def handle_compress(client, message, username):
         os.mkdir('server')
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
+        
 async def rename(client, message):
     reply_message = message.reply_to_message
     if reply_message and reply_message.media:
@@ -101,4 +104,11 @@ async def rename(client, message):
             await message.reply(f'Error: {str(e)}')
     else:
         await message.reply('Ejecute el comando respondiendo a un archivo')
+
+
+async def set_size(client, message):
+    valor = int(message.text.split(" ")[1])
+    username = message.from_user.username
+    user_comp[username] = valor
+    await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
           
