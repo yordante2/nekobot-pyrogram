@@ -17,10 +17,6 @@ app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 CODEWORD = os.getenv("CODEWORD")
 BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
 
-# Funciones y manejadores
-async def handle_start(client, message):
-    await message.reply("Funcionando")
-
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
 
