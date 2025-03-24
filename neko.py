@@ -48,15 +48,6 @@ bot_in_use = False
 user_emails = {}
 image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 
-async def handle_up(client, message):
-    if message.reply_to_message:
-        await message.reply("Descargando...")
-        file_path = await client.download_media(message.reply_to_message.document.file_id)
-        await message.reply("Subiendo a la nube...")
-        link = upload_token(file_path, os.getenv("NUBETOKEN"), os.getenv("NUBELINK"))
-        await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
-        os.remove(file_path)
-
 async def handle_start(client, message):
     await message.reply("Funcionando")
     
@@ -77,7 +68,6 @@ def access_command(client, message):
 BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
-    
     
 @app.on_message(filters.text)
 async def handle_message(client, message):
@@ -102,17 +92,12 @@ async def handle_message(client, message):
             command = parts[0]
             codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
 
-            # Determina el tipo de operación
             operation_type = "download" if command in ("/nh", "/3h") else "cover"
             global link_type
             link_type = "nh" if command in ("/nh", "/covernh") else "3h"
-            
-
-            # Llama a la función combinada
             await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, operation_type))
         else:
             return
-    
     elif text.startswith(("/setmail", "/sendmail")):
         if is_command_allowed("mailtools") or (is_admin_command_allowed("mailtools") and user_id in admin_users):
             if text.startswith("/setmail"):
@@ -137,7 +122,6 @@ async def handle_message(client, message):
                 await compress_video(client, message)
             elif text.startswith("/calidad"):
                 await update_video_settings(client , message)
-                
         else:
             return
     elif text.startswith("/imgchest"):
