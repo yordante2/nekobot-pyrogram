@@ -13,6 +13,8 @@ from mailtools import send_mail, set_mail
 from videotools import update_video_settings, compress_video
 from filetools import handle_compress, rename, set_size
 
+admin_users = list(map(int, os.getenv('ADMINS').split(',')))
+
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
     text = message.text.strip().lower()
     
