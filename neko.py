@@ -19,9 +19,14 @@ import os
 import hashlib
 import py7zr
 import shutil
-from pyrogram import Client
-
 from htools import nh_combined_operation
+import string
+import random
+import aiohttp
+import aiofiles
+from PIL import Image
+from admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user
+
 
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
@@ -188,47 +193,9 @@ async def handle_up(client, message):
         await message.reply("Enlace:\n" + str(link).replace("/webservice", ""))
         os.remove(file_path)
 
-
 async def handle_start(client, message):
     await message.reply("Funcionando")
-async def add_user(client, message):
-    new_user_id = int(message.text.split()[1])
-    temp_users.append(new_user_id)
-    allowed_users.append(new_user_id)
-    await message.reply(f"Usuario {new_user_id} añadido temporalmente.")
-async def remove_user(client, message):
-    rem_user_id = int(message.text.split()[1])
-    if rem_user_id in temp_users:
-        temp_users.remove(rem_user_id)
-        allowed_users.remove(rem_user_id)
-        await message.reply(f"Usuario {rem_user_id} eliminado temporalmente.")
-    else:
-        await message.reply("Usuario no encontrado en la lista temporal.")
-async def add_chat(client, message):
-    chat_id = message.chat.id
-    temp_chats.append(chat_id)
-    allowed_users.append(chat_id)
-    await message.reply(f"Chat {chat_id} añadido temporalmente.")
-async def remove_chat(client, message):
-    chat_id = message.chat.id
-    if chat_id in temp_chats:
-        temp_chats.remove(chat_id)
-        allowed_users.remove(chat_id)
-        await message.reply(f"Chat {chat_id} eliminado temporalmente.")
-    else:
-        await message.reply("Chat no encontrado en la lista temporal.")
-async def ban_user(client, message):
-    ban_user_id = int(message.text.split()[1])
-    if ban_user_id not in admin_users:
-        ban_users.append(ban_user_id)
-        await message.reply(f"Usuario {ban_user_id} baneado.")
-async def deban_user(client, message):
-    deban_user_id = int(message.text.split()[1])
-    if deban_user_id in ban_users:
-        ban_users.remove(deban_user_id)
-        await message.reply(f"Usuario {deban_user_id} desbaneado.")
-    else:
-        await message.reply("Usuario no encontrado en la lista de baneados.")
+        
 async def rename(client, message):
     reply_message = message.reply_to_message
     if reply_message and reply_message.media:
@@ -245,16 +212,19 @@ async def rename(client, message):
             await message.reply(f'Error: {str(e)}')
     else:
         await message.reply('Ejecute el comando respondiendo a un archivo')
+        
 async def set_size(client, message):
     valor = int(message.text.split(" ")[1])
     username = message.from_user.username
     user_comp[username] = valor
     await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+    
 async def set_mail(client, message):
     email = message.text.split(' ', 1)[1]
     user_id = message.from_user.id
     user_emails[user_id] = email
     await message.reply("Correo electrónico registrado correctamente.")
+    
 async def send_mail(client, message):
     user_id = message.from_user.id
     if user_id not in user_emails:
@@ -287,6 +257,7 @@ async def send_mail(client, message):
         finally:
             shutil.rmtree('mailtemp')
             os.mkdir('mailtemp')
+            
 async def resume_codes(client, message):
     full_message = message.text
     if message.reply_to_message and message.reply_to_message.document:
@@ -304,6 +275,7 @@ async def resume_codes(client, message):
             await message.reply(result)
     else:
         await message.reply("No hay códigos para resumir")
+        
 async def resume_txt_codes(client, message):
     full_message = message.text
     if message.reply_to_message and message.reply_to_message.document:
@@ -322,6 +294,7 @@ async def resume_txt_codes(client, message):
         os.remove(file_name)
     else:
         await message.reply("No hay códigos para resumir")
+        
 async def handle_scan(client, message):
     try:
         url = message.text.split(' ', 1)[1]
@@ -360,6 +333,7 @@ async def handle_scan(client, message):
             await message.reply("No se encontraron enlaces de páginas web.")
     except Exception as e:
         await message.reply(f"Error al escanear la página: {e}")
+        
 async def handle_multiscan(client, message):
     try:
         parts = message.text.split(' ')
@@ -411,6 +385,7 @@ async def handle_multiscan(client, message):
         os.remove('results.txt')
     else:
         await message.reply("No se encontraron enlaces de páginas web.")
+        
 CODEWORD = os.getenv("CODEWORD")
 @app.on_message(filters.command("access") & filters.private)
 def access_command(client, message):
@@ -424,114 +399,12 @@ def access_command(client, message):
             message.reply("Ya estás en la lista de acceso temporal.")
     else:
         message.reply("Palabra secreta incorrecta.")
-import os
-import string
-import random
-from pyrogram import Client, filters
-def generate_random_code(length):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-CODEWORD2 = generate_random_code(6)
-CODEWORDCHANNEL = os.getenv("CODEWORDCHANNEL")
-@app.on_message(filters.command("access2") & filters.private)
-def access_command(client, message):
-    user_id = message.from_user.id
-    if len(message.command) > 1 and message.command[1] == CODEWORD2:
-        if user_id not in temp_users:
-            temp_users.append(user_id)
-            allowed_users.append(user_id)  
-            message.reply("Acceso concedido.")
-        else:
-            message.reply("Ya estás en la lista de acceso temporal.")
-    else:
-        message.reply("Palabra secreta incorrecta.")
-async def send_initial_message(app):
-    await app.send_message("@" + CODEWORDCHANNEL, f"Bot Reiniciado, escriba\n\n /access2 {CODEWORD2} \n\nPara obtener acceso")
-import os
-import aiohttp
-import aiofiles
-async def download_single_file(client, message, url):
-    filename = url.split('/')[-1]
-    status_message = await message.reply(f"Descargando {filename}...")
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                response.raise_for_status()
-                total_size = int(response.headers.get('Content-Length', 0))
-                block_size = 1024  
-                wrote = 0
-                last_progress_message = None
-                async with aiofiles.open(filename, 'wb') as f:
-                    async for data in response.content.iter_chunked(block_size):
-                        wrote += len(data)
-                        await f.write(data)
-                        progress = (wrote / total_size) * 100
-                        progress_message = f"Descargando {filename}... {wrote // (1024 * 1024)}MB de {total_size // (1024 * 1024)}MB ({progress:.2f}%)"
-                        if progress_message != last_progress_message:
-                            await status_message.edit(progress_message)
-                            last_progress_message = progress_message
-        await status_message.edit(f"Descarga de {filename} completada.")
-        async def progress_callback(current, total):
-            progress_message = f"Enviando {filename}... {current // (1024 * 1024)}MB de {total // (1024 * 1024)}MB ({(current / total) * 100:.2f}%)"
-            if progress_message != last_progress_message:
-                await status_message.edit(progress_message)
-                last_progress_message = progress_message
-        await client.send_document(
-            chat_id=message.chat.id,
-            document=filename
-        )
-    except aiohttp.ClientError as e:
-        await status_message.edit(f"Error al descargar {filename}: {e}")
-    finally:
-        if os.path.exists(filename):
-            os.remove(filename)
-async def download_file(client, message):
-    if (message.reply_to_message and message.reply_to_message.document 
-        and message.reply_to_message.document.file_name.endswith('.txt')):
-        file_path = await client.download_media(message.reply_to_message.document)
-        async with aiofiles.open(file_path, 'r') as f:
-            links = await f.readlines()
-        for link in links:
-            link = link.strip()
-            if link:
-                await download_single_file(client, message, link)
-    else:
-        url = message.text.split(maxsplit=1)[1]
-        await download_single_file(client, message, url)
-sent_messages = {}
-async def handle_send(client, message):
-    try:
-        parts = message.text.split(maxsplit=2)
-        if len(parts) < 3:
-            await message.reply("Uso correcto: /send ChatID/@username Mensaje")
-            return
-        target = parts[1]
-        msg = parts[2]
-        if target.startswith('@'):
-            try:
-                user = await client.get_users(target)
-                sent_message = await client.send_message(user.id, msg)
-                sent_messages[sent_message.id] = {"user_id": message.from_user.id}
-            except Exception as e:
-                await message.reply("Error al enviar el mensaje: " + str(e))
-        else:
-            chat_id = int(target)
-            if chat_id in allowed_users:
-                sent_message = await client.send_message(chat_id, msg)
-                sent_messages[sent_message.id] = {"user_id": message.from_user.id}
-            elif chat_id not in allowed_users:
-                sent_message = await client.send_message(chat_id, msg)
-                sent_messages[sent_message.id] = {"user_id": message.from_user.id}
-            else:
-                await message.reply("El bot no está en el chat indicado")
-    except Exception as e:
-        await message.reply("Error al procesar el comando: " + str(e))
+        
 BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
+    
 IMG_CHEST_API_KEY = os.getenv("IMGAPI")  
-from PIL import Image
-import re
-import re
 async def create_imgchest_post(client, message):
     file = message.reply_to_message.document or message.reply_to_message.photo
     photo_file = await client.download_media(file)
@@ -596,6 +469,7 @@ async def create_imgchest_post(client, message):
         )
     os.remove(photo_file)
     os.remove(png_file)
+    
 @app.on_message(filters.text)
 async def handle_message(client, message):
     text = message.text.strip().lower()
@@ -677,11 +551,12 @@ async def handle_message(client, message):
             return
     elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
         if text.startswith("/adduser"):
-            await add_user(client, message)
+            await add_user(client, message, user_id, chat_id)
         elif text.startswith("/remuser"):
-            await remove_user(client, message)
+            await remove_user(client, message, user_id, chat_id)
         elif text.startswith("/addchat"):
-            await add_chat(client, message)
+            await add_chat(client, message, user_id, chat_id)
         elif text.startswith("/remchat"):
-            await remove_chat(client, message)
+            await remove_chat(client, message, user_id, chat_id)
+
 app.run()
