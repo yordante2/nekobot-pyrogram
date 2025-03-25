@@ -14,7 +14,7 @@ from command.mailtools import send_mail, set_mail
 from command.videotools import update_video_settings, compress_video
 from command.filetools import handle_compress, rename, set_size
 
-asyncio.create_task
+nest_asyncio.apply()
 
 admin_users = list(map(int, os.getenv('ADMINS').split(',')))
 
