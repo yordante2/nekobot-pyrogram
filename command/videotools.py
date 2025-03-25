@@ -42,7 +42,7 @@ async def update_video_settings(client, message):
 
 async def compress_video(client, message):  
     if message.reply_to_message.media:
-        original_video_path = await client.download_media(message.reply_to_message.media)
+        original_video_path = await client.download_media(message.reply_to_message.video or message.reply_to_message.document)
         original_size = os.path.getsize(original_video_path)
         await client.send_message(chat_id=message.chat.id, text=f"Iniciando la compresión del video...\n"
                                                                 f"Tamaño original: {original_size // (1024 * 1024)} MB")
