@@ -1,5 +1,6 @@
 import os
 import asyncio
+import nest_asyncio
 from pyrogram import Client
 from pyrogram.types import Message
 
@@ -12,6 +13,8 @@ from command.webtools import handle_scan, handle_multiscan
 from command.mailtools import send_mail, set_mail
 from command.videotools import update_video_settings, compress_video
 from command.filetools import handle_compress, rename, set_size
+
+asyncio.create_task
 
 admin_users = list(map(int, os.getenv('ADMINS').split(',')))
 
@@ -26,7 +29,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         )
 
     if text.startswith("/start"):
-        await handle_start(client, message)
+        await asyncio.create_task(handle_start(client, message))
     
     elif text.startswith(("/nh", "/3h", "/cover", "/covernh")):
         if cmd("htools", user_id in admin_users):
@@ -42,33 +45,33 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
     elif text.startswith(("/setmail", "/sendmail")):
         if cmd("mailtools", user_id in admin_users):
             if text.startswith("/setmail"):
-                await set_mail(client, message)
+                await asyncio.create_task(set_mail(client, message))
             elif text.startswith("/sendmail"):
-                await send_mail(client, message)
+                await asyncio.create_task(send_mail(client, message))
         return
     
     elif text.startswith(("/compress", "/setsize", "/rename")):
         if cmd("filetools", user_id in admin_users):
             if text.startswith("/compress"):
-                await handle_compress(client, message, username)
+                await asyncio.create_task(handle_compress(client, message, username))
             elif text.startswith("/setsize"):
-                await set_size(client, message)
+                await asyncio.create_task(set_size(client, message))
             elif text.startswith("/rename"):
-                await rename(client, message)
+                await asyncio.create_task(rename(client, message))
         return
     
     elif text.startswith(("/convert", "/calidad")):
         if cmd("videotools", user_id in admin_users):
             if text.startswith("/convert"):
-                await compress_video(client, message)
+                await asyncio.create_task(compress_video(client, message))
             elif text.startswith("/calidad"):
-                await update_video_settings(client, message)
+                await asyncio.create_task(update_video_settings(client, message))
         return
     
     elif text.startswith("/imgchest"):
         if cmd("imgtools", user_id in admin_users):
             if message.reply_to_message and (message.reply_to_message.photo or message.reply_to_message.document):
-                await create_imgchest_post(client, message)
+                await asyncio.create_task(create_imgchest_post(client, message))
             else:
                 await message.reply("Por favor, usa el comando respondiendo a una foto.")
         return
@@ -76,20 +79,20 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
     elif text.startswith(("/scan", "/multiscan")):
         if cmd("webtools", user_id in admin_users):
             if text.startswith("/scan"):
-                await handle_scan(client, message)
+                await asyncio.create_task(handle_scan(client, message))
             elif text.startswith("/multiscan"):
-                await handle_multiscan(client, message)
+                await asyncio.create_task(handle_multiscan(client, message))
         return
     
     elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
         if text.startswith("/adduser"):
-            await add_user(client, message, user_id, chat_id)
+            await asyncio.create_task(add_user(client, message, user_id, chat_id))
         elif text.startswith("/remuser"):
-            await remove_user(client, message, user_id, chat_id)
+            await asyncio.create_task(remove_user(client, message, user_id, chat_id))
         elif text.startswith("/addchat"):
-            await add_chat(client, message, user_id, chat_id)
+            await asyncio.create_task(add_chat(client, message, user_id, chat_id))
         elif text.startswith("/remchat"):
-            await remove_chat(client, message, user_id, chat_id)
+            await asyncio.create_task(remove_chat(client, message, user_id, chat_id))
         return
 
             
