@@ -1,6 +1,9 @@
 import os
 from pyrogram import Client, filters
 from process_command import process_command
+import nest_asyncio
+
+nest_asyncio.apply()
 
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
@@ -47,6 +50,6 @@ async def handle_message(client, message):
     active_cmd = os.getenv("ACTIVE_CMD", "").lower()
     admin_cmd = os.getenv("ADMIN_CMD", "").lower()
 
-    await process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id)
+    await asyncio.create_task(process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id))
 
 app.run()
