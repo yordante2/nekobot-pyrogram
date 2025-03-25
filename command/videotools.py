@@ -72,10 +72,26 @@ async def compress_video(client, message):
             duration_str = str(datetime.timedelta(seconds=duration))
             processing_time = datetime.datetime.now() - start_time
             processing_time_str = str(processing_time).split('.')[0]  
+            # Variables para el tamaño
+            if original_size < (1024 * 1024):  # Menor a 1MB
+                original_unit = "KB"
+                original_size_display = original_size // 1024
+            else:  # Igual o mayor a 1MB
+                original_unit = "MB"
+                original_size_display = original_size // (1024 * 1024)
+
+            if compressed_size < (1024 * 1024):  # Menor a 1MB
+                compressed_unit = "KB"
+                compressed_size_display = compressed_size // 1024
+            else:  # Igual o mayor a 1MB
+                compressed_unit = "MB"
+                compressed_size_display = compressed_size // (1024 * 1024)
+
+            # Descripción con unidades dinámicas
             description = (
                 f"✅ Archivo procesado correctamente ☑️\n"
-                f" Tamaño original: {original_size // (1024 * 1024)} MB\n"
-                f" Tamaño procesado: {compressed_size // (1024 * 1024)} MB\n"
+                f" Tamaño original: {original_size_display} {original_unit}\n"
+                f" Tamaño procesado: {compressed_size_display} {compressed_unit}\n"
                 f"⌛ Tiempo de procesamiento: {processing_time_str}\n"
                 f" Duración: {duration_str}\n"
                 f" ¡Muchas gracias por usar el bot!"
