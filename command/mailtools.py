@@ -7,13 +7,52 @@ from email.message import EmailMessage
 
 # Diccionario para almacenar correos de los usuarios
 user_emails = {}
+verification_storage = {}
 
 # Registrar el correo de un usuario
+import random
+
+# Función para generar un código de verificación de 6 números
+def generate_verification_code():
+    return f"{random.randint(100000, 999999)}"
+
+# Modificación de la función set_mail para enviar el código de verificación por correo
 async def set_mail(client, message):
     email = message.text.split(' ', 1)[1]
     user_id = message.from_user.id
-    user_emails[user_id] = email
-    await message.reply("Correo electrónico registrado correctamente.")
+
+    # Revisar MAIL_CONFIRMED
+    mail_confirmed = os.getenv('MAIL_CONFIRMED')
+    if mail_confirmed:
+        confirmed_users = {item.split('=')[0]: item.split('=')[1:] for item in mail_confirmed.split(',')}
+        if str(user_id) in confirmed_users and email in confirmed_users[str(user_id)]:
+            user_emails[user_id] = email
+            await message.reply("Correo electrónico registrado automáticamente porque está confirmado en el entorno.")
+            return
+
+    # Generar código de verificación y enviarlo por correo
+    verification_code = generate_verification_code()
+
+    # Enviar el correo con el código de verificación
+    try:
+        msg = EmailMessage()
+        msg['Subject'] = 'Código de Verificación'
+        msg['From'] = os.getenv('DISMAIL')
+        msg['To'] = email
+        msg.set_content(f"Tu código de verificación es: {verification_code}")
+
+        with smtplib.SMTP('disroot.org', 587) as server:
+            server.starttls()
+            server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+            server.send_message(msg)
+
+        # Almacenar temporalmente el código y el correo
+        verification_storage[user_id] = {'email': email, 'code': verification_code}
+
+        await message.reply("Código de verificación enviado a tu correo. Por favor, verifica el código para registrar tu correo electrónico.")
+    except Exception as e:
+        await message.reply(f"Error al enviar el correo de verificación: {e}")
+        
 
 # Función para comprimir y dividir archivos en partes
 def compressfile(file_path, part_size):
