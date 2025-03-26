@@ -10,74 +10,65 @@ from email.message import EmailMessage
 user_emails = {}
 verification_codes = {}
 
-# Generar código de 6 dígitos
+import random
+
+# Función para generar un código de verificación de 6 números
 def generate_verification_code():
     return f"{random.randint(100000, 999999)}"
 
-# Registrar el correo de un usuario con verificación (/setmail)
+# Modificación de la función set_mail para enviar el código de verificación por correo
 async def set_mail(client, message):
     email = message.text.split(' ', 1)[1]
-    user_id = str(message.from_user.id)
+    user_id = message.from_user.id
 
-    # Eliminar cualquier correo previamente registrado
-    if user_id in user_emails:
-        del user_emails[user_id]
+    # Revisar MAIL_CONFIRMED
+    mail_confirmed = os.getenv('MAIL_CONFIRMED')
+    if mail_confirmed:
+        confirmed_users = {item.split('=')[0]: item.split('=')[1:] for item in mail_confirmed.split(',')}
+        if str(user_id) in confirmed_users and email in confirmed_users[str(user_id)]:
+            user_emails[user_id] = email
+            await message.reply("Correo electrónico registrado automáticamente porque está confirmado en el entorno.")
+            return
 
-    # Obtener MAIL_CONFIRMED desde las variables de entorno
-    mail_confirmed = os.getenv('MAIL_CONFIRMED', '')
-    mail_confirmed_dict = {entry.split('=')[0]: entry.split('=')[1]
-                           for entry in mail_confirmed.split(',') if '=' in entry}
+    # Generar código de verificación y enviarlo por correo
+    verification_code = generate_verification_code()
 
-    # Si el User ID y el correo están confirmados, registrar directamente
-    if user_id in mail_confirmed_dict and email == mail_confirmed_dict[user_id]:
-        user_emails[user_id] = [email]
-        await message.reply(f"El correo {email} registrado correctamente en user_emails.")
-        return
-
-    # Iniciar proceso de verificación si no está confirmado
-    await message.reply(f"El correo {email} no está confirmado. Iniciando proceso de verificación...")
-    code = generate_verification_code()
-    verification_codes[user_id] = {'email': email, 'code': code}
-
+    # Enviar el correo con el código de verificación
     try:
         msg = EmailMessage()
         msg['Subject'] = 'Código de Verificación'
         msg['From'] = os.getenv('DISMAIL')
         msg['To'] = email
-        msg.set_content(f"Tu código de verificación es: {code}")
+        msg.set_content(f"Tu código de verificación es: {verification_code}")
+
         with smtplib.SMTP('disroot.org', 587) as server:
             server.starttls()
             server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
             server.send_message(msg)
-        await message.reply(f"Código de verificación enviado a {email}. Usa /verify Código para verificar.")
+
+        # Almacenar temporalmente el código y el correo
+        verification_storage[user_id] = {'email': email, 'code': verification_code}
+
+        await message.reply("Código de verificación enviado a tu correo. Por favor, verifica el código para registrar tu correo electrónico.")
     except Exception as e:
-        await message.reply(f"Error al enviar el código de verificación: {e}")
+        await message.reply(f"Error al enviar el correo de verificación: {e}")
 
-# Verificar el correo mediante el código (/verify)
+# Función para verificar el código y registrar el correo
 async def verify_mail(client, message):
-    user_id = str(message.from_user.id)
-    if user_id not in verification_codes:
-        await message.reply("No hay un proceso de verificación en curso para tu usuario. Usa /setmail primero.")
-        return
-
+    user_id = message.from_user.id
     code = message.text.split(' ', 1)[1]
-    if verification_codes[user_id]['code'] == code:
-        email = verification_codes[user_id]['email']
-        del verification_codes[user_id]
 
-        # Agregar el correo a MAIL_CONFIRMED
-        mail_confirmed = os.getenv('MAIL_CONFIRMED', '')
-        if mail_confirmed:
-            mail_confirmed += f",{user_id}={email}"
+    if user_id in verification_storage:
+        stored_email = verification_storage[user_id]['email']
+        stored_code = verification_storage[user_id]['code']
+        if code == stored_code:
+            user_emails[user_id] = stored_email
+            del verification_storage[user_id]  # Eliminar almacenamiento temporal
+            await message.reply("Correo electrónico verificado y registrado correctamente.")
         else:
-            mail_confirmed = f"{user_id}={email}"
-        os.environ['MAIL_CONFIRMED'] = mail_confirmed
-
-        # Registrar el correo en user_emails
-        user_emails[user_id] = [email]
-        await message.reply("Correo electrónico verificado y registrado correctamente.")
+            await message.reply("El código de verificación es incorrecto. Intenta de nuevo.")
     else:
-        await message.reply("Código de verificación incorrecto. Intenta nuevamente.")
+        await message.reply("No hay un código de verificación pendiente. Usa /setmail para iniciar el proceso.")
 
 # Enviar correo al usuario registrado (/sendmail)
 async def send_mail(client, message):
