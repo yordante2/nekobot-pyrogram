@@ -19,45 +19,39 @@ async def set_mail(client, message):
     email = message.text.split(' ', 1)[1]
     user_id = str(message.from_user.id)
 
-    # Verificar si el User ID tiene correos verificados en MAIL_CONFIRMED
+    # Obtener MAIL_CONFIRMED y verificar si el usuario o correo están en él
     mail_confirmed = os.getenv('MAIL_CONFIRMED', '')
-    user_entries = [entry for entry in mail_confirmed.split(',') if entry.startswith(f"{user_id}=")]
+    mail_confirmed_dict = {entry.split('=')[0]: entry.split('=')[1]
+                           for entry in mail_confirmed.split(',') if '=' in entry}
 
-    if user_entries:
-        # Extraer correos confirmados desde MAIL_CONFIRMED
-        mail_confirmed_dict = {entry.split('=')[0]: entry.split('=')[1]
-                               for entry in mail_confirmed.split(',') if '=' in entry}
+    # Si el usuario y el correo están confirmados, registrar en user_emails
+    if user_id in mail_confirmed_dict and email == mail_confirmed_dict[user_id]:
+        if user_id not in user_emails:
+            user_emails[user_id] = [email]
+        elif email not in user_emails[user_id]:
+            user_emails[user_id].append(email)
+        await message.reply(f"El correo {email} registrado correctamente en user_emails.")
+        return
 
-        # Verificar si el correo está confirmado y registrar en user_emails
-        if email == mail_confirmed_dict.get(user_id, ''):
-            if user_id not in user_emails:
-                user_emails[user_id] = [email]  # Registrar en user_emails
-            elif email not in user_emails[user_id]:
-                user_emails[user_id].append(email)  # Asegurar que el correo no esté duplicado
-            await message.reply(f"El correo {email} registrado correctamente en user_emails.")
-            return
-        else:
-            await message.reply(f"El correo {email} no está confirmado. Iniciando proceso de verificación...")
-            code = generate_verification_code()
-            verification_codes[user_id] = {'email': email, 'code': code}
+    # Si no están confirmados, iniciar proceso de verificación
+    await message.reply(f"El correo {email} no está confirmado. Iniciando proceso de verificación...")
+    code = generate_verification_code()
+    verification_codes[user_id] = {'email': email, 'code': code}
 
-            # Enviar el código de verificación
-            try:
-                msg = EmailMessage()
-                msg['Subject'] = 'Código de Verificación'
-                msg['From'] = os.getenv('DISMAIL')
-                msg['To'] = email
-                msg.set_content(f"Tu código de verificación es: {code}")
-                with smtplib.SMTP('disroot.org', 587) as server:
-                    server.starttls()
-                    server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
-                    server.send_message(msg)
-                await message.reply(f"Código de verificación enviado a {email}. Usa /verify Código para verificar.")
-            except Exception as e:
-                await message.reply(f"Error al enviar el código de verificación: {e}")
-            return
-    else:
-        await message.reply("No se encontraron entradas para este usuario en la variable MAIL_CONFIRMED.")
+    # Enviar el código de verificación
+    try:
+        msg = EmailMessage()
+        msg['Subject'] = 'Código de Verificación'
+        msg['From'] = os.getenv('DISMAIL')
+        msg['To'] = email
+        msg.set_content(f"Tu código de verificación es: {code}")
+        with smtplib.SMTP('disroot.org', 587) as server:
+            server.starttls()
+            server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+            server.send_message(msg)
+        await message.reply(f"Código de verificación enviado a {email}. Usa /verify Código para verificar.")
+    except Exception as e:
+        await message.reply(f"Error al enviar el código de verificación: {e}")
 
 # Verificar el correo del usuario
 async def verify_mail(client, message):
