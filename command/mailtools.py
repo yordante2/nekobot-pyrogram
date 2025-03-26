@@ -81,26 +81,28 @@ async def verify_mail(client, message):
             
 
 # Función para comprimir y dividir archivos en partes
-def compressfile(file_path, part_size):
+def compressfile(file_path, part_size)
     parts = []
-    part_size *= 1024 * 1024  # Convertir el tamaño a bytes
+    part_size *= 1024 * 1024
     archive_path = f"{file_path}.7z"
     with py7zr.SevenZipFile(archive_path, 'w') as archive:
         archive.write(file_path, os.path.basename(file_path))
     with open(archive_path, 'rb') as archive:
         part_num = 1
-        base_name = os.path.splitext(archive_path)[0]  # Quitar extensión .7z
         while True:
             part_data = archive.read(part_size)
             if not part_data:
                 break
-            part_file = f"{base_name}.{part_num:03d}"  # Crear nombre de parte adecuado
+            part_file = f"{archive_path}.{part_num:03d}"  
+            if part_file.endswith(".7z"):  
+                part_file = part_file[:-3]  
+            
             with open(part_file, 'wb') as part:
                 part.write(part_data)
             parts.append(part_file)
             part_num += 1
     return parts
-    
+
 # Enviar correo al usuario registrado
 async def send_mail(client, message):
     user_id = message.from_user.id
