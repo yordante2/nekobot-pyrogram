@@ -99,42 +99,37 @@ async def send_mail(client, message):
         return
     email = user_emails[user_id]
 
+    # Identificar a qué tipo de mensaje se está respondiendo
+    if not message.reply_to_message:
+        await message.reply("Por favor, responde a un mensaje.")
+        return
+    
+    if message.reply_to_message.text:
+        try:
+            # Si el mensaje al que responde es textual, enviar directamente
+            msg = EmailMessage()
+            msg['Subject'] = 'Mensaje de Telegram'
+            msg['From'] = os.getenv('DISMAIL')
+            msg['To'] = email
+            msg.set_content(message.reply_to_message.text)
+            with smtplib.SMTP('disroot.org', 587) as server:
+                server.starttls()
+                server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+                server.send_message(msg)
+            await message.reply("Mensaje enviado correctamente.")
+        except Exception as e:
+            await message.reply(f"Error al enviar el mensaje: {e}")
+        return
+
     # Obtener las variables de entorno
     mail_mb = os.getenv('MAIL_MB')
     mail_delay = os.getenv('MAIL_DELAY')
 
-    if mail_mb and mail_delay:
-        mail_mb = int(mail_mb)  # Convertir a entero
-        mail_delay = float(mail_delay)  # Convertir a flotante
+    if message.reply_to_message.document or message.reply_to_message.photo:
+        media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
 
-        if message.reply_to_message:
-            media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
-            if os.path.getsize(media) > mail_mb * 1024 * 1024:
-                parts = compressfile(media, mail_mb)
-                for part in parts:
-                    try:
-                        msg = EmailMessage()
-                        msg['Subject'] = 'Parte de archivo comprimido'
-                        msg['From'] = os.getenv('DISMAIL')
-                        msg['To'] = email
-                        with open(part, 'rb') as f:
-                            msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(part))
-                        with smtplib.SMTP('disroot.org', 587) as server:
-                            server.starttls()
-                            server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
-                            server.send_message(msg)
-                        await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.")
-                        time.sleep(mail_delay)  # Esperar el tiempo indicado antes de enviar la siguiente parte
-                    except Exception as e:
-                        await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}")
-            else:
-                await message.reply("El archivo no supera el tamaño indicado en MAIL_MB. No se realizará compresión.")
-        else:
-            await message.reply("Por favor, responde a un mensaje con un archivo para procesarlo.")
-    else:
-        # Si las variables no están definidas, enviar el archivo completo sin compresión ni delay
-        if message.reply_to_message:
-            media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
+        # Cuando las variables MAIL_MB son opcionales
+        if not mail_mb:
             try:
                 msg = EmailMessage()
                 msg['Subject'] = 'Archivo de Telegram'
@@ -149,5 +144,41 @@ async def send_mail(client, message):
                 await message.reply("Archivo enviado correctamente.")
             except Exception as e:
                 await message.reply(f"Error al enviar el archivo: {e}")
+            return
+
+        # Convertir MAIL_MB a entero si existe
+        mail_mb = int(mail_mb)
+        if os.path.getsize(media) <= mail_mb * 1024 * 1024:
+            try:
+                msg = EmailMessage()
+                msg['Subject'] = 'Archivo de Telegram'
+                msg['From'] = os.getenv('DISMAIL')
+                msg['To'] = email
+                with open(media, 'rb') as f:
+                    msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
+                with smtplib.SMTP('disroot.org', 587) as server:
+                    server.starttls()
+                    server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+                    server.send_message(msg)
+                await message.reply("Archivo enviado correctamente sin compresión.")
+            except Exception as e:
+                await message.reply(f"Error al enviar el archivo: {e}")
         else:
-            await message.reply("Por favor, responde a un mensaje con un archivo para procesarlo.")
+            # Lógica para comprimir si el tamaño excede MAIL_MB
+            parts = compressfile(media, mail_mb)
+            for part in parts:
+                try:
+                    msg = EmailMessage()
+                    msg['Subject'] = 'Parte de archivo comprimido'
+                    msg['From'] = os.getenv('DISMAIL')
+                    msg['To'] = email
+                    with open(part, 'rb') as f:
+                        msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(part))
+                    with smtplib.SMTP('disroot.org', 587) as server:
+                        server.starttls()
+                        server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+                        server.send_message(msg)
+                    await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.")
+                    time.sleep(float(mail_delay) if mail_delay else 0)  # Esperar antes de enviar la siguiente parte
+                except Exception as e:
+                    await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}")
