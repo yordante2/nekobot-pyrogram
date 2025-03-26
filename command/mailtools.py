@@ -31,7 +31,7 @@ async def set_mail(client, message):
         }
         if str(user_id) in confirmed_users and email in confirmed_users[str(user_id)]:
             user_emails[user_id] = email
-            await message.reply("Correo electrónico registrado automáticamente porque está confirmado en el entorno.")
+            await message.reply("Correo electrónico registrado automáticamente porque el administrador de bot reconoce tu dirección")
             return
 
     # Generar código de verificación y enviarlo por correo
@@ -41,9 +41,12 @@ async def set_mail(client, message):
     try:
         msg = EmailMessage()
         msg['Subject'] = 'Código de Verificación'
-        msg['From'] = os.getenv('DISMAIL')
+        msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
         msg['To'] = email
-        msg.set_content(f"Tu código de verificación es: {verification_code}")
+        msg.set_content(f"""
+        Tu código de verificación de correo es: {verification_code}
+        Si no solicitaste este código simplemente ignoralo.
+        """)
 
         with smtplib.SMTP('disroot.org', 587) as server:
             server.starttls()
@@ -53,7 +56,7 @@ async def set_mail(client, message):
         # Almacenar temporalmente el código y el correo
         verification_storage[user_id] = {'email': email, 'code': verification_code}
 
-        await message.reply("Código de verificación enviado a tu correo. Por favor, verifica el código para registrar tu correo electrónico.")
+        await message.reply("Código de verificación enviado a tu correo. Introdusca el codigo usando /verify")
     except Exception as e:
         await message.reply(f"Error al enviar el correo de verificación: {e}")
         
@@ -86,17 +89,18 @@ def compressfile(file_path, part_size):
         archive.write(file_path, os.path.basename(file_path))
     with open(archive_path, 'rb') as archive:
         part_num = 1
+        base_name = os.path.splitext(archive_path)[0]  # Quitar extensión .7z
         while True:
             part_data = archive.read(part_size)
             if not part_data:
                 break
-            part_file = f"{archive_path}.{part_num:03d}"
+            part_file = f"{base_name}.{part_num:03d}"  # Crear nombre de parte adecuado
             with open(part_file, 'wb') as part:
                 part.write(part_data)
             parts.append(part_file)
             part_num += 1
     return parts
-
+    
 # Enviar correo al usuario registrado
 async def send_mail(client, message):
     user_id = message.from_user.id
@@ -115,7 +119,7 @@ async def send_mail(client, message):
             # Si el mensaje al que responde es textual, enviar directamente
             msg = EmailMessage()
             msg['Subject'] = 'Mensaje de Telegram'
-            msg['From'] = os.getenv('DISMAIL')
+            msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
             msg['To'] = email
             msg.set_content(message.reply_to_message.text)
             with smtplib.SMTP('disroot.org', 587) as server:
@@ -139,7 +143,7 @@ async def send_mail(client, message):
             try:
                 msg = EmailMessage()
                 msg['Subject'] = 'Archivo de Telegram'
-                msg['From'] = os.getenv('DISMAIL')
+                msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
                 msg['To'] = email
                 with open(media, 'rb') as f:
                     msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
@@ -158,7 +162,7 @@ async def send_mail(client, message):
             try:
                 msg = EmailMessage()
                 msg['Subject'] = 'Archivo de Telegram'
-                msg['From'] = os.getenv('DISMAIL')
+                msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
                 msg['To'] = email
                 with open(media, 'rb') as f:
                     msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
@@ -171,6 +175,7 @@ async def send_mail(client, message):
                 await message.reply(f"Error al enviar el archivo: {e}")
         else:
             # Lógica para comprimir si el tamaño excede MAIL_MB
+            await message.reply(f"El archivo supera el limite de {mail_mb} MB, se iniciara la autocompreción")
             parts = compressfile(media, mail_mb)
             for part in parts:
                 try:
