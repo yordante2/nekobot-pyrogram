@@ -58,12 +58,12 @@ async def verify_mail(client, message):
     user_id = message.from_user.id
     code = message.text.split(' ', 1)[1]
 
-    if user_id in verification_storage:
-        stored_email = verification_storage[user_id]['email']
-        stored_code = verification_storage[user_id]['code']
+    if user_id in verification_codes:
+        stored_email = verification_codes[user_id]['email']
+        stored_code = verification_codes[user_id]['code']
         if code == stored_code:
             user_emails[user_id] = stored_email
-            del verification_storage[user_id]  # Eliminar almacenamiento temporal
+            del verification_codes[user_id]  # Eliminar almacenamiento temporal
             await message.reply("Correo electrónico verificado y registrado correctamente.")
         else:
             await message.reply("El código de verificación es incorrecto. Intenta de nuevo.")
