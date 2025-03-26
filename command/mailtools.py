@@ -22,36 +22,42 @@ async def set_mail(client, message):
     # Verificar si el User ID tiene correos verificados en MAIL_CONFIRMED
     mail_confirmed = os.getenv('MAIL_CONFIRMED', '')
     user_entries = [entry for entry in mail_confirmed.split(',') if entry.startswith(f"{user_id}=")]
-    
+
     if user_entries:
-        # Extraer correos existentes y agregar el nuevo al diccionario user_emails
-        existing_emails = user_entries[0].split('=')[1:]  # Obtener correos asociados al User ID
-        user_emails[user_id] = existing_emails
-        if email not in user_emails[user_id]:
-            user_emails[user_id].append(email)
-        
-        await message.reply(f"Correo registrado directamente en user_emails: {email}.")
-        return
+        # Extraer correos confirmados desde MAIL_CONFIRMED
+        mail_confirmed_dict = {entry.split('=')[0]: entry.split('=')[1]
+                               for entry in mail_confirmed.split(',') if '=' in entry}
 
-    # Si no tiene correos verificados, iniciar proceso de verificación
-    code = generate_verification_code()
-    verification_codes[user_id] = {'email': email, 'code': code}
+        # Verificar si el correo está confirmado y registrar en user_emails
+        if email == mail_confirmed_dict.get(user_id, ''):
+            if user_id not in user_emails:
+                user_emails[user_id] = [email]  # Registrar en user_emails
+            elif email not in user_emails[user_id]:
+                user_emails[user_id].append(email)  # Asegurar que el correo no esté duplicado
+            await message.reply(f"El correo {email} registrado correctamente en user_emails.")
+            return
+        else:
+            await message.reply(f"El correo {email} no está confirmado. Iniciando proceso de verificación...")
+            code = generate_verification_code()
+            verification_codes[user_id] = {'email': email, 'code': code}
 
-    # Enviar el código al correo
-    try:
-        msg = EmailMessage()
-        msg['Subject'] = 'Código de Verificación'
-        msg['From'] = os.getenv('DISMAIL')
-        msg['To'] = email
-        msg.set_content(f"Tu código de verificación es: {code}")
-        with smtplib.SMTP('disroot.org', 587) as server:
-            server.starttls()
-            server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
-            server.send_message(msg)
-        await message.reply(f"Código de verificación enviado a {email}. Usa /verify Código para verificar.")
-    except Exception as e:
-        await message.reply(f"Error al enviar el código de verificación: {e}")
-        
+            # Enviar el código de verificación
+            try:
+                msg = EmailMessage()
+                msg['Subject'] = 'Código de Verificación'
+                msg['From'] = os.getenv('DISMAIL')
+                msg['To'] = email
+                msg.set_content(f"Tu código de verificación es: {code}")
+                with smtplib.SMTP('disroot.org', 587) as server:
+                    server.starttls()
+                    server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+                    server.send_message(msg)
+                await message.reply(f"Código de verificación enviado a {email}. Usa /verify Código para verificar.")
+            except Exception as e:
+                await message.reply(f"Error al enviar el código de verificación: {e}")
+            return
+    else:
+        await message.reply("No se encontraron entradas para este usuario en la variable MAIL_CONFIRMED.")
 
 # Verificar el correo del usuario
 async def verify_mail(client, message):
@@ -59,7 +65,7 @@ async def verify_mail(client, message):
     if user_id not in verification_codes:
         await message.reply("No hay un proceso de verificación en curso para tu usuario. Usa /setmail primero.")
         return
-    
+
     code = message.text.split(' ', 1)[1]
     if verification_codes[user_id]['code'] == code:
         email = verification_codes[user_id]['email']
@@ -71,8 +77,15 @@ async def verify_mail(client, message):
             mail_confirmed += f",{user_id}={email}"
         else:
             mail_confirmed = f"{user_id}={email}"
-        
+
         os.environ['MAIL_CONFIRMED'] = mail_confirmed
+
+        # Registrar en user_emails
+        if user_id not in user_emails:
+            user_emails[user_id] = [email]
+        elif email not in user_emails[user_id]:
+            user_emails[user_id].append(email)
+
         await message.reply("Correo electrónico verificado y registrado correctamente.")
     else:
         await message.reply("Código de verificación incorrecto. Intenta nuevamente.")
@@ -108,15 +121,12 @@ async def send_mail(client, message):
 
     email = mail_confirmed.split(f"{user_id}=")[1].split(',')[0]
 
-    # Definir las variables
+    # Verificar si hay archivos adjuntos
     tiene_archivos = message.reply_to_message and hasattr(message.reply_to_message, 'media')
-    sobre_limite = tiene_archivos and os.getenv('MAIL_MB') and os.path.getsize(await client.download_media(message.reply_to_message, file_name='mailtemp/')) > int(os.getenv('MAIL_MB')) * 1024 * 1024
-    debajo_limite = tiene_archivos and os.getenv('MAIL_MB') and os.path.getsize(await client.download_media(message.reply_to_message, file_name='mailtemp/')) <= int(os.getenv('MAIL_MB')) * 1024 * 1024
-    no_limite = tiene_archivos and not os.getenv('MAIL_MB')
 
-    # Acción según las variables
     if not tiene_archivos:
         try:
+            # Enviar correo como texto simple
             msg = EmailMessage()
             msg['Subject'] = 'Mensaje de texto'
             msg['From'] = os.getenv('DISMAIL')
@@ -129,6 +139,12 @@ async def send_mail(client, message):
             await message.reply("Correo de texto enviado correctamente.")
         except Exception as e:
             await message.reply(f"Error al enviar el correo: {e}")
+        return  # Termina la función aquí si no hay archivos
+
+    # Si hay archivos, procesar y verificar límites
+    sobre_limite = os.getenv('MAIL_MB') and os.path.getsize(await client.download_media(message.reply_to_message, file_name='mailtemp/')) > int(os.getenv('MAIL_MB')) * 1024 * 1024
+    debajo_limite = os.getenv('MAIL_MB') and os.path.getsize(await client.download_media(message.reply_to_message, file_name='mailtemp/')) <= int(os.getenv('MAIL_MB')) * 1024 * 1024
+    no_limite = not os.getenv('MAIL_MB')
 
     if sobre_limite:
         media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
@@ -166,4 +182,3 @@ async def send_mail(client, message):
             await message.reply("Archivo enviado correctamente.")
         except Exception as e:
             await message.reply(f"Error al enviar el archivo: {e}")
-            
