@@ -20,7 +20,7 @@ async def set_mail(client, message):
     email = message.text.split(' ', 1)[1]
     user_id = str(message.from_user.id)
 
-    # Si el usuario ya tenía un correo registrado en user_emails, se elimina.
+    # Si el usuario ya tiene un correo registrado, se elimina primero
     if user_id in user_emails:
         del user_emails[user_id]
 
@@ -30,7 +30,7 @@ async def set_mail(client, message):
     mail_confirmed_dict = {entry.split('=')[0]: entry.split('=')[1]
                            for entry in mail_confirmed.split(',') if '=' in entry}
 
-    # Si el User ID y el correo ya están confirmados, regístralo en user_emails sin iniciar verificación.
+    # Si el User ID y el correo ya están confirmados, regístralo directamente en user_emails.
     if user_id in mail_confirmed_dict and email == mail_confirmed_dict[user_id]:
         user_emails[user_id] = [email]
         await message.reply(f"El correo {email} registrado correctamente en user_emails.")
@@ -118,12 +118,12 @@ async def send_mail(client, message):
         await message.reply("Error al obtener el correo confirmado.")
         return
 
-    # Se determina si hay archivos adjuntos (si se responde a un mensaje que contenga media)
+    # Determinar si hay archivos adjuntos
     tiene_archivos = message.reply_to_message and hasattr(message.reply_to_message, 'media')
 
-    # Si no hay archivos, se envía un correo de solo texto. (No se realiza descarga alguna.)
+    # Si no hay archivos, enviar un correo de solo texto
     if not tiene_archivos:
-        if not message.text:
+        if not message.text.strip():
             await message.reply("No hay texto para enviar en el correo.")
             return
         try:
@@ -141,8 +141,7 @@ async def send_mail(client, message):
             await message.reply(f"Error al enviar el correo: {e}")
         return  # Finaliza la función si no hay archivos.
 
-    # Si hay archivos adjuntos, se procede a descargar y enviar según el tamaño.
-    # Para evitar múltiples llamadas a download_media, se descarga una sola vez:
+    # Si hay archivos, descargar y procesar según el tamaño.
     media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
     media_size = os.path.getsize(media) if os.path.exists(media) else 0
 
