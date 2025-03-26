@@ -24,7 +24,11 @@ async def set_mail(client, message):
     # Revisar MAIL_CONFIRMED
     mail_confirmed = os.getenv('MAIL_CONFIRMED')
     if mail_confirmed:
-        confirmed_users = {item.split('=')[0]: item.split('=')[1:] for item in mail_confirmed.split(',')}
+        # Convertir a un diccionario, permitiendo múltiples correos por user_id
+        confirmed_users = {
+            item.split('=')[0]: item.split('=')[1].split(';') 
+            for item in mail_confirmed.split(',')
+        }
         if str(user_id) in confirmed_users and email in confirmed_users[str(user_id)]:
             user_emails[user_id] = email
             await message.reply("Correo electrónico registrado automáticamente porque está confirmado en el entorno.")
@@ -52,6 +56,8 @@ async def set_mail(client, message):
         await message.reply("Código de verificación enviado a tu correo. Por favor, verifica el código para registrar tu correo electrónico.")
     except Exception as e:
         await message.reply(f"Error al enviar el correo de verificación: {e}")
+        
+
 
 # Función para verificar el código y registrar el correo
 async def verify_mail(client, message):
