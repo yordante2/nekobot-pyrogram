@@ -18,11 +18,22 @@ def generate_verification_code():
 async def set_mail(client, message):
     email = message.text.split(' ', 1)[1]
     user_id = str(message.from_user.id)
+
+    # Verificar si el User ID tiene correos verificados en MAIL_CONFIRMED
+    mail_confirmed = os.getenv('MAIL_CONFIRMED', '')
+    user_entries = [entry for entry in mail_confirmed.split(',') if entry.startswith(f"{user_id}=")]
     
-    if user_id in os.getenv('MAIL_CONFIRMED', ''):
-        await message.reply("El correo ya ha sido registrado y verificado previamente.")
+    if user_entries:
+        # Extraer correos existentes y agregar el nuevo al diccionario user_emails
+        existing_emails = user_entries[0].split('=')[1:]  # Obtener correos asociados al User ID
+        user_emails[user_id] = existing_emails
+        if email not in user_emails[user_id]:
+            user_emails[user_id].append(email)
+        
+        await message.reply(f"Correo registrado directamente en user_emails: {email}.")
         return
 
+    # Si no tiene correos verificados, iniciar proceso de verificación
     code = generate_verification_code()
     verification_codes[user_id] = {'email': email, 'code': code}
 
@@ -40,6 +51,7 @@ async def set_mail(client, message):
         await message.reply(f"Código de verificación enviado a {email}. Usa /verify Código para verificar.")
     except Exception as e:
         await message.reply(f"Error al enviar el código de verificación: {e}")
+        
 
 # Verificar el correo del usuario
 async def verify_mail(client, message):
