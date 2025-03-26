@@ -48,7 +48,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(set_mail(client, message))
             elif text.startswith("/sendmail"):
                 await asyncio.create_task(send_mail(client, message))
-            elif text.startswith("/sendmail"):
+            elif text.startswith("/verify"):
                 await asyncio.create_task(verify_mail(client, message))
                     
         return
