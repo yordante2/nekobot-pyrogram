@@ -81,7 +81,7 @@ async def verify_mail(client, message):
             
 
 # Función para comprimir y dividir archivos en partes
-def compressfile(file_path, part_size)
+def compressfile(file_path, part_size):
     parts = []
     part_size *= 1024 * 1024
     archive_path = f"{file_path}.7z"
