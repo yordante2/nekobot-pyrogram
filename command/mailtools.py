@@ -52,7 +52,24 @@ async def set_mail(client, message):
         await message.reply("Código de verificación enviado a tu correo. Por favor, verifica el código para registrar tu correo electrónico.")
     except Exception as e:
         await message.reply(f"Error al enviar el correo de verificación: {e}")
-        
+
+# Función para verificar el código y registrar el correo
+async def verify_mail(client, message):
+    user_id = message.from_user.id
+    code = message.text.split(' ', 1)[1]
+
+    if user_id in verification_storage:
+        stored_email = verification_storage[user_id]['email']
+        stored_code = verification_storage[user_id]['code']
+        if code == stored_code:
+            user_emails[user_id] = stored_email
+            del verification_storage[user_id]  # Eliminar almacenamiento temporal
+            await message.reply("Correo electrónico verificado y registrado correctamente.")
+        else:
+            await message.reply("El código de verificación es incorrecto. Intenta de nuevo.")
+    else:
+        await message.reply("No hay un código de verificación pendiente. Usa /setmail para iniciar el proceso.")
+            
 
 # Función para comprimir y dividir archivos en partes
 def compressfile(file_path, part_size):
