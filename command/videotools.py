@@ -4,7 +4,8 @@ import subprocess
 import re
 import datetime
 import uuid  # Para generar IDs únicos
-from video_processor import procesar_video
+from command.video_processor import procesar_video
+
 
 # Configuración inicial
 video_settings = {
