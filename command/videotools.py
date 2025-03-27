@@ -50,7 +50,7 @@ async def cancelar_tarea(client, task_id, chat_id):
         tareas_en_ejecucion[task_id]["cancel"] = True
         await client.send_message(chat_id=chat_id, text=f"❌ Tarea `{task_id}` cancelada.")
     elif task_id in [t["id"] for t in cola_de_tareas]:
-        global cola_de_tareas
+        #global cola_de_tareas
         cola_de_tareas = [t for t in cola_de_tareas if t["id"] != task_id]
         await client.send_message(chat_id=chat_id, text=f"❌ Tarea `{task_id}` eliminada de la cola.")
     else:
