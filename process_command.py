@@ -18,6 +18,21 @@ nest_asyncio.apply()
 
 admin_users = list(map(int, os.getenv('ADMINS').split(',')))
 
+auto = false
+async def setauto(client,user_id):
+    global auto
+    if auto is false:
+        auto = true
+        client.send_message(chat_id=user_id, text="Se ha activado la auto conversión de videos")
+        return
+
+    if auto is true:
+        auto = false
+        client.send_message(chat_id=user_id, text="Se ha desactivado la auto conversión de videos")
+        return
+
+
+
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
     text = message.text.strip().lower()
     
@@ -63,10 +78,12 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(rename(client, message))
         return
     
-    elif text.startswith(("/convert", "/calidad")):
+    elif text.startswith(("/convert", "/calidad", "/autoconvert")):
         if cmd("videotools", user_id in admin_users):
             if text.startswith("/convert"):
                 await asyncio.create_task(compress_video(client, message))
+            elif text.startswith("/autoconvert"):
+                await asyncio.create_task(setauto(client, user_id))
             elif text.startswith("/calidad"):
                 await asyncio.create_task(update_video_settings(client, message))
         return
