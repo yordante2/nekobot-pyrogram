@@ -96,8 +96,12 @@ async def compress_video(client, message, original_video_path):
                     # Calcular el porcentaje procesado
                     percentage = (current_time / total_duration) * 100
 
-                    # Tiempo transcurrido desde el inicio del procesamiento
-                    elapsed_time = str(datetime.datetime.now() - start_time).split('.')[0]
+                    # Estimar el tiempo restante
+                    elapsed_time = datetime.datetime.now() - start_time
+                    elapsed_seconds = elapsed_time.total_seconds()
+                    estimated_total_time = elapsed_seconds / (percentage / 100) if percentage > 0 else 0
+                    remaining_seconds = estimated_total_time - elapsed_seconds
+                    remaining_time = str(datetime.timedelta(seconds=int(remaining_seconds)))
 
                     # Actualiza el mensaje cada 10 segundos
                     if (datetime.datetime.now() - last_update_time).seconds >= 10:
@@ -108,7 +112,8 @@ async def compress_video(client, message, original_video_path):
                                     f"📊 Tamaño procesado: `{readable_size}`\n"
                                     f"⏱️ Tiempo actual: `{current_time_str}` / `{str(datetime.timedelta(seconds=total_duration))}`\n"
                                     f"📈 Porcentaje completado: `{percentage:.2f}%`\n"
-                                    f"⏳ Tiempo total transcurrido: `{elapsed_time}`\n\n"
+                                    f"⏳ Tiempo total transcurrido: `{str(elapsed_time).split('.')[0]}`\n"
+                                    f"⌛ **Tiempo estimado restante:** `{remaining_time}`\n\n"
                                     f"🔄 El mensaje de progreso se edita cada 10 segundos..."
                                 )
                             )
