@@ -56,4 +56,4 @@ async def handle_message(client, message):
     admin_cmd = os.getenv("ADMIN_CMD", "").lower()
     await asyncio.create_task(process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id))
 
-app.run() I 
+app.run()
