@@ -9,7 +9,7 @@ from command.admintools import add_user, remove_user, add_chat, remove_chat, ban
 from command.imgtools import create_imgchest_post
 from command.webtools import handle_scan, handle_multiscan
 from command.mailtools import send_mail, set_mail, verify_mail
-from command.videotools import update_video_settings, compress_video
+from command.videotools import update_video_settings, compress_video, cancelar_tarea
 from command.filetools import handle_compress, rename, set_size
 
 nest_asyncio.apply()
@@ -71,8 +71,8 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/rename"):
                 await asyncio.create_task(rename(client, message))
         return
-    
-    elif text.startswith(("/convert", "/calidad", "/autoconvert")) or (message.video is not None):
+
+    elif text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel")) or (message.video is not None):
         if cmd("videotools", user_id in admin_users):
             if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
@@ -84,6 +84,18 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(setauto(client, user_id))
             elif text.startswith("/calidad"):
                 await asyncio.create_task(update_video_settings(client, message))
+            elif text.startswith("/cancel"):
+                try:
+                    # Obtener el ID de la tarea del mensaje
+                    task_id = text.split(" ", 1)[1].strip()
+                    # Cancelar la tarea si existe
+                    await cancelar_tarea(client, task_id, message.chat.id)
+                except IndexError:
+                    # Si el usuario no proporciona un ID
+                    await client.send_message(
+                        chat_id=message.chat.id,
+                        text="⚠️ Debes proporcionar un ID válido para cancelar la tarea. Ejemplo: `/cancel <ID>`"
+                    )
             elif auto and (message.video or message.document):
                 original_video_path = await client.download_media(message.video or message.document)
                 await asyncio.create_task(compress_video(client, message, original_video_path))
