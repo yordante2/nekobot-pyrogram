@@ -69,7 +69,7 @@ async def compress_video(client, message, original_video_path):
 
     try:
         # Llamar a la función que procesa el video
-        await procesar_video(client, message, original_video_path, task_id)
+        await procesar_video(client, message, original_video_path, task_id, tareas_en_ejecucion)
     finally:
         # Intentar eliminar la tarea en ejecución
         try:
