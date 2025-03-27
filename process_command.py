@@ -87,6 +87,24 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/calidad"):
                 await asyncio.create_task(update_video_settings(client, message))
         return
+    elif message.text.startswith(("/convert", "/calidad", "/autoconvert")) or (message.video is not None):
+        if cmd("videotools", user_id in admin_users):
+            if message.text.startswith("/convert"):
+                if message.reply_to_message and message.reply_to_message.media:
+                    original_video_path = await client.download_media(
+                        message.reply_to_message.video or message.reply_to_message.document
+                    )
+                    await asyncio.create_task(compress_video(client, message, original_video_path))
+            elif message.text.startswith("/autoconvert"):
+                await asyncio.create_task(setauto(client, user_id))
+            elif message.text.startswith("/calidad"):
+                await asyncio.create_task(update_video_settings(client, message))
+            # Nuevo paso: Si el mensaje es un vídeo y `auto = True`
+            elif message.video or message.document and auto:
+                original_video_path = await client.download_media(message.video)
+                await asyncio.create_task(compress_video(client, message, original_video_path))
+        return
+        
     
     elif text.startswith("/imgchest"):
         if cmd("imgtools", user_id in admin_users):
