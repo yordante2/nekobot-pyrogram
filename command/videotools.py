@@ -3,8 +3,9 @@ import os
 import subprocess
 import re
 import datetime
+import uuid  # Para generar IDs únicos
 
-# Configuración inicial de video_settings
+# Configuración inicial
 video_settings = {
     'resolution': '640x400',
     'crf': '28',
@@ -13,21 +14,21 @@ video_settings = {
     'preset': 'veryfast',
     'codec': 'libx265'
 }
+max_tareas = 1  # Número máximo de tareas simultáneas
+
+# Variables globales
+tareas_en_ejecucion = {}
+cola_de_tareas = []
 
 # Función para actualizar configuraciones de video
 async def update_video_settings(client, message):
     global video_settings
     try:
-        # Extraer parámetros del mensaje
         command_params = message.text.split()[1:]
         params = dict(item.split('=') for item in command_params)
-
-        # Actualizar video_settings con los nuevos valores
         for key, value in params.items():
             if key in video_settings:
                 video_settings[key] = value
-
-        # Responder con los nuevos valores actualizados
         configuracion_texto = "/calidad " + re.sub(r"[{},']", "", str(video_settings)).replace(":", "=").replace(",", " ")
         await message.reply_text(f"⚙️ Configuraciones de video actualizadas:\n`{configuracion_texto}`")
     except Exception as e:
@@ -43,12 +44,34 @@ def human_readable_size(size_in_kb):
     else:
         return f"{size_in_kb // (1024**2)} GB"
 
+# Función para cancelar una tarea
+async def cancelar_tarea(client, task_id, chat_id):
+    if task_id in tareas_en_ejecucion:
+        tareas_en_ejecucion[task_id]["cancel"] = True
+        await client.send_message(chat_id=chat_id, text=f"❌ Tarea `{task_id}` cancelada.")
+    elif task_id in [t["id"] for t in cola_de_tareas]:
+        global cola_de_tareas
+        cola_de_tareas = [t for t in cola_de_tareas if t["id"] != task_id]
+        await client.send_message(chat_id=chat_id, text=f"❌ Tarea `{task_id}` eliminada de la cola.")
+    else:
+        await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró la tarea `{task_id}`.")
+
 # Función para comprimir el video con manejo de progreso
 async def compress_video(client, message, original_video_path):
-    original_size = os.path.getsize(original_video_path)
+    task_id = str(uuid.uuid4())  # Generar un ID único para la tarea
+    chat_id = message.chat.id
+
+    # Añadir tarea a la cola si excede el límite de tareas simultáneas
+    if len(tareas_en_ejecucion) >= max_tareas:
+        cola_de_tareas.append({"id": task_id, "client": client, "message": message, "path": original_video_path})
+        await client.send_message(chat_id=chat_id, text=f"🕒 Tarea encolada con ID `{task_id}`.")
+        return
+
+    # Registrar la tarea como en ejecución
+    tareas_en_ejecucion[task_id] = {"cancel": False}
     progress_message = await client.send_message(
-        chat_id=message.chat.id,
-        text=f"🎥 Convirtiendo el video...\n📂 Tamaño original: {human_readable_size(original_size // 1024)}"
+        chat_id=chat_id,
+        text=f"🎥 Convirtiendo el video...\n📂 Tamaño original: {human_readable_size(os.path.getsize(original_video_path) // 1024)}\n`{task_id}`"
     )
 
     compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
@@ -61,23 +84,30 @@ async def compress_video(client, message, original_video_path):
     ]
 
     try:
-        # Obtener la duración total del video usando ffprobe
         total_duration = subprocess.check_output(
             ["ffprobe", "-v", "error", "-show_entries", "format=duration",
              "-of", "default=noprint_wrappers=1:nokey=1", original_video_path]
         )
-        total_duration = float(total_duration.strip())  # Convertir duración a segundos
+        total_duration = float(total_duration.strip())
 
         start_time = datetime.datetime.now()
         process = subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
         last_update_time = datetime.datetime.now()
 
         while True:
+            # Cancelación de la tarea
+            if tareas_en_ejecucion[task_id]["cancel"]:
+                process.terminate()
+                await progress_message.edit_text(f"❌ Proceso cancelado para `{task_id}`.")
+                del tareas_en_ejecucion[task_id]
+                if os.path.exists(compressed_video_path):
+                    os.remove(compressed_video_path)
+                return
+
             output = process.stderr.readline()
             if output == '' and process.poll() is not None:
                 break
 
-            # Filtrar y mostrar solo `size=` y `time=`
             if "size=" in output and "time=" in output:
                 match = re.search(r"size=\s*([\d]+).*time=([\d:.]+)", output)
                 if match:
@@ -85,26 +115,21 @@ async def compress_video(client, message, original_video_path):
                     size_kb = int(size_kb)
                     readable_size = human_readable_size(size_kb)
 
-                    # Convertir el tiempo actual del video a segundos
                     current_time_parts = list(map(float, current_time_str.split(':')))
                     current_time = (
-                        current_time_parts[0] * 3600 +  # Horas a segundos
-                        current_time_parts[1] * 60 +    # Minutos a segundos
-                        current_time_parts[2]           # Segundos
+                        current_time_parts[0] * 3600 +
+                        current_time_parts[1] * 60 +
+                        current_time_parts[2]
                     )
 
-                    # Calcular el porcentaje procesado
                     percentage = (current_time / total_duration) * 100
-
-                    # Estimar el tiempo restante
                     elapsed_time = datetime.datetime.now() - start_time
                     elapsed_seconds = elapsed_time.total_seconds()
                     estimated_total_time = elapsed_seconds / (percentage / 100) if percentage > 0 else 0
                     remaining_seconds = estimated_total_time - elapsed_seconds
                     remaining_time = str(datetime.timedelta(seconds=int(remaining_seconds)))
 
-                    # Actualiza el mensaje cada 10 segundos
-                    if (datetime.datetime.now() - last_update_time).seconds >= 1:
+                    if (datetime.datetime.now() - last_update_time).seconds >= 10:
                         try:
                             await progress_message.edit_text(
                                 text=(
@@ -114,31 +139,28 @@ async def compress_video(client, message, original_video_path):
                                     f"📈 Porcentaje completado: `{percentage:.2f}%`\n"
                                     f"⏳ Tiempo total transcurrido: `{str(elapsed_time).split('.')[0]}`\n"
                                     f"⌛ **Tiempo estimado restante:** `{remaining_time}`\n\n"
-                                    #f"🔄 El mensaje de progreso se edita cada 10 segundos..."
+                                    f"🔄 El mensaje de progreso se edita cada 10 segundos...\n`{task_id}`"
                                 )
                             )
                             last_update_time = datetime.datetime.now()
                         except Exception as e:
                             if "MESSAGE_NOT_MODIFIED" in str(e):
-                                pass  # Ignorar error si el mensaje no se modifica
+                                pass
                             else:
                                 raise
 
-        # Mostrar el mensaje "Proceso completado" durante 5 segundos antes de borrarlo
-        complete_message = await progress_message.edit_text("✅ **Proceso completado. Preparando resultados...**")
+        await progress_message.edit_text("✅ **Proceso completado. Preparando resultados...**")
         await asyncio.sleep(5)
-        await complete_message.delete()
+        await progress_message.delete()
 
         compressed_size = os.path.getsize(compressed_video_path)
         duration_str = str(datetime.timedelta(seconds=total_duration))
         processing_time = datetime.datetime.now() - start_time
         processing_time_str = str(processing_time).split('.')[0]
 
-        # Variables para el tamaño
-        original_size_display = human_readable_size(original_size // 1024)
-        compressed_size_display = human_readable_size(compressed_size // 1024)
+        original_size_display = human_readable_size(os.path.getsize(original_video_path) // 1024)
+        compressed_size_display = human_readable_size(os.path.getsize(compressed_video_path) // 1024)
 
-        # Descripción con unidades dinámicas
         description = (
             f"✅ **Archivo procesado correctamente ☑️**\n"
             f"📂 **Tamaño original:** {original_size_display}\n"
@@ -148,13 +170,23 @@ async def compress_video(client, message, original_video_path):
             f"🎉 **¡Gracias por usar el bot!**"
         )
         nombre = os.path.splitext(os.path.basename(compressed_video_path))[0]
-        
-        await client.send_video(chat_id=message.chat.id, video=compressed_video_path, caption=nombre)
-        await client.send_message(chat_id=message.chat.id, text=description)
+
+        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=nombre)
+        await client.send_message(chat_id=chat_id, text=description)
     except Exception as e:
-        await client.send_message(chat_id=message.chat.id, text=f"❌ **Ocurrió un error al comprimir el video:**\n{e}")
+        await client.send_message(chat_id=chat_id, text=f"❌ **Ocurrió un error al comprimir el video:**\n{e}")
     finally:
         if os.path.exists(original_video_path):
             os.remove(original_video_path)
         if os.path.exists(compressed_video_path):
             os.remove(compressed_video_path)
+        del tareas_en_ejecucion[task_id]
+        # Procesar la siguiente tarea en la cola
+        if cola_de_tareas:
+            siguiente_tarea = cola_de_tareas.pop(0)
+            await compress_video(
+                siguiente_tarea["client"],
+                siguiente_tarea["message"],
+                siguiente_tarea["path"]
+            )
+            
