@@ -76,10 +76,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         if cmd("videotools", user_id in admin_users):
             if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
-                    original_video_path = await client.download_media(
-                        message.reply_to_message.video or message.reply_to_message.document
-                    )
-                    await asyncio.create_task(compress_video(client, message, original_video_path))
+                    await asyncio.create_task(compress_video(client, message))
             elif text.startswith("/autoconvert"):
                 await asyncio.create_task(setauto(client, user_id))
             elif text.startswith("/calidad"):
