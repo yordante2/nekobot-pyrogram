@@ -3,8 +3,6 @@ import asyncio
 import nest_asyncio
 from pyrogram import Client
 from pyrogram.types import Message
-
-# Importa las funciones específicas que se utilizan en la lógica de comandos
 from command.moodleclient import upload_token
 from command.htools import nh_combined_operation
 from command.admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, handle_start
@@ -19,23 +17,20 @@ nest_asyncio.apply()
 admin_users = list(map(int, os.getenv('ADMINS').split(',')))
 
 auto = False
-async def setauto(client,user_id):
+
+async def setauto(client, user_id):
     global auto
-    if auto is False:
+    if not auto:
         auto = True
         await client.send_message(chat_id=user_id, text="Se ha activado la auto conversión de videos")
         return
-
-    if auto is True:
-        auto = False
-        await client.send_message(chat_id=user_id, text="Se ha desactivado la auto conversión de videos")
-        return
-
-
+    auto = False
+    await client.send_message(chat_id=user_id, text="Se ha desactivado la auto conversión de videos")
+    return
 
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
-    text = message.text.strip().lower()
-    
+    text = message.text.strip().lower() if message.text else ""
+
     def cmd(command_env, is_admin=False):
         return (
             active_cmd == "all" or 
@@ -65,7 +60,6 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(send_mail(client, message))
             elif text.startswith("/verify"):
                 await asyncio.create_task(verify_mail(client, message))
-                    
         return
     
     elif text.startswith(("/compress", "/setsize", "/rename")):
@@ -78,21 +72,20 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(rename(client, message))
         return
     
-    elif message.text.startswith(("/convert", "/calidad", "/autoconvert")) or (message.video is not None):
+    elif text.startswith(("/convert", "/calidad", "/autoconvert")) or (message.video is not None):
         if cmd("videotools", user_id in admin_users):
-            if message.text.startswith("/convert"):
+            if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
                     original_video_path = await client.download_media(
                         message.reply_to_message.video or message.reply_to_message.document
                     )
                     await asyncio.create_task(compress_video(client, message, original_video_path))
-            elif message.text.startswith("/autoconvert"):
+            elif text.startswith("/autoconvert"):
                 await asyncio.create_task(setauto(client, user_id))
-            elif message.text.startswith("/calidad"):
+            elif text.startswith("/calidad"):
                 await asyncio.create_task(update_video_settings(client, message))
-            # Nuevo paso: Si el mensaje es un vídeo y `auto = True`
             elif auto and (message.video or message.document):
-                original_video_path = await client.download_media(message.video)
+                original_video_path = await client.download_media(message.video or message.document)
                 await asyncio.create_task(compress_video(client, message, original_video_path))
         return
         
@@ -122,5 +115,3 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         elif text.startswith("/remchat"):
             await asyncio.create_task(remove_chat(client, message, user_id, chat_id))
         return
-
-            
