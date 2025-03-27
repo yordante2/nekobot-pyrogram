@@ -18,16 +18,16 @@ nest_asyncio.apply()
 
 admin_users = list(map(int, os.getenv('ADMINS').split(',')))
 
-auto = false
+auto = False
 async def setauto(client,user_id):
     global auto
-    if auto is false:
-        auto = true
+    if auto is False:
+        auto = True
         client.send_message(chat_id=user_id, text="Se ha activado la auto conversión de videos")
         return
 
-    if auto is true:
-        auto = false
+    if auto is True:
+        auto = False
         client.send_message(chat_id=user_id, text="Se ha desactivado la auto conversión de videos")
         return
 
