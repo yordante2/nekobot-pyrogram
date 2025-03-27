@@ -59,34 +59,41 @@ async def cancelar_tarea(client, task_id, chat_id):
         await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró la tarea con ID `{task_id}`.")
 
 
-async def compress_video(client, message, original_video_path):
+async def compress_video(client, message):
     global cola_de_tareas
     task_id = str(uuid.uuid4())
     chat_id = message.chat.id
 
+    # Si se excede el límite de tareas en ejecución, encolar la tarea
     if len(tareas_en_ejecucion) >= max_tareas:
-        cola_de_tareas.append({"id": task_id, "client": client, "message": message, "path": original_video_path})
+        cola_de_tareas.append({"id": task_id, "client": client, "message": message})
         await client.send_message(chat_id=chat_id, text=f"🕒 Tarea encolada con ID `{task_id}`.")
         return
 
+    # Registrar tarea en ejecución
     tareas_en_ejecucion[task_id] = {"cancel": False}
-    await client.send_message(
-        chat_id=chat_id,
-        text=f"🎥 Convirtiendo el video...\n`{task_id}`"
-    )
+    await client.send_message(chat_id=chat_id, text=f"🎥 Preparando la compresión del video...\n`{task_id}`")
 
     try:
-        await procesar_video(client, message, original_video_path, task_id, tareas_en_ejecucion)
+        # Identificar el archivo original a descargar
+        if message.video:  # Si el mensaje contiene un video directamente
+            video_path = await client.download_media(message.video)
+        elif message.reply_to_message and message.reply_to_message.video:  # Si es una respuesta con video
+            video_path = await client.download_media(message.reply_to_message.video)
+        else:
+            await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró un video en el mensaje o respuesta asociada.")
+            return
+
+        # Procesar el video (utilizando la lógica existente)
+        await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
     finally:
+        # Eliminar la tarea de la lista en ejecución
         try:
             del tareas_en_ejecucion[task_id]
         except KeyError:
             pass
 
+        # Procesar la siguiente tarea en la cola, si existe
         if cola_de_tareas:
             siguiente_tarea = cola_de_tareas.pop(0)
-            await compress_video(
-                siguiente_tarea["client"],
-                siguiente_tarea["message"],
-                siguiente_tarea["path"]
-            )
+            await compress_video(siguiente_tarea["client"], siguiente_tarea["message"])
