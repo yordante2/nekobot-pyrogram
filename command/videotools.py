@@ -72,7 +72,7 @@ async def compress_video(client, message, original_video_path):
     tareas_en_ejecucion[task_id] = {"cancel": False}
     progress_message = await client.send_message(
         chat_id=chat_id,
-        text=f"🎥 Convirtiendo el video...\n📂 Tamaño original: {human_readable_size(os.path.getsize(original_video_path) // 1024)}\n`{task_id}`"
+        text=f"🎥 Convirtiendo el video...\n📂 Tamaño original: {human_readable_size(os.path.getsize(original_video_path) // 1024)}"
     )
 
     compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
@@ -143,7 +143,8 @@ async def compress_video(client, message, original_video_path):
                                     f"📈 Porcentaje completado: `{percentage:.2f}%`\n"
                                     f"⏳ Tiempo total transcurrido: `{str(elapsed_time).split('.')[0]}`\n"
                                     f"⌛ **Tiempo estimado restante:** `{remaining_time}`\n\n"
-                                    f"🔄 El mensaje de progreso se edita cada segundo...\n`{task_id}`"
+                                    #f"🔄 El mensaje de progreso se edita cada segundo...\n"
+                                    f"❌ `/cancel {task_id}`"
                                 )
                             )
                             last_update_time = datetime.datetime.now()
