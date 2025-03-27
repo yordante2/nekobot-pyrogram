@@ -1,17 +1,7 @@
 import os
-import shutil
-import random
-import string
 import subprocess
-import requests
 import re
-from pyrogram import Client, filters
-from PIL import Image
 import datetime
-
-
-# Crear instancia del cliente
-app = Client("mi_bot")
 
 # Configuración inicial de video_settings
 video_settings = {
@@ -64,11 +54,13 @@ async def compress_video(client, message, original_video_path):
             if output == '' and process.poll() is not None:
                 break
 
-            if output:
-                print(f"\r{output.strip()}", end="", flush=True)
-                
-            else:
-                print("\r", end="", flush=True)
+            # Filtrar y mostrar solo `size=` y `time=`
+            if "size=" in output and "time=" in output:
+                match = re.search(r"size=\s*([\dA-Za-z]+).*time=([\d:.]+)", output)
+                if match:
+                    size, time = match.groups()
+                    print(f"Tamaño: {size}, Tiempo: {time}")
+
         compressed_size = os.path.getsize(compressed_video_path)
         duration = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries",
                                              "format=duration", "-of", "default=noprint_wrappers=1:nokey=1",
@@ -77,6 +69,7 @@ async def compress_video(client, message, original_video_path):
         duration_str = str(datetime.timedelta(seconds=duration))
         processing_time = datetime.datetime.now() - start_time
         processing_time_str = str(processing_time).split('.')[0]
+
         # Variables para el tamaño
         if original_size < (1024 * 1024):  # Menor a 1MB
             original_unit = "KB"
@@ -112,4 +105,3 @@ async def compress_video(client, message, original_video_path):
             os.remove(original_video_path)
         if os.path.exists(compressed_video_path):
             os.remove(compressed_video_path)
-        
