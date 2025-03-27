@@ -1,3 +1,4 @@
+import asyncio
 import os
 import subprocess
 import re
@@ -13,6 +14,7 @@ video_settings = {
     'codec': 'libx265'
 }
 
+# Función para actualizar configuraciones de video
 async def update_video_settings(client, message):
     global video_settings
     try:
@@ -31,12 +33,14 @@ async def update_video_settings(client, message):
     except Exception as e:
         await message.reply_text(f"Error al procesar el comando: {e}")
 
-async def compress_video(client, message, original_video_path):  
+# Función para comprimir el video con actualización de progreso cada 10 segundos
+async def compress_video(client, message, original_video_path):
     original_size = os.path.getsize(original_video_path)
-    await client.send_message(
+    progress_message = await client.send_message(
         chat_id=message.chat.id,
         text=f"Convirtiendo el video...\nTamaño original: {original_size // (1024 * 1024)} MB"
     )
+
     compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
     ffmpeg_command = [
         'ffmpeg', '-y', '-i', original_video_path,
@@ -45,24 +49,38 @@ async def compress_video(client, message, original_video_path):
         '-preset', video_settings['preset'], '-c:v', video_settings['codec'],
         compressed_video_path
     ]
+
     try:
         start_time = datetime.datetime.now()
         process = subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
-        await client.send_message(chat_id=message.chat.id, text="Compresión en progreso...")
+        last_update_time = datetime.datetime.now()
+
         while True:
             output = process.stderr.readline()
             if output == '' and process.poll() is not None:
                 break
 
-            # Filtrar y mostrar solo `size=` y `time=` en una sola línea
+            # Filtrar y mostrar solo `size=` y `time=`
             if "size=" in output and "time=" in output:
                 match = re.search(r"size=\s*([\dA-Za-z]+).*time=([\d:.]+)", output)
                 if match:
                     size, time = match.groups()
-                    print(f"\rTamaño: {size}, Tiempo: {time}", end="", flush=True)
+                    elapsed_time = str(datetime.datetime.now() - start_time).split('.')[0]
 
-        # Borrar el mensaje en consola al terminar
-        print("\r", end="", flush=True)
+                    # Actualiza el mensaje cada 10 segundos
+                    if (datetime.datetime.now() - last_update_time).seconds >= 10:
+                        await progress_message.edit_text(
+                            text=(
+                                f"Progreso:\n"
+                                f"Tamaño: {size}\n"
+                                f"Tiempo: {time}\n"
+                                f"Tiempo transcurrido: {elapsed_time}"
+                            )
+                        )
+                        last_update_time = datetime.datetime.now()
+
+        # Borrar el mensaje de progreso al terminar
+        await progress_message.edit_text("✅ Proceso completado. Preparando resultados...")
 
         compressed_size = os.path.getsize(compressed_video_path)
         duration = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries",
