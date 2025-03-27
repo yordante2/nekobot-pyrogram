@@ -54,12 +54,15 @@ async def compress_video(client, message, original_video_path):
             if output == '' and process.poll() is not None:
                 break
 
-            # Filtrar y mostrar solo `size=` y `time=`
+            # Filtrar y mostrar solo `size=` y `time=` en una sola línea
             if "size=" in output and "time=" in output:
                 match = re.search(r"size=\s*([\dA-Za-z]+).*time=([\d:.]+)", output)
                 if match:
                     size, time = match.groups()
-                    print(f"Tamaño: {size}, Tiempo: {time}")
+                    print(f"\rTamaño: {size}, Tiempo: {time}", end="", flush=True)
+
+        # Borrar el mensaje en consola al terminar
+        print("\r", end="", flush=True)
 
         compressed_size = os.path.getsize(compressed_video_path)
         duration = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries",
