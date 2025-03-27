@@ -15,12 +15,12 @@ app = Client("mi_bot")
 
 # Configuración inicial de video_settings
 video_settings = {
-    'resolution': '640x480',
+    'resolution': '640x400',
     'crf': '28',
-    'audio_bitrate': '64k',
-    'fps': '25',
-    'preset': 'fast',
-    'codec': 'libx264'
+    'audio_bitrate': '80k',
+    'fps': '18',
+    'preset': 'veryfast',
+    'codec': 'libx265'
 }
 
 async def update_video_settings(client, message):
@@ -36,7 +36,8 @@ async def update_video_settings(client, message):
                 video_settings[key] = value
 
         # Responder con los nuevos valores actualizados
-        await message.reply_text(f"Configuraciones de video actualizadas: {video_settings}")
+        configuracion_texto = "/calidad " + re.sub(r"[{},']", "", str(video_settings)).replace(":", "=").replace(",", " ")
+        await message.reply_text(f"Configuraciones de video actualizadas: `{configuracion_texto}`")
     except Exception as e:
         await message.reply_text(f"Error al procesar el comando: {e}")
 
@@ -44,7 +45,7 @@ async def compress_video(client, message):
     if message.reply_to_message.media:
         original_video_path = await client.download_media(message.reply_to_message.video or message.reply_to_message.document)
         original_size = os.path.getsize(original_video_path)
-        await client.send_message(chat_id=message.chat.id, text=f"Iniciando la compresión del video...\n"
+        await client.send_message(chat_id=message.chat.id, text=f"Convirtiendo el del video...\n"
                                                                 f"Tamaño original: {original_size // (1024 * 1024)} MB")
         compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
         ffmpeg_command = [
