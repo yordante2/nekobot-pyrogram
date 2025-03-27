@@ -32,6 +32,15 @@ async def update_video_settings(client, message):
         await message.reply_text(f"⚙️ Configuraciones de video actualizadas:\n`{configuracion_texto}`")
     except Exception as e:
         await message.reply_text(f"❌ Error al procesar el comando:\n{e}")
+
+def human_readable_size(size_in_kb):
+    size_in_bytes = size_in_kb * 1024
+    if size_in_bytes < 1024**2:
+        return f"{size_in_kb} KB"
+    elif size_in_bytes < 1024**3:
+        return f"{size_in_kb // 1024} MB"
+    else:
+        return f"{size_in_kb // (1024**2)} GB"
         
 
 async def cancelar_tarea(client, task_id, chat_id):
