@@ -1,5 +1,5 @@
 import os
-from pyrogram import Client, filters
+from pyrogram import Client
 from process_command import process_command
 import asyncio
 import nest_asyncio
@@ -23,24 +23,28 @@ BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
 
-@app.on_message(filters.command("access") & filters.private)
-def access_command(client, message):
+async def process_access_command(message):
     user_id = message.from_user.id
     if len(message.command) > 1 and message.command[1] == CODEWORD:
         if user_id not in temp_users:
             temp_users.append(user_id)
             allowed_users.append(user_id)
-            message.reply("Acceso concedido.")
+            await message.reply("Acceso concedido.")
         else:
-            message.reply("Ya estás en la lista de acceso temporal.")
+            await message.reply("Ya estás en la lista de acceso temporal.")
     else:
-        message.reply("Palabra secreta incorrecta.")
+        await message.reply("Palabra secreta incorrecta.")
 
-@app.on_message(filters.text)
+@app.on_message()
 async def handle_message(client, message):
     user_id = message.from_user.id
     username = message.from_user.username
     chat_id = message.chat.id
+    auto = True
+
+    if message.text and message.text.startswith("/access") and message.chat.type == "private":
+        await process_access_command(message)
+        return
 
     if user_id in ban_users:
         return
@@ -50,7 +54,6 @@ async def handle_message(client, message):
 
     active_cmd = os.getenv("ACTIVE_CMD", "").lower()
     admin_cmd = os.getenv("ADMIN_CMD", "").lower()
-
     await asyncio.create_task(process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id))
 
-app.run()
+app.run() I 
