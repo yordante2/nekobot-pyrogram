@@ -104,7 +104,7 @@ async def compress_video(client, message, original_video_path):
                     remaining_time = str(datetime.timedelta(seconds=int(remaining_seconds)))
 
                     # Actualiza el mensaje cada 10 segundos
-                    if (datetime.datetime.now() - last_update_time).seconds >= 10:
+                    if (datetime.datetime.now() - last_update_time).seconds >= 1:
                         try:
                             await progress_message.edit_text(
                                 text=(
@@ -114,7 +114,7 @@ async def compress_video(client, message, original_video_path):
                                     f"📈 Porcentaje completado: `{percentage:.2f}%`\n"
                                     f"⏳ Tiempo total transcurrido: `{str(elapsed_time).split('.')[0]}`\n"
                                     f"⌛ **Tiempo estimado restante:** `{remaining_time}`\n\n"
-                                    f"🔄 El mensaje de progreso se edita cada 10 segundos..."
+                                    #f"🔄 El mensaje de progreso se edita cada 10 segundos..."
                                 )
                             )
                             last_update_time = datetime.datetime.now()
