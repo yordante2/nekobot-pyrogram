@@ -34,22 +34,21 @@ async def update_video_settings(client, message):
         await message.reply_text(f"❌ Error al procesar el comando:\n{e}")
 
 # Función para manejar tamaños con unidades dinámicas
-def human_readable_size(size_in_bytes):
-    if size_in_bytes < 1024:
-        return f"{size_in_bytes} B"
-    elif size_in_bytes < 1024**2:
-        return f"{size_in_bytes // 1024} KB"
+def human_readable_size(size_in_kb):
+    size_in_bytes = size_in_kb * 1024
+    if size_in_bytes < 1024**2:
+        return f"{size_in_kb} KB"
     elif size_in_bytes < 1024**3:
-        return f"{size_in_bytes // (1024**2)} MB"
+        return f"{size_in_kb // 1024} MB"
     else:
-        return f"{size_in_bytes // (1024**3)} GB"
+        return f"{size_in_kb // (1024**2)} GB"
 
 # Función para comprimir el video con manejo de progreso
 async def compress_video(client, message, original_video_path):
     original_size = os.path.getsize(original_video_path)
     progress_message = await client.send_message(
         chat_id=message.chat.id,
-        text=f"🎥 Convirtiendo el video...\n📂 Tamaño original: {human_readable_size(original_size)}"
+        text=f"🎥 Convirtiendo el video...\n📂 Tamaño original: {human_readable_size(original_size // 1024)}"
     )
 
     compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
@@ -80,9 +79,11 @@ async def compress_video(client, message, original_video_path):
 
             # Filtrar y mostrar solo `size=` y `time=`
             if "size=" in output and "time=" in output:
-                match = re.search(r"size=\s*([\dA-Za-z]+).*time=([\d:.]+)", output)
+                match = re.search(r"size=\s*([\d]+).*time=([\d:.]+)", output)
                 if match:
-                    size, current_time_str = match.groups()
+                    size_kb, current_time_str = match.groups()
+                    size_kb = int(size_kb)
+                    readable_size = human_readable_size(size_kb)
 
                     # Convertir el tiempo actual del video a segundos
                     current_time_parts = list(map(float, current_time_str.split(':')))
@@ -104,10 +105,11 @@ async def compress_video(client, message, original_video_path):
                             await progress_message.edit_text(
                                 text=(
                                     f"🚀 **Progreso:**\n"
-                                    f"📊 Tamaño procesado: `{size}`\n"
+                                    f"📊 Tamaño procesado: `{readable_size}`\n"
                                     f"⏱️ Tiempo actual: `{current_time_str}` / `{str(datetime.timedelta(seconds=total_duration))}`\n"
                                     f"📈 Porcentaje completado: `{percentage:.2f}%`\n"
-                                    f"⏳ Tiempo total transcurrido: `{elapsed_time}`"
+                                    f"⏳ Tiempo total transcurrido: `{elapsed_time}`\n\n"
+                                    f"🔄 El mensaje de progreso se edita cada 10 segundos..."
                                 )
                             )
                             last_update_time = datetime.datetime.now()
@@ -117,8 +119,10 @@ async def compress_video(client, message, original_video_path):
                             else:
                                 raise
 
-        # Borrar el mensaje de progreso al terminar
-        await progress_message.edit_text("✅ **Proceso completado. Preparando resultados...**")
+        # Mostrar el mensaje "Proceso completado" durante 5 segundos antes de borrarlo
+        complete_message = await progress_message.edit_text("✅ **Proceso completado. Preparando resultados...**")
+        await asyncio.sleep(5)
+        await complete_message.delete()
 
         compressed_size = os.path.getsize(compressed_video_path)
         duration_str = str(datetime.timedelta(seconds=total_duration))
@@ -126,8 +130,8 @@ async def compress_video(client, message, original_video_path):
         processing_time_str = str(processing_time).split('.')[0]
 
         # Variables para el tamaño
-        original_size_display = human_readable_size(original_size)
-        compressed_size_display = human_readable_size(compressed_size)
+        original_size_display = human_readable_size(original_size // 1024)
+        compressed_size_display = human_readable_size(compressed_size // 1024)
 
         # Descripción con unidades dinámicas
         description = (
