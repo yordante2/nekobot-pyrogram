@@ -4,6 +4,20 @@ import subprocess
 import re
 import datetime
 
+async def update_video_settings(client, message):
+    global video_settings
+    try:
+        command_params = message.text.split()[1:]
+        params = dict(item.split('=') for item in command_params)
+        for key, value in params.items():
+            if key in video_settings:
+                video_settings[key] = value
+        configuracion_texto = "/calidad " + re.sub(r"[{},']", "", str(video_settings)).replace(":", "=").replace(",", " ")
+        await message.reply_text(f"⚙️ Configuraciones de video actualizadas:\n`{configuracion_texto}`")
+    except Exception as e:
+        await message.reply_text(f"❌ Error al procesar el comando:\n{e}")        
+
+
 async def procesar_video(client, message, original_video_path, task_id, tareas_en_ejecucion):
     chat_id = message.chat.id
     compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
