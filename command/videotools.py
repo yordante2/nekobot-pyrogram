@@ -20,6 +20,20 @@ max_tareas = 1  # Número máximo de tareas simultáneas
 tareas_en_ejecucion = {}
 cola_de_tareas = []
 
+async def update_video_settings(client, message):
+    global video_settings
+    try:
+        command_params = message.text.split()[1:]
+        params = dict(item.split('=') for item in command_params)
+        for key, value in params.items():
+            if key in video_settings:
+                video_settings[key] = value
+        configuracion_texto = "/calidad " + re.sub(r"[{},']", "", str(video_settings)).replace(":", "=").replace(",", " ")
+        await message.reply_text(f"⚙️ Configuraciones de video actualizadas:\n`{configuracion_texto}`")
+    except Exception as e:
+        await message.reply_text(f"❌ Error al procesar el comando:\n{e}")
+        
+
 async def cancelar_tarea(client, task_id, chat_id):
     global cola_de_tareas  # Declaramos la variable global para interactuar con la cola
     if task_id in tareas_en_ejecucion:
@@ -110,7 +124,7 @@ async def compress_video(client, message, original_video_path):
                     remaining_seconds = estimated_total_time - elapsed_seconds
                     remaining_time = str(datetime.timedelta(seconds=int(remaining_seconds)))
 
-                    if (datetime.datetime.now() - last_update_time).seconds >= 10:
+                    if (datetime.datetime.now() - last_update_time).seconds >= 1:
                         try:
                             await progress_message.edit_text(
                                 text=(
@@ -120,7 +134,7 @@ async def compress_video(client, message, original_video_path):
                                     f"📈 Porcentaje completado: `{percentage:.2f}%`\n"
                                     f"⏳ Tiempo total transcurrido: `{str(elapsed_time).split('.')[0]}`\n"
                                     f"⌛ **Tiempo estimado restante:** `{remaining_time}`\n\n"
-                                    f"🔄 El mensaje de progreso se edita cada 10 segundos...\n`{task_id}`"
+                                    f"🔄 El mensaje de progreso se edita cada segundo...\n`{task_id}`"
                                 )
                             )
                             last_update_time = datetime.datetime.now()
