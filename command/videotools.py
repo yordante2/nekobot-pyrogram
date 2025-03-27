@@ -64,7 +64,9 @@ async def compress_video(client, message, original_video_path):
             if output == '' and process.poll() is not None:
                 break
             if output:
-                print(output.strip())
+                print(f"\r{output.strip()}", end="", flush=True)
+                print("\r", end="", flush=True)
+                
         compressed_size = os.path.getsize(compressed_video_path)
         duration = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries",
                                              "format=duration", "-of", "default=noprint_wrappers=1:nokey=1",
