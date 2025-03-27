@@ -94,8 +94,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         text="⚠️ Debes proporcionar un ID válido para cancelar la tarea. Ejemplo: `/cancel <ID>`"
                     )
             elif auto and (message.video or message.document):
-                original_video_path = await client.download_media(message.video or message.document)
-                await asyncio.create_task(compress_video(client, message, original_video_path))
+                await asyncio.create_task(compress_video(client, message))
         return
         
     elif text.startswith("/imgchest"):
