@@ -23,12 +23,12 @@ async def setauto(client,user_id):
     global auto
     if auto is False:
         auto = True
-        client.send_message(chat_id=user_id, text="Se ha activado la auto conversión de videos")
+        await client.send_message(chat_id=user_id, text="Se ha activado la auto conversión de videos")
         return
 
     if auto is True:
         auto = False
-        client.send_message(chat_id=user_id, text="Se ha desactivado la auto conversión de videos")
+        await client.send_message(chat_id=user_id, text="Se ha desactivado la auto conversión de videos")
         return
 
 
