@@ -91,7 +91,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif message.text.startswith("/calidad"):
                 await asyncio.create_task(update_video_settings(client, message))
             # Nuevo paso: Si el mensaje es un vídeo y `auto = True`
-            elif message.video or message.document and auto:
+            elif auto and (message.video or message.document):
                 original_video_path = await client.download_media(message.video)
                 await asyncio.create_task(compress_video(client, message, original_video_path))
         return
