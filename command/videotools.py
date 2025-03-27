@@ -58,6 +58,7 @@ async def cancelar_tarea(client, task_id, chat_id):
 
 # Función para comprimir el video con manejo de progreso
 async def compress_video(client, message, original_video_path):
+    global cola_de_tareas
     task_id = str(uuid.uuid4())  # Generar un ID único para la tarea
     chat_id = message.chat.id
 
