@@ -4,15 +4,6 @@ import subprocess
 import re
 import datetime
 
-def human_readable_size(size_in_kb):
-    size_in_bytes = size_in_kb * 1024
-    if size_in_bytes < 1024**2:
-        return f"{size_in_kb} KB"
-    elif size_in_bytes < 1024**3:
-        return f"{size_in_kb // 1024} MB"
-    else:
-        return f"{size_in_kb // (1024**2)} GB"
-
 async def procesar_video(client, message, original_video_path, task_id, tareas_en_ejecucion):
     chat_id = message.chat.id
     compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
