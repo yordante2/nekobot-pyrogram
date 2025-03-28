@@ -11,7 +11,7 @@ from command.webtools import handle_scan, handle_multiscan
 from command.mailtools import send_mail, set_mail, verify_mail, set_mail_limit
 from command.videotools import update_video_settings, compress_video, cancelar_tarea
 from command.filetools import handle_compress, rename, set_size
-
+from command.telegramtools import get_file_id, send_file_by_id
 
 nest_asyncio.apply()
 
@@ -62,9 +62,18 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
 
             elif text.startswith("/setmb"):
                 await asyncio.create_task(set_mail_limit(client, message))
+                
             elif text.startswith("/verify"):
                 await asyncio.create_task(verify_mail(client, message))
         return
+
+    elif text.startswith(("/id", "/sendid")):
+        if text.startswith("/id"):
+            await asyncio.create_task(get_file_id(client, message))
+            return
+        elif text.startswith("/sendid"):
+            await asyncio.create_task(send_file_by_id(client, message))
+            return
     
     elif text.startswith(("/compress", "/setsize", "/rename")):
         if cmd("filetools", user_id in admin_users):
