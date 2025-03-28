@@ -1,152 +1,62 @@
-from pyrogram import Client, filters
-import zipfile
-import shutil
-import random
 import os
-import requests
-from pyrogram.types import Message
-from bs4 import BeautifulSoup
+from pyrogram import Client
+from process_command import process_command
 import asyncio
-import re
+import nest_asyncio
 
-# Obtener valores de entorno de ADMINS y VIP_USERS
-ADMINS = os.getenv("ADMINS", "")
-VIP_USERS = os.getenv("VIP_USERS", "")
+nest_asyncio.apply()
 
-# Crear lista de User IDs
-admin_ids = set(map(int, ADMINS.split(","))) if ADMINS else set()
-vip_ids = set(map(int, VIP_USERS.split(","))) if VIP_USERS else set()
-allowed_ids = admin_ids.union(vip_ids)
+api_id = os.getenv('API_ID', '0')
+api_hash = os.getenv('API_HASH', '0')
+bot_token = os.getenv('TOKEN', '0')
+admin_users = list(map(int, os.getenv('ADMINS').split(','))) if os.getenv('ADMINS') else []
+users = list(map(int, os.getenv('USERS').split(','))) if os.getenv('USERS') else []
+temp_users = []
+temp_chats = []
+ban_users = []
+allowed_users = admin_users + users + temp_users + temp_chats
+app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
-# Función para verificar si un usuario está permitido
-def is_user_allowed(user_id):
-    return user_id in allowed_ids
+CODEWORD = os.getenv('CODEWORD', '')
+BOT_IS_PUBLIC = os.getenv('BOT_IS_PUBLIC', 'false')
 
-# Función para borrar carpeta temporal
-def borrar_carpeta_h3dl():
-    try:
-        folder_name = 'h3dl'
-        for root, dirs, files in os.walk(folder_name, topdown=False):
-            for name in files:
-                os.remove(os.path.join(root, name))
-            for name in dirs:
-                os.rmdir(os.path.join(root, name))
-        os.rmdir(folder_name)
-    except Exception as e:
-        print(f"Error al borrar la carpeta: {e}")
+def is_bot_public():
+    return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
 
-# Funciones de sanitización
-def sanitize_input(input_string):
-    return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
-
-def clean_string(s):
-    return re.sub(r'[^a-zA-Z0-9\[\]]', '', s)
-
-# Función principal de operación combinada
-async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
-    if link_type == "nh":
-        base_url = "nhentai.net/g"
-    elif link_type == "3h":
-        base_url = "3hentai.net/d"
+async def process_access_command(message):
+    user_id = message.from_user.id
+    if len(message.command) > 1 and message.command[1] == CODEWORD:
+        if user_id not in temp_users:
+            temp_users.append(user_id)
+            allowed_users.append(user_id)
+            await message.reply("Acceso concedido.")
+        else:
+            await message.reply("Ya estás en la lista de acceso temporal.")
     else:
-        await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
+        await message.reply("Palabra secreta incorrecta.")
+
+@app.on_message()
+async def handle_message(client, message):
+    user_id = message.from_user.id
+    username = message.from_user.username
+    chat_id = message.chat.id
+    auto = True
+
+    if message.text and message.text.startswith("/access") and message.chat.type == "private":
+        await process_access_command(message)
         return
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
+    if user_id in ban_users:
+        return
 
-    for code in codes:
-        url = f"https://{base_url}/{code}/"
-        try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            await message.reply(f"Error al procesar el código {code}: {str(e)}")
-            continue
-        
-        try:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            title_tag = soup.find('title')
-            name = clean_string(title_tag.text.strip()) if title_tag else clean_string(code)
+    if not is_bot_public() and user_id not in allowed_users and chat_id not in allowed_users:
+        return
 
-            # Descargar y enviar la portada
-            img_url = f"https://{base_url}/{code}/1/"
-            response = requests.get(img_url, headers=headers)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
-            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+    active_cmd = os.getenv('ACTIVE_CMD', '').lower()
+    admin_cmd = os.getenv('ADMIN_CMD', '').lower()
+    await asyncio.create_task(process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id))
 
-            if img_tag:
-                img_url = img_tag['src']
-                img_extension = os.path.splitext(img_url)[1]
-                img_data = requests.get(img_url, headers=headers).content
-                img_filename = f"1{img_extension}"
-
-                with open(img_filename, 'wb') as img_file:
-                    img_file.write(img_data)
-
-                await client.send_photo(
-                    message.chat.id,
-                    img_filename,
-                    caption=f"https://{base_url}/{code} {name}",
-                    protect_content=not is_user_allowed(message.from_user.id)
-                )
-        except Exception as e:
-            await message.reply(f"Error al procesar la portada del código {code}: {str(e)}")
-            continue
-
-        # Descargar si el tipo de operación es "download"
-        if operation_type == "download":
-            folder_name = os.path.join("h3dl", name)
-            try:
-                os.makedirs(folder_name, exist_ok=True)
-            except OSError as e:
-                await message.reply(f"Error al crear el directorio: {e}")
-                continue
-            
-            page_number = 1
-            while True:
-                page_url = f"https://{base_url}/{code}/{page_number}/"
-                try:
-                    response = requests.get(page_url, headers=headers)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as e:
-                    if page_number == 1:
-                        await message.reply(f"Error al acceder a las páginas del código {code}: {str(e)}")
-                    break
-                
-                try:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
-                    if not img_tag:
-                        break
-
-                    img_url = img_tag['src']
-                    img_extension = os.path.splitext(img_url)[1]
-                    img_data = requests.get(img_url, headers=headers).content
-                    img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
-
-                    with open(img_filename, 'wb') as img_file:
-                        img_file.write(img_data)
-
-                    page_number += 1
-                except Exception as e:
-                    await message.reply(f"Error al procesar la imagen de la página {page_number}: {str(e)}")
-                    break
-
-            try:
-                zip_filename = os.path.join(f"{folder_name}.cbz")
-                with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                    for root, _, files in os.walk(folder_name):
-                        for file in files:
-                            zipf.write(os.path.join(root, file), arcname=file)
-                await client.send_document(
-                    message.chat.id,
-                    zip_filename,
-                    protect_content=not is_user_allowed(message.from_user.id)
-                )
-            except Exception as e:
-                await message.reply(f"Error al comprimir o enviar el archivo {name}: {str(e)}")
-            
-            borrar_carpeta_h3dl()
+try:
+    app.run()
+except KeyboardInterrupt:
+    print("Detención forzada realizada")
