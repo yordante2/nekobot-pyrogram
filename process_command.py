@@ -12,6 +12,7 @@ from command.mailtools import send_mail, set_mail, verify_mail
 from command.videotools import update_video_settings, compress_video, cancelar_tarea
 from command.filetools import handle_compress, rename, set_size
 
+
 nest_asyncio.apply()
 
 admin_users = list(map(int, os.getenv('ADMINS').split(',')))
