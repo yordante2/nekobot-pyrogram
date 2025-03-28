@@ -31,7 +31,7 @@ async def set_mail(client, message):
         }
         if str(user_id) in confirmed_users and email in confirmed_users[str(user_id)]:
             user_emails[user_id] = email
-            await message.reply("Correo electrónico registrado automáticamente porque el administrador de bot reconoce tu dirección")
+            await message.reply("Correo electrónico registrado automáticamente porque el administrador de bot reconoce tu dirección.")
             return
 
     # Generar código de verificación y enviarlo por correo
@@ -41,25 +41,32 @@ async def set_mail(client, message):
     try:
         msg = EmailMessage()
         msg['Subject'] = 'Código de Verificación'
-        msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
+        msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
         msg['To'] = email
         msg.set_content(f"""
         Tu código de verificación de correo es: {verification_code}
-        Si no solicitaste este código simplemente ignoralo.
+        Si no solicitaste este código simplemente ignóralo.
         """)
 
-        with smtplib.SMTP('disroot.org', 587) as server:
-            server.starttls()
-            server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+        # Obtener configuración del servidor SMTP desde MAIL_SERVER
+        mail_server = os.getenv('MAIL_SERVER')
+        server_details = mail_server.split(':')
+        smtp_host = server_details[0]
+        smtp_port = int(server_details[1])
+        security_enabled = len(server_details) > 2 and server_details[2].lower() == 'tls'
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            if security_enabled:
+                server.starttls()
+            server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
             server.send_message(msg)
 
         # Almacenar temporalmente el código y el correo
         verification_storage[user_id] = {'email': email, 'code': verification_code}
 
-        await message.reply("Código de verificación enviado a tu correo. Introdusca el codigo usando /verify")
+        await message.reply("Código de verificación enviado a tu correo. Introduce el código usando /verify.")
     except Exception as e:
         await message.reply(f"Error al enviar el correo de verificación: {e}")
-        
 
 
 # Función para verificar el código y registrar el correo
@@ -93,10 +100,7 @@ def compressfile(file_path, part_size):
             part_data = archive.read(part_size)
             if not part_data:
                 break
-            part_file = f"{archive_path}.{part_num:03d}"  
-            if part_file.endswith(".7z"):  
-                part_file = part_file[:-3]  
-            
+            part_file = f"{archive_path}.{part_num:03d}"
             with open(part_file, 'wb') as part:
                 part.write(part_data)
             parts.append(part_file)
@@ -111,87 +115,96 @@ async def send_mail(client, message):
         return
     email = user_emails[user_id]
 
-    # Identificar a qué tipo de mensaje se está respondiendo
     if not message.reply_to_message:
         await message.reply("Por favor, responde a un mensaje.")
         return
-    
+
     if message.reply_to_message.text:
         try:
-            # Si el mensaje al que responde es textual, enviar directamente
             msg = EmailMessage()
             msg['Subject'] = 'Mensaje de Telegram'
-            msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
+            msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
             msg['To'] = email
             msg.set_content(message.reply_to_message.text)
-            with smtplib.SMTP('disroot.org', 587) as server:
-                server.starttls()
-                server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+
+            # Obtener configuración del servidor SMTP desde MAIL_SERVER
+            mail_server = os.getenv('MAIL_SERVER')
+            server_details = mail_server.split(':')
+            smtp_host = server_details[0]
+            smtp_port = int(server_details[1])
+            security_enabled = len(server_details) > 2 and server_details[2].lower() == 'tls'
+
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                if security_enabled:
+                    server.starttls()
+                server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                 server.send_message(msg)
             await message.reply("Mensaje enviado correctamente.")
         except Exception as e:
             await message.reply(f"Error al enviar el mensaje: {e}")
         return
 
-    # Obtener las variables de entorno
     mail_mb = os.getenv('MAIL_MB')
     mail_delay = os.getenv('MAIL_DELAY')
 
     if message.reply_to_message.document or message.reply_to_message.photo:
         media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
 
-        # Cuando las variables MAIL_MB son opcionales
         if not mail_mb:
             try:
                 msg = EmailMessage()
                 msg['Subject'] = 'Archivo de Telegram'
-                msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
+                msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
                 msg['To'] = email
                 with open(media, 'rb') as f:
                     msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
-                with smtplib.SMTP('disroot.org', 587) as server:
-                    server.starttls()
-                    server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+
+                with smtplib.SMTP(smtp_host, smtp_port) as server:
+                    if security_enabled:
+                        server.starttls()
+                    server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                     server.send_message(msg)
                 await message.reply("Archivo enviado correctamente.")
             except Exception as e:
                 await message.reply(f"Error al enviar el archivo: {e}")
             return
 
-        # Convertir MAIL_MB a entero si existe
         mail_mb = int(mail_mb)
         if os.path.getsize(media) <= mail_mb * 1024 * 1024:
             try:
                 msg = EmailMessage()
                 msg['Subject'] = 'Archivo de Telegram'
-                msg['From'] = f"Neko Bot <{os.getenv('DISMAIL')}>"
+                msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
                 msg['To'] = email
                 with open(media, 'rb') as f:
                     msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
-                with smtplib.SMTP('disroot.org', 587) as server:
-                    server.starttls()
-                    server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+
+                with smtplib.SMTP(smtp_host, smtp_port) as server:
+                    if security_enabled:
+                        server.starttls()
+                    server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                     server.send_message(msg)
                 await message.reply("Archivo enviado correctamente sin compresión.")
             except Exception as e:
                 await message.reply(f"Error al enviar el archivo: {e}")
         else:
-            # Lógica para comprimir si el tamaño excede MAIL_MB
-            await message.reply(f"El archivo supera el limite de {mail_mb} MB, se iniciara la autocompreción")
+            await message.reply(f"El archivo supera el límite de {mail_mb} MB, se iniciará la autocompresión.")
             parts = compressfile(media, mail_mb)
             for part in parts:
                 try:
                     msg = EmailMessage()
                     msg['Subject'] = 'Parte de archivo comprimido'
-                    msg['From'] = os.getenv('DISMAIL')
+                    msg['From'] = os.getenv('MAILDIR')
                     msg['To'] = email
                     with open(part, 'rb') as f:
                         msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(part))
-                    with smtplib.SMTP('disroot.org', 587) as server:
-                        server.starttls()
-                        server.login(os.getenv('DISMAIL'), os.getenv('DISPASS'))
+
+                    with smtplib.SMTP(smtp_host, smtp_port) as server:
+                        if security_enabled:
+                            server.starttls()
+                        server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                         server.send_message(msg)
                     await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.")
-                    time.sleep(float(mail_delay) if mail_delay else 0)  # Esperar antes de enviar la siguiente parte
+                    time.sleep(float(mail_delay) if mail_delay else 0)
                 except Exception as e:
                     await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}")
