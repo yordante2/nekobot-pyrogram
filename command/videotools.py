@@ -85,7 +85,9 @@ async def compress_video(client, message):
             return
 
         # Procesar el video (utilizando la lógica existente)
-        await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
+        nombre, description, chat_id, compressed_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
+        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=nombre)
+        await client.send_message(chat_id=chat_id, text=description)
     finally:
         # Eliminar la tarea de la lista en ejecución
         try:
