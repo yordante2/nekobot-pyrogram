@@ -9,16 +9,16 @@ nest_asyncio.apply()
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('TOKEN')
-admin_users = list(map(int, os.getenv('ADMINS').split(',')))
-users = list(map(int, os.getenv('USERS').split(',')))
+admin_users = list(map(int, os.getenv('ADMINS').split(','))) if os.getenv('ADMINS') else []
+users = list(map(int, os.getenv('USERS').split(','))) if os.getenv('USERS') else []
 temp_users = []
 temp_chats = []
 ban_users = []
 allowed_users = admin_users + users + temp_users + temp_chats
 app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
-CODEWORD = os.getenv("CODEWORD")
-BOT_IS_PUBLIC = os.getenv("BOT_IS_PUBLIC")
+CODEWORD = os.getenv('CODEWORD', '')
+BOT_IS_PUBLIC = os.getenv('BOT_IS_PUBLIC', 'false')
 
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
@@ -52,8 +52,11 @@ async def handle_message(client, message):
     if not is_bot_public() and user_id not in allowed_users and chat_id not in allowed_users:
         return
 
-    active_cmd = os.getenv("ACTIVE_CMD", "").lower()
-    admin_cmd = os.getenv("ADMIN_CMD", "").lower()
+    active_cmd = os.getenv('ACTIVE_CMD', '').lower()
+    admin_cmd = os.getenv('ADMIN_CMD', '').lower()
     await asyncio.create_task(process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id))
 
-app.run()
+try:
+    app.run()
+except KeyboardInterrupt:
+    print("Detención forzada realizada")
