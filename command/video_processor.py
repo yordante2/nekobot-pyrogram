@@ -49,6 +49,7 @@ async def procesar_video(client, message, original_video_path, task_id, tareas_e
                 await progress_message.edit_text(f"❌ Proceso cancelado para `{task_id}`.")
                 if os.path.exists(compressed_video_path):
                     os.remove(compressed_video_path)
+                    os.remove(original_video_path)
                 return
 
             output = process.stderr.readline()
@@ -121,9 +122,6 @@ async def procesar_video(client, message, original_video_path, task_id, tareas_e
         return nombre, description, chat_id, compressed_video_path
     except Exception as e:
         await client.send_message(chat_id=chat_id, text=f"❌ **Ocurrió un error al procesar el video:**\n{e}")
-    finally:
-        if os.path.exists(original_video_path):
-            os.remove(original_video_path)
-        if os.path.exists(compressed_video_path):
-            os.remove(compressed_video_path)
-              
+        os.remove(original_video_path)
+        os.remove(compressed_video_path)
+    
