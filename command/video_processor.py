@@ -118,9 +118,7 @@ async def procesar_video(client, message, original_video_path, task_id, tareas_e
             f"🎉 **¡Gracias por usar el bot!**"
         )
         nombre = os.path.splitext(os.path.basename(compressed_video_path))[0]
-
-        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=nombre)
-        await client.send_message(chat_id=chat_id, text=description)
+       return nombre, description, chat_id, compressed_video_path
     except Exception as e:
         await client.send_message(chat_id=chat_id, text=f"❌ **Ocurrió un error al procesar el video:**\n{e}")
     finally:
