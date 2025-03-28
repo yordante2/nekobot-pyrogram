@@ -9,8 +9,8 @@ nest_asyncio.apply()
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('TOKEN')
-admin_users = list(map(int, os.getenv("ADMINS", "").split(',')))
-users = list(map(int, os.getenv("USERS", "").split(',')))
+admin_users = users = os.getenv("ADMINS", "").split(',')
+users = users = os.getenv("USERS", "").split(',')
 temp_users = []
 temp_chats = []
 ban_users = []
