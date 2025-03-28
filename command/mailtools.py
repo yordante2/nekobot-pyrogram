@@ -9,7 +9,7 @@ from email.message import EmailMessage
 user_emails = {}
 verification_storage = {}
 user_limits = {}
-user_attempts = {}  # Diccionario para rastrear intentos de exceder el límite
+exceeded_users = []
 
 import random
 
@@ -31,14 +31,30 @@ async def set_mail_limit(client, message):
                 chat_id=message.chat.id,
                 sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
             )
+            time.sleep(3)  # Pausa de 3 segundos entre el sticker y el mensaje
 
             # Enviar el mensaje
             await message.reply("¿Qué haces pendejo?")
             return
 
-        # Validar y ajustar límite (máximo 20 MB)
+        # Verificar si el límite supera los 20 MB
         if new_limit > 20:
-            new_limit = 20
+            # Si el usuario ya está en la lista de excedidos
+            if user_id in exceeded_users:
+                # Enviar el sticker
+                await client.send_sticker(
+                    chat_id=message.chat.id,
+                    sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
+                )
+                time.sleep(3)  # Pausa de 3 segundos entre el sticker y el mensaje
+
+                # Enviar el mensaje
+                await message.reply("¿Qué haces pendejo? 20 es el límite.")
+                return
+            else:
+                # Agregar usuario a la lista de excedidos
+                exceeded_users.append(user_id)
+                new_limit = 20  # Ajustar el límite a 20 MB
 
         # Establecer el límite en el diccionario
         user_limits[user_id] = new_limit
@@ -47,7 +63,7 @@ async def set_mail_limit(client, message):
         await message.reply(f"El límite personal del usuario ha sido cambiado a {new_limit} MB.")
     except ValueError:
         await message.reply("Por favor, proporciona un número válido como límite.")
-
+        
 # Función para obtener el límite de MAIL_MB para un usuario
 def get_mail_limit(user_id):
     return user_limits.get(user_id, int(os.getenv('MAIL_MB', 20)))
