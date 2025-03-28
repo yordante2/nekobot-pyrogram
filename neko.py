@@ -9,8 +9,8 @@ nest_asyncio.apply()
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('TOKEN')
-admin_users = users = os.getenv("ADMINS", "").split(',')
-users = users = os.getenv("USERS", "").split(',')
+admin_users = os.getenv("ADMINS", "").split(',')
+users = os.getenv("USERS", "").split(',')
 temp_users = []
 temp_chats = []
 ban_users = []
@@ -56,4 +56,7 @@ async def handle_message(client, message):
     admin_cmd = os.getenv("ADMIN_CMD", "").lower()
     await asyncio.create_task(process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id))
 
-app.run()
+try:
+    app.run()
+except KeyboardInterrupt:
+    print("Detención forzada realizada")
