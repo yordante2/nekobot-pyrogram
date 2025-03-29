@@ -34,6 +34,8 @@ def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
 async def nh_combined_operation(client, message, codes, link_type, allowed_ids, operation_type="download"):
+    # Convertir todos los códigos a cadenas
+    codes = [str(code) for code in codes]
 
     if link_type == "nh":
         base_url = "nhentai.net/g"
@@ -104,6 +106,53 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
             while True:
                 page_url = f"https://{base_url}/{code}/{page_number}/"
                 try:
+                    response = requests.get(page_url, headers=headers)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as e:
+                    if page_number == 1:
+                        await message.reply(f"Error al acceder a las páginas del código {code}: {str(e)}")
+                    break
+
+                try:
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+                    if not img_tag:
+                        break
+
+                    img_url = img_tag['src']
+                    img_extension = os.path.splitext(img_url)[1]
+                    img_data = requests.get(img_url, headers=headers).content
+                    img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
+
+                    with open(img_filename, 'wb') as img_file:
+                        img_file.write(img_data)
+
+                    page_number += 1
+                except Exception as e:
+                    await message.reply(f"Error al procesar la imagen de la página {page_number}: {str(e)}")
+                    break
+
+            try:
+                zip_filename = os.path.join(f"{folder_name}.cbz")
+                with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                    for root, _, files in os.walk(folder_name):
+                        for file in files:
+                            zipf.write(os.path.join(root, file), arcname=file)
+
+                # Determinar si el archivo CBZ está protegido
+                protect_content = not is_user_allowed(allowed_ids, message.from_user.id)
+                caption = f"Look Here {name}" if protect_content else name
+
+                await client.send_document(
+                    message.chat.id,
+                    zip_filename,
+                    caption=caption,
+                    protect_content=protect_content
+                )
+            except Exception as e:
+                await message.reply(f"Error al comprimir o enviar el archivo {name}: {str(e)}")
+
+            borrar_carpeta_h3dl()
                     response = requests.get(page_url, headers=headers)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
