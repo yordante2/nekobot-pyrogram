@@ -29,11 +29,14 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
+                # Usar el título de la página como caption y nombre del archivo
+                caption = result.get("caption", "Contenido descargado")
+                
                 # Enviar la foto principal (1.jpg/1.png/1.loquesea) como portada
                 await client.send_photo(
                     message.chat.id,
-                    os.path.join(random_folder_name, "1.jpg"),  # Asegurarse de usar la primera foto
-                    caption=result['caption'],
+                    os.path.join(random_folder_name, "1.jpg"),
+                    caption=caption,
                     protect_content=protect_content
                 )
 
@@ -41,13 +44,13 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 await client.send_document(
                     message.chat.id,
                     result['cbz_file'],
-                    caption=result['caption'],
+                    caption=caption,
                     protect_content=protect_content
                 )
                 await client.send_document(
                     message.chat.id,
                     result['pdf_file'],
-                    caption=result['caption'],
+                    caption=caption,
                     protect_content=protect_content
                 )
         except Exception as e:
@@ -58,4 +61,3 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             borrar_carpeta(random_folder_name, result.get("cbz_file"))
         except Exception as e:
             await message.reply(f"Error al limpiar carpeta para el código {code}: {str(e)}")
-        
