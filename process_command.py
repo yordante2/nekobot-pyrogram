@@ -25,13 +25,16 @@ allowed_ids = set(admin_users).union(set(vip_users))
 # Revisar PROTECT_CONTENT
 protect_content_env = os.getenv('PROTECT_CONTENT', '').strip().lower()
 is_protect_content_enabled = protect_content_env == 'true'  # Evaluamos si es "True" en cualquier formato
+auto_users = {}
 
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
     global allowed_ids
     text = message.text.strip().lower() if message.text else ""
     if not is_protect_content_enabled and user_id not in allowed_ids:
         allowed_ids = allowed_ids.union({user_id})
-
+    user_id = message.from_user.id
+    auto = auto_users.get(user_id, False)
+    
     def cmd(command_env, is_admin=False, is_vip=False):
         return (
             active_cmd == "all" or 
@@ -85,33 +88,51 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/rename"):
                 await asyncio.create_task(rename(client, message))
         return
+        )
 
-    elif text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel", "/list")) or (message.video is not None):
+    if text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel", "/list")) or (message.video is not None):
         if cmd("videotools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
                     await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
 
             elif text.startswith("/autoconvert"):
-                await asyncio.create_task(setauto(client, user_id))
+                # Activar/desactivar "auto" para este usuario
+                if user_id in auto_users and auto_users[user_id]:
+                    auto_users[user_id] = False
+                    await client.send_message(
+                        chat_id=message.chat.id,
+                        text="🛑 Modo automático desactivado.",
+                        protect_content=True
+                    )
+                else:
+                    auto_users[user_id] = True
+                    await client.send_message(
+                        chat_id=message.chat.id,
+                        text="✅ Modo automático activado.",
+                        protect_content=True
+                    )
 
             elif text.startswith("/calidad"):
                 await asyncio.create_task(update_video_settings(client, message, allowed_ids))
 
             elif text.startswith("/cancel"):
                 try:
-                    # Obtener el ID de la tarea del mensaje
                     task_id = text.split(" ", 1)[1].strip()
-                    # Cancelar la tarea si existe
                     await cancelar_tarea(admin_users, client, task_id, message.chat.id, message, allowed_ids)
                 except IndexError:
-                    # Si el usuario no proporciona un ID
                     await client.send_message(
                         chat_id=message.chat.id,
                         text="⚠️ Debes proporcionar un ID válido para cancelar la tarea. Ejemplo: `/cancel <ID>`",
                         protect_content=True
                     )
 
+            elif text.startswith("/list"):
+                await listar_tareas(client, message.chat.id, allowed_ids, message)
+
+            elif auto and (message.video or message.document):
+                await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
+                                              
             elif text.startswith("/list"):
                 await listar_tareas(client, message.chat.id, allowed_ids, message)
 
