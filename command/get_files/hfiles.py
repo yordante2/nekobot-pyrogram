@@ -8,30 +8,30 @@ from fpdf import FPDF
 
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
-
-def crear_pdf(folder_name, pdf_filename):
+def crear_pdf(folder_name, page_title):
     try:
+        # Crear nombre dinámico para el PDF
+        pdf_filename = os.path.join(folder_name, f"{page_title}.pdf")
+
+        # Crear una instancia del objeto PDF
         pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=0)
-        valid_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        # Obtener las imágenes en orden numérico
+        images = sorted(
+            [file for file in os.listdir(folder_name) if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.webp'))],
+            key=lambda x: int(re.findall(r'\d+', x)[0])
+        )
 
-        # Iterar sobre los archivos en la carpeta
-        for file in sorted(os.listdir(folder_name)):
-            file_path = os.path.join(folder_name, file)
-            if file.lower().endswith(valid_extensions) and os.path.isfile(file_path):
-                try:
-                    pdf.add_page()
-                    pdf.image(file_path, x=0, y=0, w=210)  # Ajustar el ancho si es necesario
-                except Exception as e:
-                    print(f"Error al añadir la imagen {file_path} al PDF: {e}")
-                    continue  # Pasar a la siguiente imagen
+        # Agregar cada imagen al PDF
+        for image in images:
+            img_path = os.path.join(folder_name, image)
+            pdf.add_page()
+            pdf.image(img_path, x=10, y=10, w=190)  # Ajustar tamaño y posición de la imagen
 
-        if pdf.page_no() == 0:
-            print("No se añadió ninguna imagen al PDF. Verifica el contenido de la carpeta.")
-            return None
-
+        # Guardar el archivo PDF
         pdf.output(pdf_filename)
-        print(f"PDF creado: {pdf_filename}")
+
         return pdf_filename
     except Exception as e:
         print(f"Error al crear PDF: {e}")
