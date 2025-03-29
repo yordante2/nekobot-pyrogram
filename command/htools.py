@@ -28,11 +28,11 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            await message.reply(f"Error con el código {code} es erróneo: {str(e)}")
             continue
 
-        # Generar nombre único para la carpeta
-        random_folder_name = f"h3dl/{uuid4()}"
+        random_folder_name = f"downloads/{uuid4()}"  # Carpeta con nombre único
+        os.makedirs(random_folder_name, exist_ok=True)
 
         try:
             # Descargar el contenido
@@ -40,7 +40,6 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
-                # Usar el título de la página como caption y nombre del archivo
                 caption = result.get("caption", "Contenido descargado")
 
                 # Subir CBZ al chat de MAIN_ADMIN y registrar el ID del mensaje
@@ -49,7 +48,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     result['cbz_file']
                 )
                 cbz_file_id = cbz_message.document.file_id
-                message_ids_to_delete.append(cbz_message.id)  # Registrar mensaje para borrar
+                message_ids_to_delete.append(cbz_message.id)
 
                 # Subir PDF al chat de MAIN_ADMIN y registrar el ID del mensaje
                 pdf_message = await client.send_document(
@@ -57,19 +56,16 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     result['pdf_file']
                 )
                 pdf_file_id = pdf_message.document.file_id
-                message_ids_to_delete.append(pdf_message.id)  # Registrar mensaje para borrar
+                message_ids_to_delete.append(pdf_message.id)
 
-                # Generar identificadores únicos para botones Inline
                 cbz_button_id = str(uuid4())
                 pdf_button_id = str(uuid4())
                 fotos_button_id = str(uuid4())
 
-                # Mapear los identificadores a los File IDs
                 callback_data_map[cbz_button_id] = cbz_file_id
                 callback_data_map[pdf_button_id] = pdf_file_id
-                callback_data_map[fotos_button_id] = cbz_file_id  # Para fotos, usamos el CBZ File ID
+                callback_data_map[fotos_button_id] = cbz_file_id
 
-                # Crear botones Inline para opciones posteriores
                 keyboard = InlineKeyboardMarkup([
                     [
                         InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
@@ -78,17 +74,15 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     [InlineKeyboardButton("Ver Fotos", callback_data=f"fotos|{fotos_button_id}")]
                 ])
 
-                await message.reply("Opciones disponibles para los archivos:", reply_markup=keyboard)
+                await message.reply("Opciones disponibles:", reply_markup=keyboard)
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
         try:
-            # Limpiar únicamente la carpeta temporal
             borrar_carpeta(random_folder_name, result.get("cbz_file"))
         except Exception as e:
-            await message.reply(f"Error al limpiar carpeta para el código {code}: {str(e)}")
+            await message.reply(f"Error al limpiar carpeta: {str(e)}")
 
-    # Borrar los mensajes enviados al administrador
     await client.delete_messages(MAIN_ADMIN, message_ids_to_delete)
 
 async def manejar_opcion(client, callback_query):
@@ -99,9 +93,7 @@ async def manejar_opcion(client, callback_query):
     opcion = data[0]
     identificador = data[1]
 
-    # Obtener los datos reales del diccionario
     datos_reales = callback_data_map.get(identificador)
-
     if not datos_reales:
         await callback_query.answer("La opción ya no es válida.", show_alert=True)
         return
@@ -122,32 +114,29 @@ async def manejar_opcion(client, callback_query):
         )
     elif opcion == "fotos":
         cbz_file_id = datos_reales
-        # Descargar el CBZ desde Telegram
+        temp_folder = f"temp/{uuid4()}"  # Crear carpeta temporal
+        os.makedirs(temp_folder, exist_ok=True)
+
+        # Descargar el CBZ y moverlo a la carpeta temporal
         cbz_file_path = await client.download_media(cbz_file_id)
-        extract_folder = cbz_file_path.replace(".cbz", "_photos")
+        os.rename(cbz_file_path, f"{temp_folder}/downloaded.cbz")
 
-        # Verificar si extract_folder es un archivo en lugar de un directorio
-        if os.path.isfile(extract_folder):
-            os.remove(extract_folder)
-
-        # Crear el directorio si no existe
-        os.makedirs(extract_folder, exist_ok=True)
-
-        # Descomprimir el archivo CBZ
-        with zipfile.ZipFile(cbz_file_path, 'r') as zipf:
-            zipf.extractall(extract_folder)
-        os.remove(cbz_file_path)  # Borrar el CBZ después de descomprimirlo
+        # Descomprimir todos los CBZ encontrados
+        for file in os.listdir(temp_folder):
+            if file.lower().endswith(".cbz"):
+                with zipfile.ZipFile(os.path.join(temp_folder, file), 'r') as zipf:
+                    zipf.extractall(temp_folder)
 
         # Enviar fotos en lotes de 10
-        archivos = sorted([os.path.join(extract_folder, f) for f in os.listdir(extract_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+        archivos = sorted([os.path.join(temp_folder, f) for f in os.listdir(temp_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
         lote = 10
         for i in range(0, len(archivos), lote):
             grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
             await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
 
-        # Borrar las fotos después de enviarlas
+        # Limpiar carpeta temporal
         for archivo in archivos:
             os.remove(archivo)
-        os.rmdir(extract_folder)
+        os.rmdir(temp_folder)
 
     await callback_query.answer("¡Opción procesada!")
