@@ -34,11 +34,20 @@ async def process_access_command(message):
             await message.reply("Ya estás en la lista de acceso temporal.")
     else:
         await message.reply("Palabra secreta incorrecta.")
+
+
+from command.options import manejar_opcion
+
+@app.on_callback_query(filters.regex("^(cbz|pdf|fotos)"))
+async def callback_handler(client, callback_query):
+    await manejar_opcion(client, callback_query)
+    
 @app.on_callback_query()
 async def callback_handler(client, callback_query):
     from command.help import handle_help_callback
     await asyncio.create_task(handle_help_callback(client, callback_query))
-  
+
+
 @app.on_message()
 async def handle_message(client, message):
     user_id = message.from_user.id
