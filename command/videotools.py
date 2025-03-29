@@ -1,6 +1,7 @@
 import asyncio
 import os
 import uuid
+import re
 from command.video_processor import procesar_video
 
 # Configuración inicial
@@ -19,7 +20,7 @@ cola_de_tareas = []
 
 # Convertir tamaño en formato legible
 def human_readable_size(size, decimal_places=2):
-    for unit in ['KB', 'MB', 'GB', 'TB']:
+    for unit in ['MB', 'GB', 'TB']:
         if size < 1024.0:
             return f"{size:.{decimal_places}f} {unit}"
         size /= 1024.0
@@ -35,9 +36,14 @@ async def update_video_settings(client, message, allowed_ids):
         params = dict(item.split('=') for item in command_params)
         for key, value in params.items():
             if key in video_settings:
+                # Validación adicional
+                if key == 'resolution' and not re.match(r'^\d+x\d+$', value):
+                    raise ValueError("Resolución inválida. Usa formato WIDTHxHEIGHT.")
                 video_settings[key] = value
         configuracion_texto = "/calidad " + re.sub(r"[{},']", "", str(video_settings)).replace(":", "=").replace(",", " ")
         await message.reply_text(f"⚙️ Configuraciones de video actualizadas:\n`{configuracion_texto}`", protect_content=protect_content)
+    except ValueError as ve:
+        await message.reply_text(f"❌ Error de validación:\n{ve}", protect_content=protect_content)
     except Exception as e:
         await message.reply_text(f"❌ Error al procesar el comando:\n{e}", protect_content=protect_content)
 
@@ -69,16 +75,25 @@ async def listar_tareas(client, chat_id, allowed_ids, message):
     user_id_requesting = message.from_user.id
     protect_content = user_id_requesting not in allowed_ids
 
-    global cola_de_tareas
-    if not cola_de_tareas:
-        await client.send_message(chat_id=chat_id, text="📝 No hay tareas en la cola.", protect_content=protect_content)
-        return
+    global cola_de_tareas, tareas_en_ejecucion
 
+    # Inicia el mensaje con la tarea actual
     lista_tareas = "📝 Lista de tareas:\n\n"
-    for index, tarea in enumerate(cola_de_tareas, start=1):
-        user_info = await client.get_users(tarea["user_id"])
-        username = f"@{user_info.username}" if user_info.username else f"Usuario Anónimo ({tarea['user_id']})"
-        lista_tareas += f"{index}. ID: `{tarea['id']}`\n   Usuario: {username}\n\n"
+    if tareas_en_ejecucion:
+        for task_id, tarea in tareas_en_ejecucion.items():
+            user_info = await client.get_users(tarea["user_id"])
+            username = f"@{user_info.username}" if user_info.username else "Usuario Anónimo"
+            lista_tareas += f"Tarea actual: ID {task_id} {username} /{tarea['user_id']}\n\n"
+
+    # Añade las tareas en cola
+    if cola_de_tareas:
+        for index, tarea in enumerate(cola_de_tareas, start=1):
+            user_info = await client.get_users(tarea["user_id"])
+            username = f"@{user_info.username}" if user_info.username else "Usuario Anónimo"
+            lista_tareas += f"{index}. ID: `{tarea['id']}`\n   Usuario: {username} (`{tarea['user_id')]`}\n\n"
+    else:
+        if not tareas_en_ejecucion:
+            lista_tareas += "📝 No hay tareas en ejecución ni en cola.\n"
 
     await client.send_message(chat_id=chat_id, text=lista_tareas, protect_content=protect_content)
 
