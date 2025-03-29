@@ -39,7 +39,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
 
     if text.startswith("/start"):
         # Si PROTECT_CONTENT no está habilitado, añadir a allowed_ids
-        if not is_protect_content_enabled:
+        if not is_protect_content_enabled and user_id not in allowed_ids:
             allowed_ids = allowed_ids.union({user_id})
         await asyncio.create_task(handle_start(client, message))
     
