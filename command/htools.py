@@ -1,4 +1,7 @@
 from command.get_files.hfiles import descargar_hentai, borrar_carpeta
+import request
+import os
+import re
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     if link_type not in ["nh", "3h"]:
