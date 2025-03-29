@@ -29,13 +29,15 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
-                # Enviar archivos procesados
+                # Enviar la foto principal (1.jpg/1.png/1.loquesea) como portada
                 await client.send_photo(
                     message.chat.id,
-                    result['img_file'],
+                    os.path.join(random_folder_name, "1.jpg"),  # Asegurarse de usar la primera foto
                     caption=result['caption'],
                     protect_content=protect_content
                 )
+
+                # Enviar CBZ y PDF
                 await client.send_document(
                     message.chat.id,
                     result['cbz_file'],
@@ -56,3 +58,4 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             borrar_carpeta(random_folder_name, result.get("cbz_file"))
         except Exception as e:
             await message.reply(f"Error al limpiar carpeta para el código {code}: {str(e)}")
+        
