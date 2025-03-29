@@ -12,6 +12,9 @@ MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
+    """
+    Operación combinada para manejar la descarga y el envío de archivos antes de la limpieza.
+    """
     if link_type not in ["nh", "3h"]:
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
@@ -83,6 +86,9 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             await message.reply(f"Error al limpiar carpeta para el código {code}: {str(e)}")
 
 async def manejar_opcion(client, callback_query):
+    """
+    Procesa las opciones seleccionadas usando File IDs.
+    """
     data = callback_query.data.split('|')
     opcion = data[0]
     identificador = data[1]
@@ -113,6 +119,12 @@ async def manejar_opcion(client, callback_query):
         # Descargar el CBZ desde Telegram
         cbz_file_path = await client.download_media(cbz_file_id)
         extract_folder = cbz_file_path.replace(".cbz", "_photos")
+
+        # Verificar si existe un archivo con el mismo nombre que el directorio
+        if os.path.isfile(extract_folder):
+            os.remove(extract_folder)  # Eliminar el archivo
+
+        # Crear el directorio si no existe
         os.makedirs(extract_folder, exist_ok=True)
 
         # Descomprimir el archivo CBZ
