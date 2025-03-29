@@ -92,7 +92,14 @@ async def compress_video(client, message):
 
         # Procesar el video (utilizando la lógica existente)
         nombre, description, chat_id, compressed_video_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
-        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=nombre, protect_content=protect_content)
+
+        # Agregar "Look Here" al caption si protect_content es True
+        if protect_content:
+            caption = f"Look Here {nombre}"
+        else:
+            caption = nombre
+
+        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=caption, protect_content=protect_content)
         await client.send_message(chat_id=chat_id, text=description, protect_content=protect_content)
         os.remove(original_video_path)
         os.remove(compressed_video_path)
