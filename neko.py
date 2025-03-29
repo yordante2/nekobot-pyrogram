@@ -36,7 +36,7 @@ async def process_access_command(message):
         await message.reply("Palabra secreta incorrecta.")
 
 
-from command.options import manejar_opcion
+from command.htools import manejar_opcion
 
 @app.on_callback_query(filters.regex("^(cbz|pdf|fotos)"))
 async def callback_handler(client, callback_query):
