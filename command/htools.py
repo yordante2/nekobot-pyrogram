@@ -9,19 +9,6 @@ from bs4 import BeautifulSoup
 import asyncio
 import re
 
-# Obtener valores de entorno de ADMINS y VIP_USERS
-ADMINS = os.getenv("ADMINS", "")
-VIP_USERS = os.getenv("VIP_USERS", "")
-
-# Crear lista de User IDs
-admin_ids = set(map(int, ADMINS.split(","))) if ADMINS else set()
-vip_ids = set(map(int, VIP_USERS.split(","))) if VIP_USERS else set()
-allowed_ids = admin_ids.union(vip_ids)
-
-# Función para verificar si un usuario está permitido
-def is_user_allowed(allowed_ids, user_id):
-    return user_id in allowed_ids
-
 # Función para borrar carpeta temporal
 def borrar_carpeta_h3dl():
     try:
@@ -42,7 +29,6 @@ def sanitize_input(input_string):
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
-# Función principal de operación combinada
 async def nh_combined_operation(client, message, codes, link_type, allowed_ids, operation_type="download"):
     if link_type == "nh":
         base_url = "nhentai.net/g"
@@ -62,53 +48,66 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
             response = requests.get(url, headers=headers)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            await message.reply(f"Error al procesar el código {code}: {str(e)}")
+            await message.reply(f"El código {code} es erróneo: {str(e)}")
             continue
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
+        name = clean_string(title_tag.text.strip()) if title_tag else clean_string(code)
 
+        # Descargar y enviar la portada
+        img_url = f"https://{base_url}/{code}/1/"
         try:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            title_tag = soup.find('title')
-            name = clean_string(title_tag.text.strip()) if title_tag else clean_string(code)
-
-            # Descargar y enviar la portada
-            img_url = f"https://{base_url}/{code}/1/"
             response = requests.get(img_url, headers=headers)
             response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
-            img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"Error al acceder a la página de la imagen: {str(e)}")
+            continue
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+        
+        if img_tag:
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_data = requests.get(img_url, headers=headers).content
+            img_filename = f"1{img_extension}"
+            
+            with open(img_filename, 'wb') as img_file:
+                img_file.write(img_data)
 
-            if img_tag:
-                img_url = img_tag['src']
-                img_extension = os.path.splitext(img_url)[1]
-                img_data = requests.get(img_url, headers=headers).content
-                img_filename = f"1{img_extension}"
+            # Determinar si el contenido está protegido
+            protect_content = message.from_user.id not in allowed_ids
+            caption = f"Look Here {name}" if protect_content else name
 
-                with open(img_filename, 'wb') as img_file:
-                    img_file.write(img_data)
-
-                # Determinar si el contenido está protegido
-                protect_content = not is_user_allowed(allowed_ids, message.from_user.id)
-                caption = "Look Here" if protect_content else name
-
+            try:
                 await client.send_photo(
                     message.chat.id,
                     img_filename,
                     caption=f"{caption} https://{base_url}/{code} {name}",
                     protect_content=protect_content
                 )
-        except Exception as e:
-            await message.reply(f"Error al procesar la portada del código {code}: {str(e)}")
-            continue
-
-        # Descargar si el tipo de operación es "download"
+            except Exception as e:
+                await client.send_document(
+                    message.chat.id,
+                    img_filename,
+                    caption=f"{caption} https://{base_url}/{code} {name}",
+                    protect_content=protect_content
+                )
+        
+        # Proseguir con la descarga si el tipo de operación es "download"
         if operation_type == "download":
             folder_name = os.path.join("h3dl", name)
             try:
                 os.makedirs(folder_name, exist_ok=True)
             except OSError as e:
-                await message.reply(f"Error al crear el directorio: {e}")
-                continue
-
+                if "File name too long" in str(e):
+                    folder_name = folder_name[:50]
+                    os.makedirs(folder_name, exist_ok=True)
+                else:
+                    print(f"Error al crear el directorio: {e}")
+                    continue
+            
             page_number = 1
             while True:
                 page_url = f"https://{base_url}/{code}/{page_number}/"
@@ -117,46 +116,39 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
                     if page_number == 1:
-                        await message.reply(f"Error al acceder a las páginas del código {code}: {str(e)}")
+                        await message.reply(f"Error al acceder a la página: {str(e)}")
                     break
-
-                try:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
-                    if not img_tag:
-                        break
-
-                    img_url = img_tag['src']
-                    img_extension = os.path.splitext(img_url)[1]
-                    img_data = requests.get(img_url, headers=headers).content
-                    img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
-
-                    with open(img_filename, 'wb') as img_file:
-                        img_file.write(img_data)
-
-                    page_number += 1
-                except Exception as e:
-                    await message.reply(f"Error al procesar la imagen de la página {page_number}: {str(e)}")
+                
+                soup = BeautifulSoup(response.content, 'html.parser')
+                img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+                if not img_tag:
                     break
+                
+                img_url = img_tag['src']
+                img_extension = os.path.splitext(img_url)[1]
+                img_data = requests.get(img_url, headers=headers).content
+                img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
+                
+                with open(img_filename, 'wb') as img_file:
+                    img_file.write(img_data)
+                
+                page_number += 1
+            
+            zip_filename = os.path.join(f"{folder_name}.cbz")
+            with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                for root, _, files in os.walk(folder_name):
+                    for file in files:
+                        zipf.write(os.path.join(root, file), arcname=file)
 
-            try:
-                zip_filename = os.path.join(f"{folder_name}.cbz")
-                with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                    for root, _, files in os.walk(folder_name):
-                        for file in files:
-                            zipf.write(os.path.join(root, file), arcname=file)
+            # Determinar si el archivo CBZ está protegido
+            protect_content = message.from_user.id not in allowed_ids
+            caption = f"Look Here {name}" if protect_content else name
 
-                # Determinar si el archivo CBZ está protegido
-                protect_content = not is_user_allowed(allowed_ids, message.from_user.id)
-                caption = f"Look Here {name}" if protect_content else name
-
-                await client.send_document(
-                    message.chat.id,
-                    zip_filename,
-                    caption=caption,
-                    protect_content=protect_content
-                )
-            except Exception as e:
-                await message.reply(f"Error al comprimir o enviar el archivo {name}: {str(e)}")
-
+            await client.send_document(
+                message.chat.id,
+                zip_filename,
+                caption=caption,
+                protect_content=protect_content
+            )
             borrar_carpeta_h3dl()
+    
