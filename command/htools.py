@@ -34,6 +34,7 @@ def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
 async def nh_combined_operation(client, message, codes, link_type, allowed_ids, operation_type="download"):
+
     # Convertir todos los códigos a cadenas
     codes = [str(code) for code in codes]
 
@@ -153,4 +154,3 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                 await message.reply(f"Error al comprimir o enviar el archivo {name}: {str(e)}")
 
             borrar_carpeta_h3dl()
-                    
