@@ -9,15 +9,6 @@ from bs4 import BeautifulSoup
 import asyncio
 import re
 
-# Obtener valores de entorno de ADMINS y VIP_USERS
-ADMINS = os.getenv("ADMINS", "")
-VIP_USERS = os.getenv("VIP_USERS", "")
-
-# Crear lista de User IDs
-admin_ids = set(map(int, ADMINS.split(","))) if ADMINS else set()
-vip_ids = set(map(int, VIP_USERS.split(","))) if VIP_USERS else set()
-allowed_ids = admin_ids.union(vip_ids)
-
 # Función para verificar si un usuario está permitido
 def is_user_allowed(user_id):
     return user_id in allowed_ids
@@ -43,7 +34,7 @@ def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
 # Función principal de operación combinada
-async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
+async def nh_combined_operation(client, message, codes, link_type, operation_type="download", allowed_ids):
     if link_type == "nh":
         base_url = "nhentai.net/g"
     elif link_type == "3h":
