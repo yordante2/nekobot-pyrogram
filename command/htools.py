@@ -39,6 +39,13 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     caption=result['caption'],
                     protect_content=protect_content
                 )
+                await client.send_document(
+                    message.chat.id,
+                    result['pdf_file'],
+                    caption=result['caption'],
+                    protect_content=protect_content
+                )
+                
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
