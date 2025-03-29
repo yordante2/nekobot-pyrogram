@@ -11,3 +11,4 @@ ffmpeg-python
 curl_cffi
 Pillow
 nest_asyncio
+fpdf
