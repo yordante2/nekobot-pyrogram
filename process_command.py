@@ -102,14 +102,14 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     await client.send_message(
                         chat_id=message.chat.id,
                         text="🛑 Modo automático desactivado.",
-                        protect_content=True
+                        protect_content=False
                     )
                 else:
                     auto_users[user_id] = True
                     await client.send_message(
                         chat_id=message.chat.id,
                         text="✅ Modo automático activado.",
-                        protect_content=True
+                        protect_content=False
                     )
 
             elif text.startswith("/calidad"):
@@ -126,7 +126,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         protect_content=True
                     )
 
-            elif text.startswith("/list"):
+            elif text.startswith("/list") and (user_id in admin_users or user_id in vip_users):
                 await listar_tareas(client, message.chat.id, allowed_ids, message)
 
             elif auto and (message.video or message.document):
