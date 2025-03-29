@@ -32,11 +32,14 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
         # Asegurar que el directorio base existe
         os.makedirs(folder_name, exist_ok=True)
 
-        # Descargar la portada (1.jpg/1.png/etc.)
+        # Descargar la portada y obtener el título para usarlo como nombre de archivo
         page_url = f"https://{base_url}/{code}/1/"
         response = requests.get(page_url, headers={"User-Agent": "Mozilla/5.0"})
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
+
+        page_title = clean_string(title_tag.text.strip()) if title_tag else f"Contenido_{code}"
         img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
 
         img_filename = None
@@ -74,9 +77,9 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
 
                 page_number += 1
 
-            # Crear nombres basados en el código/título
-            zip_filename = f"{code}.cbz"
-            pdf_filename = f"{code}.pdf"
+            # Usar el título como nombre de archivo
+            zip_filename = f"{page_title}.cbz"
+            pdf_filename = f"{page_title}.pdf"
 
             # Crear CBZ
             with zipfile.ZipFile(zip_filename, 'w') as zipf:
@@ -88,13 +91,13 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
             pdf_result = crear_pdf(folder_name, pdf_filename)
 
             results = {
-                "caption": code,
+                "caption": page_title,
                 "img_file": img_filename,  # La portada será la primera imagen
                 "cbz_file": zip_filename,
                 "pdf_file": pdf_result
             }
         else:
-            results = {"caption": code, "img_file": img_filename}
+            results = {"caption": page_title, "img_file": img_filename}
     except Exception as e:
         results = {"error": str(e)}
 
