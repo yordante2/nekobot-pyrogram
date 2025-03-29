@@ -12,6 +12,7 @@ from command.mailtools import send_mail, set_mail, verify_mail, set_mail_limit
 from command.videotools import update_video_settings, compress_video, cancelar_tarea, listar_tareas
 from command.filetools import handle_compress, rename, set_size
 from command.telegramtools import get_file_id, send_file_by_id
+from command.help import handle_help, handle_help_callback  # Importar funciones de ayuda desde help.py
 
 nest_asyncio.apply()
 
@@ -45,6 +46,10 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
     if text.startswith("/start"):
         await asyncio.create_task(handle_start(client, message))
     
+    elif text.startswith("/help"):  # Manejo del comando /help
+        await asyncio.create_task(handle_help(client, message))
+        return
+
     elif text.startswith(("/nh", "/3h", "/cover", "/covernh")):
         if cmd("htools", user_id in admin_users, user_id in vip_users):
             parts = text.split(maxsplit=1)
@@ -168,3 +173,4 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         elif text.startswith("/remchat"):
             await asyncio.create_task(remove_chat(client, message, user_id, chat_id))
         return
+            
