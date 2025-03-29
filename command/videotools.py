@@ -39,7 +39,7 @@ async def update_video_settings(client, message):
     except Exception as e:
         await message.reply_text(f"❌ Error al procesar el comando:\n{e}", protect_content=True)
 
-async def cancelar_tarea(client, task_id, chat_id):
+async def cancelar_tarea(admin_users, client, task_id, chat_id):
     global cola_de_tareas
     if task_id in tareas_en_ejecucion:
         tareas_en_ejecucion[task_id]["cancel"] = True
@@ -50,7 +50,7 @@ async def cancelar_tarea(client, task_id, chat_id):
     else:
         await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró la tarea con ID `{task_id}`.", protect_content=True)
 
-async def compress_video(client, message, allowed_ids):
+async def compress_video(admin_users, client, message, allowed_ids):
     global cola_de_tareas
     task_id = str(uuid.uuid4())
     chat_id = message.chat.id
@@ -58,19 +58,19 @@ async def compress_video(client, message, allowed_ids):
 
     # Validación de permisos para reenviar contenido
     if user_id not in allowed_ids:
-        protect_content = True  # Los usuarios sin permisos no pueden reenviar contenido
+        protect_content = True
     else:
-        protect_content = False  # Usuarios permitidos pueden reenviar contenido
+        protect_content = False
 
     # Si se excede el límite de tareas en ejecución, encolar la tarea
     if len(tareas_en_ejecucion) >= max_tareas:
         cola_de_tareas.append({"id": task_id, "client": client, "message": message})
-        await client.send_message(chat_id=chat_id, text=f"🕒 Tarea encolada con ID `{task_id}`.", protect_content=protect_content)
+        await client.send_message(chat_id=chat_id, text=f"🕒 Tarea añadida la cola con ID `{task_id}`.", protect_content=protect_content)
         return
 
     # Registrar tarea en ejecución
     tareas_en_ejecucion[task_id] = {"cancel": False}
-    await client.send_message(chat_id=chat_id, text=f"🎥 Preparando la compresión del video...\n`{task_id}`", protect_content=protect_content)
+    await client.send_message(chat_id=chat_id, text=f"🎥 Preparando la compresión del video...\n", protect_content=protect_content)
 
     try:
         # Identificar el archivo original a descargar
