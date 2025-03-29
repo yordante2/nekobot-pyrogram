@@ -2,7 +2,7 @@ import os
 import requests
 import re
 from uuid import uuid4  # Generar identificadores únicos
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
 from command.get_files.hfiles import descargar_hentai, borrar_carpeta
 
 # Variable MAIN_ADMIN definida en las variables de entorno
@@ -140,7 +140,7 @@ async def manejar_opcion(client, callback_query):
             grupo_fotos = []
             for file_id in photo_file_ids[i:i + lote]:
                 foto_descargada = await client.download_media(file_id)  # Descargar desde Telegram
-                grupo_fotos.append({"type": "photo", "media": foto_descargada})
+                grupo_fotos.append(InputMediaPhoto(foto_descargada))  # Crear InputMediaPhoto
 
             await client.send_media_group(
                 callback_query.message.chat.id,
