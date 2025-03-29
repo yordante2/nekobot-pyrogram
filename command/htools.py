@@ -88,7 +88,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
 
                 # Determinar si el contenido está protegido
                 protect_content = not is_user_allowed(message.from_user.id)
-                caption = f"Look Here}" if protect_content else name
+                caption = "Look Here" if protect_content else name
 
                 await client.send_photo(
                     message.chat.id,
