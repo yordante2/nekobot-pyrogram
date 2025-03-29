@@ -154,12 +154,18 @@ def compressfile(file_path, part_size):
 async def send_mail(client, message):
     user_id = message.from_user.id
     if user_id not in user_emails:
-        await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.")
+        await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.", protect_content=True)
         return
     email = user_emails[user_id]
 
     if not message.reply_to_message:
-        await message.reply("Por favor, responde a un mensaje.")
+        await message.reply("Por favor, responde a un mensaje.", protect_content=True)
+        return
+
+    # Validación: Verificar si el caption empieza con "Look Here" y si el remitente es el bot
+    reply_message = message.reply_to_message
+    if reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
+        await message.reply("No puedes enviar este contenido debido a restricciones.", protect_content=True)
         return
 
     mail_mb = get_mail_limit(user_id)
@@ -177,13 +183,13 @@ async def send_mail(client, message):
                     chat_id=message.chat.id,
                     sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
                 )
-                await message.reply("¿Qué haces pendejo? 20 es el límite.")
+                await message.reply("¿Qué haces pendejo? 20 es el límite.", protect_content=True)
                 return
 
         if os.path.getsize(media) <= mail_mb * 1024 * 1024:
             try:
                 msg = EmailMessage()
-                msg['Subject'] = 'Archivo de Telegram'
+                msg['Subject'] = 'Archivo'
                 msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
                 msg['To'] = email
                 with open(media, 'rb') as f:
@@ -201,17 +207,17 @@ async def send_mail(client, message):
                     server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                     server.send_message(msg)
 
-                await message.reply("Archivo enviado correctamente sin compresión.")
+                await message.reply("Archivo enviado correctamente sin compresión.", protect_content=True)
             except Exception as e:
-                await message.reply(f"Error al enviar el archivo: {e}")
+                await message.reply(f"Error al enviar el archivo: {e}", protect_content=True)
         else:
-            await message.reply(f"El archivo supera el límite de {mail_mb} MB, se iniciará la autocompresión.")
+            await message.reply(f"El archivo supera el límite de {mail_mb} MB, se iniciará la autocompresión.", protect_content=True)
             parts = compressfile(media, mail_mb)
             for part in parts:
                 try:
                     msg = EmailMessage()
-                    msg['Subject'] = 'Parte de archivo comprimido'
-                    msg['From'] = os.getenv('MAILDIR')
+                    msg['Subject'] = f"Parte {part}"
+                    msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
                     msg['To'] = email
                     with open(part, 'rb') as f:
                         msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(part))
@@ -222,7 +228,7 @@ async def send_mail(client, message):
                         server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                         server.send_message(msg)
 
-                    await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.")
+                    await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.", protect_content=True)
                     time.sleep(float(mail_delay) if mail_delay else 0)
                 except Exception as e:
-                    await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}")
+                    await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}", protect_content=True)
