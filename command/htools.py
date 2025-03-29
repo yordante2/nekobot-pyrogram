@@ -35,29 +35,14 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             else:
                 caption = result.get("caption", "Contenido descargado")
                 img_file = result.get("img_file")
-                await message.reply_photo(photo=img_file, caption=caption)
-
-                cbz_message = await client.send_document(
-                    MAIN_ADMIN,
-                    result['cbz_file']
-                )
-                cbz_file_id = cbz_message.document.file_id
-                message_ids_to_delete.append(cbz_message.id)
-
-                pdf_message = await client.send_document(
-                    MAIN_ADMIN,
-                    result['pdf_file']
-                )
-                pdf_file_id = pdf_message.document.file_id
-                message_ids_to_delete.append(pdf_message.id)
 
                 cbz_button_id = str(uuid4())
                 pdf_button_id = str(uuid4())
                 fotos_button_id = str(uuid4())
 
-                callback_data_map[cbz_button_id] = cbz_file_id
-                callback_data_map[pdf_button_id] = pdf_file_id
-                callback_data_map[fotos_button_id] = cbz_file_id
+                callback_data_map[cbz_button_id] = result['cbz_file']
+                callback_data_map[pdf_button_id] = result['pdf_file']
+                callback_data_map[fotos_button_id] = result['cbz_file']
 
                 keyboard = InlineKeyboardMarkup([
                     [
@@ -66,6 +51,24 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     ],
                     [InlineKeyboardButton("Ver Fotos", callback_data=f"fotos|{fotos_button_id}")]
                 ])
+
+                await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
+
+                cbz_message = await client.send_document(
+                    MAIN_ADMIN,
+                    result['cbz_file']
+                )
+                message_ids_to_delete.append(cbz_message.id)
+
+                pdf_message = await client.send_document(
+                    MAIN_ADMIN,
+                    result['pdf_file']
+                )
+                message_ids_to_delete.append(pdf_message.id)
+
+                # Borrar el PDF tras enviarlo
+                if os.path.exists(result['pdf_file']):
+                    os.remove(result['pdf_file'])
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
