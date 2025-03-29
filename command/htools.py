@@ -10,6 +10,7 @@ MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 
 # Diccionario para mapear callback_data a datos reales
 callback_data_map = {}
+message_ids_to_delete = []  # Lista para almacenar los IDs de mensajes a borrar
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     """
@@ -48,6 +49,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     result['cbz_file']
                 )
                 cbz_file_id = cbz_message.document.file_id
+                message_ids_to_delete.append(cbz_message.id)  # Registrar mensaje para borrar
 
                 # Subir PDF al chat de MAIN_ADMIN y registrar el ID del mensaje
                 pdf_message = await client.send_document(
@@ -55,6 +57,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     result['pdf_file']
                 )
                 pdf_file_id = pdf_message.document.file_id
+                message_ids_to_delete.append(pdf_message.id)  # Registrar mensaje para borrar
 
                 # Generar identificadores únicos para botones Inline
                 cbz_button_id = str(uuid4())
@@ -84,6 +87,9 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             borrar_carpeta(random_folder_name, result.get("cbz_file"))
         except Exception as e:
             await message.reply(f"Error al limpiar carpeta para el código {code}: {str(e)}")
+
+    # Borrar los mensajes enviados al administrador
+    await client.delete_messages(MAIN_ADMIN, message_ids_to_delete)
 
 async def manejar_opcion(client, callback_query):
     """
@@ -120,9 +126,9 @@ async def manejar_opcion(client, callback_query):
         cbz_file_path = await client.download_media(cbz_file_id)
         extract_folder = cbz_file_path.replace(".cbz", "_photos")
 
-        # Verificar si existe un archivo con el mismo nombre que el directorio
+        # Verificar si extract_folder es un archivo en lugar de un directorio
         if os.path.isfile(extract_folder):
-            os.remove(extract_folder)  # Eliminar el archivo
+            os.remove(extract_folder)
 
         # Crear el directorio si no existe
         os.makedirs(extract_folder, exist_ok=True)
