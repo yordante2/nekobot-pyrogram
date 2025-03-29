@@ -51,7 +51,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             operation_type = "download" if command in ("/nh", "/3h") else "cover"
             global link_type
             link_type = "nh" if command in ("/nh", "/covernh") else "3h"
-            protect_content = user_id not in allowed_idd
+            protect_content = user_id not in allowed_ids
             await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, operation_type))
         return
     
