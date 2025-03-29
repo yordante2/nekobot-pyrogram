@@ -15,20 +15,12 @@ video_settings = {
     'preset': 'veryfast',
     'codec': 'libx265'
 }
-max_tareas = int(os.getenv('MAX_TASKS', '1'))  # Número máximo de tareas simultáneas
+max_tareas = int(os.getenv('MAX_TASKS', '1')) 
 
-# Listas de permisos desde las variables de entorno
-admins = list(map(int, os.getenv('ADMINS', '').split(','))) if os.getenv('ADMINS') else []
-vip_users = list(map(int, os.getenv('VIP_USERS', '').split(','))) if os.getenv('VIP_USERS') else []
-
-# Variables globales
 tareas_en_ejecucion = {}
 cola_de_tareas = []
 
 def human_readable_size(size, decimal_places=2):
-    """
-    Convierte bytes en un formato legible (por ejemplo, KB, MB, GB, TB).
-    """
     for unit in ['KB', 'MB', 'GB', 'TB']:
         if size < 1024.0:
             return f"{size:.{decimal_places}f} {unit}"
@@ -58,17 +50,17 @@ async def cancelar_tarea(client, task_id, chat_id):
     else:
         await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró la tarea con ID `{task_id}`.", protect_content=True)
 
-async def compress_video(client, message):
+async def compress_video(client, message, allowed_ids):
     global cola_de_tareas
     task_id = str(uuid.uuid4())
     chat_id = message.chat.id
     user_id = message.from_user.id
 
     # Validación de permisos para reenviar contenido
-    if user_id not in admins and user_id not in vip_users:
+    if user_id not in allowed_ids:
         protect_content = True  # Los usuarios sin permisos no pueden reenviar contenido
     else:
-        protect_content = False  # Admins y VIPs pueden reenviar contenido
+        protect_content = False  # Usuarios permitidos pueden reenviar contenido
 
     # Si se excede el límite de tareas en ejecución, encolar la tarea
     if len(tareas_en_ejecucion) >= max_tareas:
@@ -94,10 +86,7 @@ async def compress_video(client, message):
         nombre, description, chat_id, compressed_video_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
 
         # Agregar "Look Here" al caption si protect_content es True
-        if protect_content:
-            caption = f"Look Here {nombre}"
-        else:
-            caption = nombre
+        caption = f"Look Here {nombre}" if protect_content else nombre
 
         await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=caption, protect_content=protect_content)
         await client.send_message(chat_id=chat_id, text=description, protect_content=protect_content)
