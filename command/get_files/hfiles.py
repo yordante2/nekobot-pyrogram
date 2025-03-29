@@ -3,7 +3,7 @@ import re
 import requests
 import zipfile
 from bs4 import BeautifulSoup
-from uuid import uuid4  # Para generar nombres únicos
+from uuid import uuid4
 from fpdf import FPDF
 
 def sanitize_input(input_string):
@@ -36,9 +36,9 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
         # Asegurar que el directorio base aleatorio existe
         os.makedirs(folder_name, exist_ok=True)
 
-        # Descargar la portada
-        img_url = f"https://{base_url}/{code}/1/"
-        response = requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"})
+        # Descargar la portada (1.jpg/1.png/etc.)
+        page_url = f"https://{base_url}/{code}/1/"
+        response = requests.get(page_url, headers={"User-Agent": "Mozilla/5.0"})
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
         img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
@@ -47,7 +47,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
         if img_tag:
             img_url = img_tag['src']
             img_extension = os.path.splitext(img_url)[1]
-            img_filename = os.path.join(folder_name, f"cover{img_extension}")
+            img_filename = os.path.join(folder_name, f"1{img_extension}")
 
             with open(img_filename, 'wb') as img_file:
                 img_data = requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}).content
@@ -91,7 +91,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
 
             results = {
                 "caption": code,
-                "img_file": img_filename,
+                "img_file": img_filename,  # La portada será la primera imagen
                 "cbz_file": zip_filename,
                 "pdf_file": pdf_result
             }
@@ -115,3 +115,4 @@ def borrar_carpeta(folder_name, cbz_file):
             os.remove(cbz_file)
     except Exception as e:
         print(f"Error al borrar: {e}")
+        
