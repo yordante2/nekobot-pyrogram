@@ -49,7 +49,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     result['cbz_file']
                 )
                 cbz_file_id = cbz_message.document.file_id
-                message_ids_to_delete.append(cbz_message.message_id)  # Registrar mensaje para borrar
+                message_ids_to_delete.append(cbz_message.id)  # Registrar mensaje para borrar
 
                 # Subir PDF al chat de MAIN_ADMIN y registrar el ID del mensaje
                 pdf_message = await client.send_document(
@@ -57,7 +57,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     result['pdf_file']
                 )
                 pdf_file_id = pdf_message.document.file_id
-                message_ids_to_delete.append(pdf_message.message_id)  # Registrar mensaje para borrar
+                message_ids_to_delete.append(pdf_message.id)  # Registrar mensaje para borrar
 
                 # Subir todas las fotos al chat de MAIN_ADMIN y registrar los IDs de mensajes
                 photo_ids = []
@@ -68,7 +68,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                         archivo
                     )
                     photo_ids.append(photo_message.photo.file_id)
-                    message_ids_to_delete.append(photo_message.message_id)  # Registrar mensaje para borrar
+                    message_ids_to_delete.append(photo_message.id)  # Registrar mensaje para borrar
 
                 # Generar identificadores únicos para botones Inline
                 cbz_button_id = str(uuid4())
