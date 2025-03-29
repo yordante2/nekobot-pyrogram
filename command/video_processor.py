@@ -1,6 +1,8 @@
 from command.get_files.video_file import obtener_duracion_video, comprimir_video, calcular_progreso
 import os
 import re
+import datetime
+
 async def procesar_video(client, message, original_video_path, task_id, tareas_en_ejecucion):
     chat_id = message.chat.id
     compressed_video_path = f"{os.path.splitext(original_video_path)[0]}_compressed.mkv"
