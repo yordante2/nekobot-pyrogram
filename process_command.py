@@ -9,7 +9,7 @@ from command.admintools import add_user, remove_user, add_chat, remove_chat, ban
 from command.imgtools import create_imgchest_post
 from command.webtools import handle_scan, handle_multiscan
 from command.mailtools import send_mail, set_mail, verify_mail, set_mail_limit
-from command.videotools import update_video_settings, compress_video, cancelar_tarea
+from command.videotools import update_video_settings, compress_video, cancelar_tarea, listar_tareas
 from command.filetools import handle_compress, rename, set_size
 from command.telegramtools import get_file_id, send_file_by_id
 
