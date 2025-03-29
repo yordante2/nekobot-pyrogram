@@ -42,14 +42,6 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
 
-    # Interpretar allowed_ids y asegurar comparación correcta
-    def is_user_allowed(user_id, allowed_ids):
-        if isinstance(user_id, int):
-            return user_id in allowed_ids or str(user_id) in allowed_ids
-        elif isinstance(user_id, str):
-            return user_id in allowed_ids or int(user_id) in allowed_ids
-        return False
-
     for code in codes:
         url = f"https://{base_url}/{code}/"
         try:
@@ -80,8 +72,8 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                 with open(img_filename, 'wb') as img_file:
                     img_file.write(img_data)
 
-                # Determinar si el contenido está protegido
-                protect_content = not is_user_allowed(message.from_user.id, allowed_ids)
+                # Determinar si el contenido debe estar protegido
+                protect_content = message.from_user.id not in allowed_ids
                 caption = f"Look Here {name}" if protect_content else name
 
                 try:
@@ -144,7 +136,7 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                         zipf.write(os.path.join(root, file), arcname=file)
 
             # Determinar si el archivo CBZ debe estar protegido
-            protect_content = not is_user_allowed(message.from_user.id, allowed_ids)
+            protect_content = message.from_user.id not in allowed_ids
             caption = f"Look Here {name}" if protect_content else name
 
             await client.send_document(
@@ -154,4 +146,4 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                 protect_content=protect_content
             )
             borrar_carpeta_h3dl()
-                
+            
