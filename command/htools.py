@@ -1,5 +1,5 @@
 from command.get_files.hfiles import descargar_hentai, borrar_carpeta
-import request
+import requests
 import os
 import re
 
