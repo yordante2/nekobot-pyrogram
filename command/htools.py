@@ -9,6 +9,9 @@ from command.get_files.hfiles import descargar_hentai, borrar_carpeta
 callback_data_map = {}
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
+    """
+    Operación combinada para manejar la descarga y el envío de archivos a "Mensajes guardados" antes de la limpieza.
+    """
     if link_type not in ["nh", "3h"]:
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
@@ -35,9 +38,51 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             else:
                 # Usar el título de la página como caption y nombre del archivo
                 caption = result.get("caption", "Contenido descargado")
-                
-                # Enviar botones Inline con opciones
-                await enviar_opciones(client, message, caption, result['cbz_file'], result['pdf_file'], random_folder_name)
+
+                # Subir CBZ a "Mensajes guardados"
+                cbz_message = await client.send_document(
+                    client.me.id,  # "Mensajes guardados" (chat del bot)
+                    result['cbz_file']
+                )
+                cbz_file_id = cbz_message.document.file_id  # Obtener File ID
+
+                # Subir PDF a "Mensajes guardados"
+                pdf_message = await client.send_document(
+                    client.me.id,  # "Mensajes guardados" (chat del bot)
+                    result['pdf_file']
+                )
+                pdf_file_id = pdf_message.document.file_id  # Obtener File ID
+
+                # Subir todas las fotos a "Mensajes guardados" y registrar sus File IDs
+                photo_ids = []
+                archivos = sorted([os.path.join(random_folder_name, f) for f in os.listdir(random_folder_name) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+                for archivo in archivos:
+                    photo_message = await client.send_photo(
+                        client.me.id,  # "Mensajes guardados" (chat del bot)
+                        archivo
+                    )
+                    photo_ids.append(photo_message.photo.file_id)  # Obtener File ID
+
+                # Generar identificadores únicos para botones Inline
+                cbz_button_id = str(uuid4())
+                pdf_button_id = str(uuid4())
+                fotos_button_id = str(uuid4())
+
+                # Mapear los identificadores a los File IDs
+                callback_data_map[cbz_button_id] = cbz_file_id
+                callback_data_map[pdf_button_id] = pdf_file_id
+                callback_data_map[fotos_button_id] = photo_ids
+
+                # Crear botones Inline para opciones posteriores
+                keyboard = InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
+                        InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}")
+                    ],
+                    [InlineKeyboardButton("Ver Fotos (10 por lote)", callback_data=f"fotos|{fotos_button_id}")]
+                ])
+
+                await message.reply("Opciones disponibles para los archivos:", reply_markup=keyboard)
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
@@ -47,34 +92,9 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         except Exception as e:
             await message.reply(f"Error al limpiar carpeta para el código {code}: {str(e)}")
 
-async def enviar_opciones(client, message, caption, cbz_file, pdf_file, folder_name):
-    """
-    Envía botones Inline con identificadores únicos como callback_data.
-    """
-    # Generar identificadores únicos para cada botón
-    cbz_id = str(uuid4())
-    pdf_id = str(uuid4())
-    fotos_id = str(uuid4())
-
-    # Mapear los identificadores a los datos correspondientes
-    callback_data_map[cbz_id] = cbz_file
-    callback_data_map[pdf_id] = pdf_file
-    callback_data_map[fotos_id] = folder_name
-
-    # Crear los botones con los identificadores únicos
-    keyboard = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_id}"),
-            InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_id}")
-        ],
-        [InlineKeyboardButton("Ver Fotos (10 por lote)", callback_data=f"fotos|{fotos_id}")]
-    ])
-    
-    await message.reply(caption, reply_markup=keyboard)
-
 async def manejar_opcion(client, callback_query):
     """
-    Procesa las opciones seleccionadas usando identificadores únicos.
+    Procesa las opciones seleccionadas usando File IDs.
     """
     data = callback_query.data.split('|')
     opcion = data[0]
@@ -88,28 +108,27 @@ async def manejar_opcion(client, callback_query):
         return
 
     if opcion == "cbz":
-        cbz_file = datos_reales
+        cbz_file_id = datos_reales
         await client.send_document(
             callback_query.message.chat.id,
-            cbz_file,
+            cbz_file_id,
             caption="Aquí está tu CBZ 📚"
         )
     elif opcion == "pdf":
-        pdf_file = datos_reales
+        pdf_file_id = datos_reales
         await client.send_document(
             callback_query.message.chat.id,
-            pdf_file,
+            pdf_file_id,
             caption="Aquí está tu PDF 🖨️"
         )
     elif opcion == "fotos":
-        folder_name = datos_reales
-        archivos = sorted([os.path.join(folder_name, f) for f in os.listdir(folder_name) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+        photo_file_ids = datos_reales  # Lista de File IDs de las fotos
         lote = 10
-        for i in range(0, len(archivos), lote):
+        for i in range(0, len(photo_file_ids), lote):
             await client.send_media_group(
                 callback_query.message.chat.id,
                 [
-                    {"type": "photo", "media": archivo} for archivo in archivos[i:i + lote]
+                    {"type": "photo", "media": file_id} for file_id in photo_file_ids[i:i + lote]
                 ]
             )
     await callback_query.answer("¡Opción procesada!")
