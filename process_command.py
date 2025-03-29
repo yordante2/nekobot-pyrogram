@@ -15,46 +15,47 @@ from command.telegramtools import get_file_id, send_file_by_id
 
 nest_asyncio.apply()
 
-admin_users = list(map(int, os.getenv('ADMINS').split(',')))
+# Definir usuarios administradores y VIPs
+admin_users = list(map(int, os.getenv('ADMINS', '').split(','))) if os.getenv('ADMINS') else []
+vip_users = list(map(int, os.getenv('VIP_USERS', '').split(','))) if os.getenv('VIP_USERS') else []
 
-auto = False
+# Definir lista de IDs permitidos (allowed_ids)
+allowed_ids = set(admin_users).union(set(vip_users))
 
-async def setauto(client, user_id):
-    global auto
-    if not auto:
-        auto = True
-        await client.send_message(chat_id=user_id, text="Se ha activado la auto conversión de videos")
-        return
-    auto = False
-    await client.send_message(chat_id=user_id, text="Se ha desactivado la auto conversión de videos")
-    return
+# Revisar PROTECT_CONTENT
+protect_content_env = os.getenv('PROTECT_CONTENT', '').strip().lower()
+is_protect_content_enabled = protect_content_env == 'true'  # Evaluamos si es "True" en cualquier formato
 
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
+    global allowed_ids
     text = message.text.strip().lower() if message.text else ""
 
-    def cmd(command_env, is_admin=False):
+    def cmd(command_env, is_admin=False, is_vip=False):
         return (
             active_cmd == "all" or 
             command_env in active_cmd or 
-            (is_admin and (admin_cmd == "all" or command_env in admin_cmd))
+            ((is_admin or is_vip) and (admin_cmd == "all" or command_env in admin_cmd))
         )
 
     if text.startswith("/start"):
+        # Si PROTECT_CONTENT no está habilitado, añadir a allowed_ids
+        if not is_protect_content_enabled:
+            allowed_ids = allowed_ids.union({user_id})
         await asyncio.create_task(handle_start(client, message))
     
     elif text.startswith(("/nh", "/3h", "/cover", "/covernh")):
-        if cmd("htools", user_id in admin_users):
+        if cmd("htools", user_id in admin_users, user_id in vip_users):
             parts = text.split(maxsplit=1)
             command = parts[0]
             codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
             operation_type = "download" if command in ("/nh", "/3h") else "cover"
             global link_type
             link_type = "nh" if command in ("/nh", "/covernh") else "3h"
-            await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, operation_type))
+            await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, operation_type, allowed_ids))
         return
     
     elif text.startswith(("/setmail", "/sendmail", "/verify", "/setmb")):
-        if cmd("mailtools", user_id in admin_users):
+        if cmd("mailtools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/setmail"):
                 await asyncio.create_task(set_mail(client, message))
             elif text.startswith("/sendmail"):
@@ -76,7 +77,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             return
     
     elif text.startswith(("/compress", "/setsize", "/rename")):
-        if cmd("filetools", user_id in admin_users):
+        if cmd("filetools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/compress"):
                 await asyncio.create_task(handle_compress(client, message, username))
             elif text.startswith("/setsize"):
@@ -86,10 +87,10 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         return
 
     elif text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel")) or (message.video is not None):
-        if cmd("videotools", user_id in admin_users):
+        if cmd("videotools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
-                    await asyncio.create_task(compress_video(client, message))
+                    await asyncio.create_task(compress_video(client, message, allowed_ids))
             elif text.startswith("/autoconvert"):
                 await asyncio.create_task(setauto(client, user_id))
             elif text.startswith("/calidad"):
@@ -107,11 +108,11 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         text="⚠️ Debes proporcionar un ID válido para cancelar la tarea. Ejemplo: `/cancel <ID>`"
                     )
             elif auto and (message.video or message.document):
-                await asyncio.create_task(compress_video(client, message))
+                await asyncio.create_task(compress_video(client, message, allowed_ids))
         return
         
     elif text.startswith("/imgchest"):
-        if cmd("imgtools", user_id in admin_users):
+        if cmd("imgtools", user_id in admin_users, user_id in vip_users):
             if message.reply_to_message and (message.reply_to_message.photo or message.reply_to_message.document):
                 await asyncio.create_task(create_imgchest_post(client, message))
             else:
@@ -119,7 +120,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         return
     
     elif text.startswith(("/scan", "/multiscan")):
-        if cmd("webtools", user_id in admin_users):
+        if cmd("webtools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/scan"):
                 await asyncio.create_task(handle_scan(client, message))
             elif text.startswith("/multiscan"):
