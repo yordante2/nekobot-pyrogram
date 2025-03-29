@@ -29,7 +29,7 @@ def sanitize_input(input_string):
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
-async def nh_combined_operation(client, message, codes, link_type, allowed_ids, operation_type="download"):
+async def nh_combined_operation(client, message, codes, link_type, protect_content, operation_type="download"):
     if link_type == "nh":
         base_url = "nhentai.net/g"
     elif link_type == "3h":
@@ -72,8 +72,6 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                 with open(img_filename, 'wb') as img_file:
                     img_file.write(img_data)
 
-                # Determinar si el contenido debe estar protegido
-                protect_content = message.from_user.id not in allowed_ids
                 caption = f"Look Here {name}" if protect_content else name
 
                 try:
@@ -135,8 +133,6 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                     for file in files:
                         zipf.write(os.path.join(root, file), arcname=file)
 
-            # Determinar si el archivo CBZ debe estar protegido
-            protect_content = message.from_user.id not in allowed_ids
             caption = f"Look Here {name}" if protect_content else name
 
             await client.send_document(
@@ -146,4 +142,4 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                 protect_content=protect_content
             )
             borrar_carpeta_h3dl()
-            
+                
