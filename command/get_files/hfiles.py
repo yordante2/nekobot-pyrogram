@@ -4,12 +4,31 @@ import requests
 import zipfile
 from bs4 import BeautifulSoup
 import shutil
+from fpdf import FPDF
 
 def sanitize_input(input_string):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
+
+def crear_pdf(folder_name, pdf_filename):
+    try:
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=0)
+
+        for file in sorted(os.listdir(folder_name)):
+            file_path = os.path.join(folder_name, file)
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
+                pdf.add_page()
+                pdf.image(file_path, x=0, y=0, w=210)  # Ajustar tamaño según sea necesario
+
+        pdf.output(pdf_filename)
+        print(f"PDF creado: {pdf_filename}")
+        return pdf_filename
+    except Exception as e:
+        print(f"Error al crear PDF: {e}")
+        return None
 
 def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
     results = {}
@@ -73,10 +92,15 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                     for file in files:
                         zipf.write(os.path.join(root, file), arcname=file)
 
+            # Crear PDF
+            pdf_filename = f"{folder_name}.pdf"
+            pdf_result = crear_pdf(folder_name, pdf_filename)
+
             results = {
                 "caption": name,
                 "img_file": img_filename,
-                "cbz_file": zip_filename
+                "cbz_file": zip_filename,
+                "pdf_file": pdf_result
             }
         else:
             results = {"caption": name, "img_file": img_filename}
@@ -97,4 +121,3 @@ def borrar_carpeta(folder_name, cbz_file):
         os.remove(cbz_file)
     except Exception as e:
         print(f"Error al borrar: {e}")
-        
