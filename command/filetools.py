@@ -28,6 +28,13 @@ def compressfile(file_path, part_size):
     return parts
 
 async def handle_compress(client, message, username):
+    reply_message = message.reply_to_message
+
+    # Verificar si el caption empieza con "Look Here" y el remitente es el bot
+    if reply_message and reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
+        await message.reply("No puedes comprimir este contenido debido a restricciones.", protect_content=True)
+        return
+
     try:
         os.system("rm -rf ./server/*")
         await message.reply("Descargando el archivo para comprimirlo...")
@@ -70,9 +77,15 @@ async def handle_compress(client, message, username):
     
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
-        
+
 async def rename(client, message):
     reply_message = message.reply_to_message
+
+    # Verificar si el caption empieza con "Look Here" y el remitente es el bot
+    if reply_message and reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
+        await message.reply("No puedes renombrar este contenido debido a restricciones.", protect_content=True)
+        return
+
     if reply_message and reply_message.media:
         try:
             await message.reply("Descargando el archivo para renombrarlo...")
