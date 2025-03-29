@@ -13,12 +13,22 @@ def crear_pdf(folder_name, pdf_filename):
     try:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=0)
+        valid_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')
 
+        # Iterar sobre los archivos en la carpeta
         for file in sorted(os.listdir(folder_name)):
             file_path = os.path.join(folder_name, file)
-            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
-                pdf.add_page()
-                pdf.image(file_path, x=0, y=0, w=210)
+            if file.lower().endswith(valid_extensions) and os.path.isfile(file_path):
+                try:
+                    pdf.add_page()
+                    pdf.image(file_path, x=0, y=0, w=210)  # Ajustar el ancho si es necesario
+                except Exception as e:
+                    print(f"Error al añadir la imagen {file_path} al PDF: {e}")
+                    continue  # Pasar a la siguiente imagen
+
+        if pdf.page_no() == 0:
+            print("No se añadió ninguna imagen al PDF. Verifica el contenido de la carpeta.")
+            return None
 
         pdf.output(pdf_filename)
         print(f"PDF creado: {pdf_filename}")
