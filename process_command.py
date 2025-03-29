@@ -86,30 +86,38 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(rename(client, message))
         return
 
-    elif text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel")) or (message.video is not None):
+    elif text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel", "/list")) or (message.video is not None):
         if cmd("videotools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
                     await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
+
             elif text.startswith("/autoconvert"):
                 await asyncio.create_task(setauto(client, user_id))
+
             elif text.startswith("/calidad"):
-                await asyncio.create_task(update_video_settings(client, message))
+                await asyncio.create_task(update_video_settings(client, message, allowed_ids))
+
             elif text.startswith("/cancel"):
                 try:
                     # Obtener el ID de la tarea del mensaje
                     task_id = text.split(" ", 1)[1].strip()
                     # Cancelar la tarea si existe
-                    await cancelar_tarea(admin_users, client, task_id, message.chat.id)
+                    await cancelar_tarea(admin_users, client, task_id, message.chat.id, message, allowed_ids)
                 except IndexError:
                     # Si el usuario no proporciona un ID
                     await client.send_message(
                         chat_id=message.chat.id,
-                        text="⚠️ Debes proporcionar un ID válido para cancelar la tarea. Ejemplo: `/cancel <ID>`"
+                        text="⚠️ Debes proporcionar un ID válido para cancelar la tarea. Ejemplo: `/cancel <ID>`",
+                        protect_content=True
                     )
+
+            elif text.startswith("/list"):
+                await listar_tareas(client, message.chat.id, allowed_ids, message)
+
             elif auto and (message.video or message.document):
                 await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
-        return
+                
         
     elif text.startswith("/imgchest"):
         if cmd("imgtools", user_id in admin_users, user_id in vip_users):
