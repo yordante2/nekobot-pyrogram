@@ -19,7 +19,7 @@ vip_ids = set(map(int, VIP_USERS.split(","))) if VIP_USERS else set()
 allowed_ids = admin_ids.union(vip_ids)
 
 # Función para verificar si un usuario está permitido
-def is_user_allowed(user_id):
+def is_user_allowed(allowed_ids, user_id):
     return user_id in allowed_ids
 
 # Función para borrar carpeta temporal
@@ -43,7 +43,7 @@ def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
 # Función principal de operación combinada
-async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
+async def nh_combined_operation(client, message, codes, link_type, allowed_ids, operation_type="download"):
     if link_type == "nh":
         base_url = "nhentai.net/g"
     elif link_type == "3h":
@@ -87,7 +87,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                     img_file.write(img_data)
 
                 # Determinar si el contenido está protegido
-                protect_content = not is_user_allowed(message.from_user.id)
+                protect_content = not is_user_allowed(allowed_ids, message.from_user.id)
                 caption = "Look Here" if protect_content else name
 
                 await client.send_photo(
@@ -147,7 +147,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                             zipf.write(os.path.join(root, file), arcname=file)
 
                 # Determinar si el archivo CBZ está protegido
-                protect_content = not is_user_allowed(message.from_user.id)
+                protect_content = not is_user_allowed(allowed_ids, message.from_user.id)
                 caption = f"Look Here {name}" if protect_content else name
 
                 await client.send_document(
