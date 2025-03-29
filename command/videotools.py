@@ -27,10 +27,7 @@ def human_readable_size(size, decimal_places=2):
 # Actualizar configuraciones de video
 async def update_video_settings(client, message, allowed_ids):
     user_id = message.from_user.id
-    if user_id not in allowed_ids:
-        protect_content = True
-    else:
-        protect_content = False
+    protect_content = user_id not in allowed_ids
 
     global video_settings
     try:
@@ -45,11 +42,9 @@ async def update_video_settings(client, message, allowed_ids):
         await message.reply_text(f"❌ Error al procesar el comando:\n{e}", protect_content=protect_content)
 
 # Cancelar tareas
-async def cancelar_tarea(admin_users, client, task_id, chat_id, user_id_requesting, allowed_ids):
-    if user_id_requesting not in allowed_ids:
-        protect_content = True
-    else:
-        protect_content = False
+async def cancelar_tarea(admin_users, client, task_id, chat_id, message, allowed_ids):
+    user_id_requesting = message.from_user.id
+    protect_content = user_id_requesting not in allowed_ids
 
     global cola_de_tareas
     if task_id in tareas_en_ejecucion:
@@ -70,11 +65,9 @@ async def cancelar_tarea(admin_users, client, task_id, chat_id, user_id_requesti
         await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró la tarea con ID `{task_id}`.", protect_content=protect_content)
 
 # Listar tareas
-async def listar_tareas(client, chat_id, allowed_ids, user_id_requesting):
-    if user_id_requesting not in allowed_ids:
-        protect_content = True
-    else:
-        protect_content = False
+async def listar_tareas(client, chat_id, allowed_ids, message):
+    user_id_requesting = message.from_user.id
+    protect_content = user_id_requesting not in allowed_ids
 
     global cola_de_tareas
     if not cola_de_tareas:
@@ -92,10 +85,7 @@ async def listar_tareas(client, chat_id, allowed_ids, user_id_requesting):
 # Comprimir videos
 async def compress_video(admin_users, client, message, allowed_ids):
     user_id = message.from_user.id
-    if user_id not in allowed_ids:
-        protect_content = True
-    else:
-        protect_content = False
+    protect_content = user_id not in allowed_ids
 
     global cola_de_tareas
     task_id = str(uuid.uuid4())
