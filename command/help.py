@@ -26,8 +26,8 @@ async def handle_help_callback(client, callback_query):
             Archivos:\n
 **Responda a in mensaje y escriba los siguientes comandos**\n
 `/compress`: Para comprimir su archivo en archivos 7z
-`/rename`: Nuevo Nombre.ext` Cambie el nombre del archivo
-`setsize 10`: Cambie el tamaño en MB de las partes en que `\compress` dividira su archivo.
+`/rename: Nuevo Nombre.ext` Cambie el nombre del archivo
+`/setsize 10`: Cambie el tamaño en MB de las partes en que `\compress` dividira su archivo.
             """,
             reply_markup=InlineKeyboardMarkup(
                 [[InlineKeyboardButton("Volver", callback_data="help_back")]]
