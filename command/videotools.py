@@ -19,7 +19,7 @@ max_tareas = int(os.getenv('MAX_TASKS', '1'))  # Número máximo de tareas simul
 
 # Listas de permisos desde las variables de entorno
 admins = list(map(int, os.getenv('ADMINS', '').split(','))) if os.getenv('ADMINS') else []
-users_vip = list(map(int, os.getenv('VIP_USERS', '').split(','))) if os.getenv('VIP_USERS') else []
+vip_users = list(map(int, os.getenv('VIP_USERS', '').split(','))) if os.getenv('VIP_USERS') else []
 
 # Variables globales
 tareas_en_ejecucion = {}
@@ -27,9 +27,9 @@ cola_de_tareas = []
 
 def human_readable_size(size, decimal_places=2):
     """
-    Convierte bytes en un formato legible (por ejemplo, KB, MB, GB).
+    Convierte bytes en un formato legible (por ejemplo, KB, MB, GB, TB).
     """
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ['KB', 'MB', 'GB', 'TB']:
         if size < 1024.0:
             return f"{size:.{decimal_places}f} {unit}"
         size /= 1024.0
@@ -65,19 +65,20 @@ async def compress_video(client, message):
     user_id = message.from_user.id
 
     # Validación de permisos para reenviar contenido
-    if user_id not in admins and user_id not in users_vip:
-        await client.send_message(chat_id=chat_id, text=f"❌ No tienes permiso para procesar esta tarea.", protect_content=True)
-        return
+    if user_id not in admins and user_id not in vip_users:
+        protect_content = True  # Los usuarios sin permisos no pueden reenviar contenido
+    else:
+        protect_content = False  # Admins y VIPs pueden reenviar contenido
 
     # Si se excede el límite de tareas en ejecución, encolar la tarea
     if len(tareas_en_ejecucion) >= max_tareas:
         cola_de_tareas.append({"id": task_id, "client": client, "message": message})
-        await client.send_message(chat_id=chat_id, text=f"🕒 Tarea encolada con ID `{task_id}`.", protect_content=True)
+        await client.send_message(chat_id=chat_id, text=f"🕒 Tarea encolada con ID `{task_id}`.", protect_content=protect_content)
         return
 
     # Registrar tarea en ejecución
     tareas_en_ejecucion[task_id] = {"cancel": False}
-    await client.send_message(chat_id=chat_id, text=f"🎥 Preparando la compresión del video...\n`{task_id}`", protect_content=True)
+    await client.send_message(chat_id=chat_id, text=f"🎥 Preparando la compresión del video...\n`{task_id}`", protect_content=protect_content)
 
     try:
         # Identificar el archivo original a descargar
@@ -86,13 +87,13 @@ async def compress_video(client, message):
         elif message.reply_to_message and message.reply_to_message.video:  # Si es una respuesta con video
             video_path = await client.download_media(message.reply_to_message.video)
         else:
-            await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró un video en el mensaje o respuesta asociada.", protect_content=True)
+            await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró un video en el mensaje o respuesta asociada.", protect_content=protect_content)
             return
 
         # Procesar el video (utilizando la lógica existente)
         nombre, description, chat_id, compressed_video_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
-        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=nombre, protect_content=True)
-        await client.send_message(chat_id=chat_id, text=description, protect_content=True)
+        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=nombre, protect_content=protect_content)
+        await client.send_message(chat_id=chat_id, text=description, protect_content=protect_content)
         os.remove(original_video_path)
         os.remove(compressed_video_path)
     finally:
@@ -106,4 +107,3 @@ async def compress_video(client, message):
         if cola_de_tareas:
             siguiente_tarea = cola_de_tareas.pop(0)
             await compress_video(siguiente_tarea["client"], siguiente_tarea["message"])
-            
