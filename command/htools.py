@@ -37,10 +37,10 @@ def borrar_carpeta_h3dl():
 
 # Funciones de sanitización
 def sanitize_input(input_string):
-    return re.sub(r'[^a-zA-Z0-9\[\]]', '', input_string)
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
 
 def clean_string(s):
-    return re.sub(r'[^a-zA-Z0-9\[\]]', '', s)
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
 # Función principal de operación combinada
 async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
@@ -86,11 +86,15 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                 with open(img_filename, 'wb') as img_file:
                     img_file.write(img_data)
 
+                # Determinar si el contenido está protegido
+                protect_content = not is_user_allowed(message.from_user.id)
+                caption = f"Look Here {name}" if protect_content else name
+
                 await client.send_photo(
                     message.chat.id,
                     img_filename,
-                    caption=f"https://{base_url}/{code} {name}",
-                    protect_content=not is_user_allowed(message.from_user.id)
+                    caption=f"https://{base_url}/{code} {caption}",
+                    protect_content=protect_content
                 )
         except Exception as e:
             await message.reply(f"Error al procesar la portada del código {code}: {str(e)}")
@@ -130,6 +134,32 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                     with open(img_filename, 'wb') as img_file:
                         img_file.write(img_data)
 
+                    page_number += 1
+                except Exception as e:
+                    await message.reply(f"Error al procesar la imagen de la página {page_number}: {str(e)}")
+                    break
+
+            try:
+                zip_filename = os.path.join(f"{folder_name}.cbz")
+                with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                    for root, _, files in os.walk(folder_name):
+                        for file in files:
+                            zipf.write(os.path.join(root, file), arcname=file)
+
+                # Determinar si el archivo CBZ está protegido
+                protect_content = not is_user_allowed(message.from_user.id)
+                caption = f"Look Here {name}" if protect_content else name
+
+                await client.send_document(
+                    message.chat.id,
+                    zip_filename,
+                    caption=caption,
+                    protect_content=protect_content
+                )
+            except Exception as e:
+                await message.reply(f"Error al comprimir o enviar el archivo {name}: {str(e)}")
+            
+            borrar_carpeta_h3dl()
                     page_number += 1
                 except Exception as e:
                     await message.reply(f"Error al procesar la imagen de la página {page_number}: {str(e)}")
