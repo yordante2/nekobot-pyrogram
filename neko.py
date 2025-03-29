@@ -1,5 +1,5 @@
 import os
-from pyrogram import Client
+from pyrogram import Client, filters
 from process_command import process_command
 import asyncio
 import nest_asyncio
