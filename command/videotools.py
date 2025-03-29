@@ -19,7 +19,7 @@ max_tareas = int(os.getenv('MAX_TASKS', '1'))  # Número máximo de tareas simul
 
 # Listas de permisos desde las variables de entorno
 admins = list(map(int, os.getenv('ADMINS', '').split(','))) if os.getenv('ADMINS') else []
-users_vip = list(map(int, os.getenv('USERS_VIP', '').split(','))) if os.getenv('USERS_VIP') else []
+users_vip = list(map(int, os.getenv('VIP_USERS', '').split(','))) if os.getenv('VIP_USERS') else []
 
 # Variables globales
 tareas_en_ejecucion = {}
