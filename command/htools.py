@@ -24,7 +24,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
         # Delegar las operaciones de archivos al módulo externo, pasando el nombre de la carpeta
         try:
-            result = manejar_archivos(url, code, base_url, operation_type, protect_content, folder_name)
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name)
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
