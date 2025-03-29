@@ -4,13 +4,17 @@ import re
 from uuid import uuid4  # Generar identificadores únicos
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.get_files.hfiles import descargar_hentai, borrar_carpeta
+import os
+
+# Variable MAIN_ADMIN definida en las variables de entorno
+MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 
 # Diccionario para mapear callback_data a datos reales
 callback_data_map = {}
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     """
-    Operación combinada para manejar la descarga y el envío de archivos a "Mensajes guardados" antes de la limpieza.
+    Operación combinada para manejar la descarga y el envío de archivos antes de la limpieza.
     """
     if link_type not in ["nh", "3h"]:
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
@@ -39,26 +43,26 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 # Usar el título de la página como caption y nombre del archivo
                 caption = result.get("caption", "Contenido descargado")
 
-                # Subir CBZ a "Mensajes guardados"
+                # Subir CBZ al chat de MAIN_ADMIN
                 cbz_message = await client.send_document(
-                    client.me.id,  # "Mensajes guardados" (chat del bot)
+                    MAIN_ADMIN,  # Chat del administrador
                     result['cbz_file']
                 )
                 cbz_file_id = cbz_message.document.file_id  # Obtener File ID
 
-                # Subir PDF a "Mensajes guardados"
+                # Subir PDF al chat de MAIN_ADMIN
                 pdf_message = await client.send_document(
-                    client.me.id,  # "Mensajes guardados" (chat del bot)
+                    MAIN_ADMIN,  # Chat del administrador
                     result['pdf_file']
                 )
                 pdf_file_id = pdf_message.document.file_id  # Obtener File ID
 
-                # Subir todas las fotos a "Mensajes guardados" y registrar sus File IDs
+                # Subir todas las fotos al chat de MAIN_ADMIN y registrar sus File IDs
                 photo_ids = []
                 archivos = sorted([os.path.join(random_folder_name, f) for f in os.listdir(random_folder_name) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
                 for archivo in archivos:
                     photo_message = await client.send_photo(
-                        client.me.id,  # "Mensajes guardados" (chat del bot)
+                        MAIN_ADMIN,  # Chat del administrador
                         archivo
                     )
                     photo_ids.append(photo_message.photo.file_id)  # Obtener File ID
@@ -134,3 +138,4 @@ async def manejar_opcion(client, callback_query):
     await callback_query.answer("¡Opción procesada!")
     # Limpiar el identificador del diccionario después de procesarlo
     del callback_data_map[identificador]
+            
