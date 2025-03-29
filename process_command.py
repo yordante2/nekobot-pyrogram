@@ -91,7 +91,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         if cmd("videotools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
-                    await asyncio.create_task(compress_video(client, message, allowed_ids))
+                    await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
             elif text.startswith("/autoconvert"):
                 await asyncio.create_task(setauto(client, user_id))
             elif text.startswith("/calidad"):
@@ -101,7 +101,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     # Obtener el ID de la tarea del mensaje
                     task_id = text.split(" ", 1)[1].strip()
                     # Cancelar la tarea si existe
-                    await cancelar_tarea(client, task_id, message.chat.id)
+                    await cancelar_tarea(admin_users, client, task_id, message.chat.id)
                 except IndexError:
                     # Si el usuario no proporciona un ID
                     await client.send_message(
@@ -109,7 +109,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         text="⚠️ Debes proporcionar un ID válido para cancelar la tarea. Ejemplo: `/cancel <ID>`"
                     )
             elif auto and (message.video or message.document):
-                await asyncio.create_task(compress_video(client, message, allowed_ids))
+                await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
         return
         
     elif text.startswith("/imgchest"):
