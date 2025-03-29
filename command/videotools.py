@@ -90,7 +90,7 @@ async def listar_tareas(client, chat_id, allowed_ids, message):
         for index, tarea in enumerate(cola_de_tareas, start=1):
             user_info = await client.get_users(tarea["user_id"])
             username = f"@{user_info.username}" if user_info.username else "Usuario Anónimo"
-            lista_tareas += f"{index}. ID: `{tarea['id']}`\n   Usuario: {username} (`{tarea['user_id')]`}\n\n"
+            lista_tareas += f"{index}. ID: `{tarea['id']}`\n   Usuario: {username} (`{tarea['user_id']}`)\n\n"
     else:
         if not tareas_en_ejecucion:
             lista_tareas += "📝 No hay tareas en ejecución ni en cola.\n"
