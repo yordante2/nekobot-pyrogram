@@ -6,9 +6,6 @@ from bs4 import BeautifulSoup
 from uuid import uuid4
 from fpdf import FPDF
 
-def sanitize_input(input_string):
-    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', input_string)
-
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
@@ -35,6 +32,14 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
     try:
         # Asegurar que el directorio base aleatorio existe
         os.makedirs(folder_name, exist_ok=True)
+
+        # Descargar la página inicial y obtener el título para el nombre y caption
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        title_tag = soup.find('title')
+        page_title = clean_string(title_tag.text.strip()) if title_tag else f"Contenido_{code}"
 
         # Descargar la portada (1.jpg/1.png/etc.)
         page_url = f"https://{base_url}/{code}/1/"
@@ -79,24 +84,24 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                 page_number += 1
 
             # Crear CBZ
-            zip_filename = f"{folder_name}.cbz"
+            zip_filename = os.path.join(folder_name, f"{page_title}.cbz")
             with zipfile.ZipFile(zip_filename, 'w') as zipf:
                 for root, _, files in os.walk(folder_name):
                     for file in files:
                         zipf.write(os.path.join(root, file), arcname=file)
 
             # Crear PDF
-            pdf_filename = f"{folder_name}.pdf"
+            pdf_filename = os.path.join(folder_name, f"{page_title}.pdf")
             pdf_result = crear_pdf(folder_name, pdf_filename)
 
             results = {
-                "caption": code,
+                "caption": page_title,
                 "img_file": img_filename,  # La portada será la primera imagen
                 "cbz_file": zip_filename,
                 "pdf_file": pdf_result
             }
         else:
-            results = {"caption": code, "img_file": img_filename}
+            results = {"caption": page_title, "img_file": img_filename}
     except Exception as e:
         results = {"error": str(e)}
 
@@ -115,4 +120,3 @@ def borrar_carpeta(folder_name, cbz_file):
             os.remove(cbz_file)
     except Exception as e:
         print(f"Error al borrar: {e}")
-        
