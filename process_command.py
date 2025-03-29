@@ -127,7 +127,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     )
 
             elif text.startswith("/list"):
-                if user_id in admin_users or user_id in vip_users or user_id in [tarea["user_id"] for tarea in cola_de_tareas] or user_id in [tareas_en_ejecucion[task]["user_id"] for task in tareas_en_ejecucion]:
+                if user_id in admin_users or user_id in vip_users:
                     await listar_tareas(client, chat_id, allowed_ids, message)
                 else:
                     await client.send_message(chat_id=chat_id, text="⚠️ No tienes permiso para usar este comando.")
