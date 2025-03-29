@@ -1,9 +1,9 @@
-from pyrogram import Client, filters
-import zipfile
+import os
 import shutil
 import random
-import os
+import zipfile
 import requests
+from pyrogram import Client, filters
 from pyrogram.types import Message
 from bs4 import BeautifulSoup
 import asyncio
@@ -64,7 +64,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
         except requests.exceptions.RequestException as e:
             await message.reply(f"Error al procesar el código {code}: {str(e)}")
             continue
-        
+
         try:
             soup = BeautifulSoup(response.content, 'html.parser')
             title_tag = soup.find('title')
@@ -108,7 +108,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
             except OSError as e:
                 await message.reply(f"Error al crear el directorio: {e}")
                 continue
-            
+
             page_number = 1
             while True:
                 page_url = f"https://{base_url}/{code}/{page_number}/"
@@ -119,7 +119,7 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                     if page_number == 1:
                         await message.reply(f"Error al acceder a las páginas del código {code}: {str(e)}")
                     break
-                
+
                 try:
                     soup = BeautifulSoup(response.content, 'html.parser')
                     img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
@@ -158,25 +158,5 @@ async def nh_combined_operation(client, message, codes, link_type, operation_typ
                 )
             except Exception as e:
                 await message.reply(f"Error al comprimir o enviar el archivo {name}: {str(e)}")
-            
-            borrar_carpeta_h3dl()
-                    page_number += 1
-                except Exception as e:
-                    await message.reply(f"Error al procesar la imagen de la página {page_number}: {str(e)}")
-                    break
 
-            try:
-                zip_filename = os.path.join(f"{folder_name}.cbz")
-                with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                    for root, _, files in os.walk(folder_name):
-                        for file in files:
-                            zipf.write(os.path.join(root, file), arcname=file)
-                await client.send_document(
-                    message.chat.id,
-                    zip_filename,
-                    protect_content=not is_user_allowed(message.from_user.id)
-                )
-            except Exception as e:
-                await message.reply(f"Error al comprimir o enviar el archivo {name}: {str(e)}")
-            
             borrar_carpeta_h3dl()
