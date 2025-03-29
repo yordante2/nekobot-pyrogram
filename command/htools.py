@@ -53,22 +53,33 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 ])
 
                 await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
-
+                # Subir CBZ al chat de MAIN_ADMIN y registrar el ID del mensaje
                 cbz_message = await client.send_document(
                     MAIN_ADMIN,
                     result['cbz_file']
                 )
+                cbz_file_id = cbz_message.document.file_id
+                
                 message_ids_to_delete.append(cbz_message.id)
 
+                # Subir PDF al chat de MAIN_ADMIN y registrar el ID del mensaje
                 pdf_message = await client.send_document(
                     MAIN_ADMIN,
                     result['pdf_file']
                 )
+                pdf_file_id = pdf_message.document.file_id
+                
                 message_ids_to_delete.append(pdf_message.id)
 
-                # Borrar el PDF tras enviarlo
-                if os.path.exists(result['pdf_file']):
-                    os.remove(result['pdf_file'])
+                # Intentar eliminar el archivo PDF después de enviarlo
+                try:
+                    if os.path.exists(result['pdf_file']):
+                        os.remove(result['pdf_file'])
+                        
+                    else:
+                        print(f"No se encontró el archivo PDF para eliminar: {result['pdf_file']}")
+                except Exception as e:
+                    pass
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
