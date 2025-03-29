@@ -33,8 +33,8 @@ def sanitize_input(input_string):
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
-# Función principal de operación combinada
-async def nh_combined_operation(client, message, codes, link_type, operation_type="download", allowed_ids):
+async def nh_combined_operation(client, message, codes, link_type, allowed_ids, operation_type="download"):
+
     if link_type == "nh":
         base_url = "nhentai.net/g"
     elif link_type == "3h":
