@@ -29,6 +29,8 @@ is_protect_content_enabled = protect_content_env == 'true'  # Evaluamos si es "T
 async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
     global allowed_ids
     text = message.text.strip().lower() if message.text else ""
+    if not is_protect_content_enabled and user_id not in allowed_ids:
+        allowed_ids = allowed_ids.union({user_id})
 
     def cmd(command_env, is_admin=False, is_vip=False):
         return (
@@ -38,9 +40,6 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         )
 
     if text.startswith("/start"):
-        # Si PROTECT_CONTENT no está habilitado, añadir a allowed_ids
-        if not is_protect_content_enabled and user_id not in allowed_ids:
-            allowed_ids = allowed_ids.union({user_id})
         await asyncio.create_task(handle_start(client, message))
     
     elif text.startswith(("/nh", "/3h", "/cover", "/covernh")):
