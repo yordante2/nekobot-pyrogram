@@ -9,8 +9,17 @@ from bs4 import BeautifulSoup
 import asyncio
 import re
 
+# Obtener valores de entorno de ADMINS y VIP_USERS
+ADMINS = os.getenv("ADMINS", "")
+VIP_USERS = os.getenv("VIP_USERS", "")
+
+# Crear lista de User IDs
+admin_ids = set(map(int, ADMINS.split(","))) if ADMINS else set()
+vip_ids = set(map(int, VIP_USERS.split(","))) if VIP_USERS else set()
+allowed_ids = admin_ids.union(vip_ids)
+
 # Función para verificar si un usuario está permitido
-def is_user_allowed(allowed_ids, user_id):
+def is_user_allowed(user_id):
     return user_id in allowed_ids
 
 # Función para borrar carpeta temporal
@@ -33,11 +42,8 @@ def sanitize_input(input_string):
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
-async def nh_combined_operation(client, message, codes, link_type, allowed_ids, operation_type="download"):
-
-    # Convertir todos los códigos a cadenas
-    codes = [str(code) for code in codes]
-
+# Función principal de operación combinada
+async def nh_combined_operation(client, message, codes, link_type, operation_type="download"):
     if link_type == "nh":
         base_url = "nhentai.net/g"
     elif link_type == "3h":
@@ -81,7 +87,7 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                     img_file.write(img_data)
 
                 # Determinar si el contenido está protegido
-                protect_content = not is_user_allowed(allowed_ids, message.from_user.id)
+                protect_content = not is_user_allowed(message.from_user.id)
                 caption = "Look Here" if protect_content else name
 
                 await client.send_photo(
@@ -141,7 +147,7 @@ async def nh_combined_operation(client, message, codes, link_type, allowed_ids, 
                             zipf.write(os.path.join(root, file), arcname=file)
 
                 # Determinar si el archivo CBZ está protegido
-                protect_content = not is_user_allowed(allowed_ids, message.from_user.id)
+                protect_content = not is_user_allowed(message.from_user.id)
                 caption = f"Look Here {name}" if protect_content else name
 
                 await client.send_document(
