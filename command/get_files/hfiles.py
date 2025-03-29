@@ -8,6 +8,7 @@ from fpdf import FPDF
 
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
+
 def crear_pdf(folder_name, page_title):
     try:
         # Crear nombre dinámico para el PDF
@@ -95,20 +96,22 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
 
             # Crear CBZ
             zip_filename = os.path.join(folder_name, f"{page_title}.cbz")
+            added_files = set()  # Conjunto para evitar duplicados
             with zipfile.ZipFile(zip_filename, 'w') as zipf:
                 for root, _, files in os.walk(folder_name):
                     for file in files:
-                        zipf.write(os.path.join(root, file), arcname=file)
+                        if file not in added_files:  # Verificar si el archivo ya fue añadido
+                            zipf.write(os.path.join(root, file), arcname=file)
+                            added_files.add(file)  # Añadir el archivo al conjunto
 
             # Crear PDF
-            pdf_filename = os.path.join(folder_name, f"{page_title}.pdf")
-            pdf_result = crear_pdf(folder_name, pdf_filename)
+            pdf_filename = crear_pdf(folder_name, page_title)
 
             results = {
                 "caption": page_title,
                 "img_file": img_filename,  # La portada será la primera imagen
                 "cbz_file": zip_filename,
-                "pdf_file": pdf_result
+                "pdf_file": pdf_filename
             }
         else:
             results = {"caption": page_title, "img_file": img_filename}
