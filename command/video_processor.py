@@ -1,4 +1,4 @@
-from command.get_files.video_file import obtener_duracion_video, comprimir_video, calcular_progreso
+from command.get_files.video_file import obtener_duracion_video, comprimir_video, calcular_progreso, human_readable_size
 import os
 import re
 import datetime
