@@ -1,75 +1,140 @@
 import os
-from pyrogram import Client, filters
-from process_command import process_command
-import asyncio
-import nest_asyncio
+import requests
+import re
+from uuid import uuid4  # Generar identificadores únicos
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from command.get_files.hfiles import descargar_hentai, borrar_carpeta
+import os
 
-nest_asyncio.apply()
+# Variable MAIN_ADMIN definida en las variables de entorno
+MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 
-api_id = os.getenv('API_ID')
-api_hash = os.getenv('API_HASH')
-bot_token = os.getenv('TOKEN')
-admin_users = list(map(int, os.getenv('ADMINS').split(','))) if os.getenv('ADMINS') else []
-users = list(map(int, os.getenv('USERS').split(','))) if os.getenv('USERS') else []
-temp_users = []
-temp_chats = []
-ban_users = []
-allowed_users = admin_users + users + temp_users + temp_chats
-app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+# Diccionario para mapear callback_data a datos reales
+callback_data_map = {}
 
-CODEWORD = os.getenv('CODEWORD', '')
-BOT_IS_PUBLIC = os.getenv('BOT_IS_PUBLIC', 'false')
-
-def is_bot_public():
-    return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
-
-async def process_access_command(message):
-    user_id = message.from_user.id
-    if len(message.command) > 1 and message.command[1] == CODEWORD:
-        if user_id not in temp_users:
-            temp_users.append(user_id)
-            allowed_users.append(user_id)
-            await message.reply("Acceso concedido.")
-        else:
-            await message.reply("Ya estás en la lista de acceso temporal.")
-    else:
-        await message.reply("Palabra secreta incorrecta.")
-
-
-from command.htools import manejar_opcion
-
-@app.on_callback_query(filters.regex("^(cbz|pdf|fotos)"))
-async def callback_handler(client, callback_query):
-    await manejar_opcion(client, callback_query)
-    
-@app.on_callback_query()
-async def callback_handler(client, callback_query):
-    from command.help import handle_help_callback
-    await asyncio.create_task(handle_help_callback(client, callback_query))
-
-
-@app.on_message()
-async def handle_message(client, message):
-    user_id = message.from_user.id
-    username = message.from_user.username
-    chat_id = message.chat.id
-    auto = True
-
-    if message.text and message.text.startswith("/access") and message.chat.type == "private":
-        await process_access_command(message)
+async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
+    """
+    Operación combinada para manejar la descarga y el envío de archivos antes de la limpieza.
+    """
+    if link_type not in ["nh", "3h"]:
+        await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
 
-    if user_id in ban_users:
+    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
+
+    for code in codes:
+        try:
+            url = f"https://{base_url}/{code}/"
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            continue
+
+        # Generar nombre único para la carpeta
+        random_folder_name = f"h3dl/{uuid4()}"
+
+        try:
+            # Descargar el contenido
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, random_folder_name)
+            if result.get("error"):
+                await message.reply(f"Error con el código {code}: {result['error']}")
+            else:
+                # Usar el título de la página como caption y nombre del archivo
+                caption = result.get("caption", "Contenido descargado")
+
+                # Subir CBZ al chat de MAIN_ADMIN
+                cbz_message = await client.send_document(
+                    MAIN_ADMIN,  # Chat del administrador
+                    result['cbz_file']
+                )
+                cbz_file_id = cbz_message.document.file_id  # Obtener File ID
+
+                # Subir PDF al chat de MAIN_ADMIN
+                pdf_message = await client.send_document(
+                    MAIN_ADMIN,  # Chat del administrador
+                    result['pdf_file']
+                )
+                pdf_file_id = pdf_message.document.file_id  # Obtener File ID
+
+                # Subir todas las fotos al chat de MAIN_ADMIN y registrar sus File IDs
+                photo_ids = []
+                archivos = sorted([os.path.join(random_folder_name, f) for f in os.listdir(random_folder_name) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+                for archivo in archivos:
+                    photo_message = await client.send_photo(
+                        MAIN_ADMIN,  # Chat del administrador
+                        archivo
+                    )
+                    photo_ids.append(photo_message.photo.file_id)  # Obtener File ID
+
+                # Generar identificadores únicos para botones Inline
+                cbz_button_id = str(uuid4())
+                pdf_button_id = str(uuid4())
+                fotos_button_id = str(uuid4())
+
+                # Mapear los identificadores a los File IDs
+                callback_data_map[cbz_button_id] = cbz_file_id
+                callback_data_map[pdf_button_id] = pdf_file_id
+                callback_data_map[fotos_button_id] = photo_ids
+
+                # Crear botones Inline para opciones posteriores
+                keyboard = InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
+                        InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}")
+                    ],
+                    [InlineKeyboardButton("Ver Fotos (10 por lote)", callback_data=f"fotos|{fotos_button_id}")]
+                ])
+
+                await message.reply("Opciones disponibles para los archivos:", reply_markup=keyboard)
+        except Exception as e:
+            await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
+
+        try:
+            # Limpiar únicamente la carpeta temporal
+            borrar_carpeta(random_folder_name, result.get("cbz_file"))
+        except Exception as e:
+            await message.reply(f"Error al limpiar carpeta para el código {code}: {str(e)}")
+
+async def manejar_opcion(client, callback_query):
+    """
+    Procesa las opciones seleccionadas usando File IDs.
+    """
+    data = callback_query.data.split('|')
+    opcion = data[0]
+    identificador = data[1]
+
+    # Obtener los datos reales del diccionario
+    datos_reales = callback_data_map.get(identificador)
+
+    if not datos_reales:
+        await callback_query.answer("La opción ya no es válida.", show_alert=True)
         return
 
-    if not is_bot_public() and user_id not in allowed_users and chat_id not in allowed_users:
-        return
-
-    active_cmd = os.getenv('ACTIVE_CMD', '').lower()
-    admin_cmd = os.getenv('ADMIN_CMD', '').lower()
-    await asyncio.create_task(process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id))
-
-try:
-    app.run()
-except KeyboardInterrupt:
-    print("Detención forzada realizada")
+    if opcion == "cbz":
+        cbz_file_id = datos_reales
+        await client.send_document(
+            callback_query.message.chat.id,
+            cbz_file_id,
+            caption="Aquí está tu CBZ 📚"
+        )
+    elif opcion == "pdf":
+        pdf_file_id = datos_reales
+        await client.send_document(
+            callback_query.message.chat.id,
+            pdf_file_id,
+            caption="Aquí está tu PDF 🖨️"
+        )
+    elif opcion == "fotos":
+        photo_file_ids = datos_reales  # Lista de File IDs de las fotos
+        lote = 10
+        for i in range(0, len(photo_file_ids), lote):
+            await client.send_media_group(
+                callback_query.message.chat.id,
+                [
+                    {"type": "photo", "media": file_id} for file_id in photo_file_ids[i:i + lote]
+                ]
+            )
+    await callback_query.answer("¡Opción procesada!")
+    # Limpiar el identificador del diccionario después de procesarlo
+    del callback_data_map[identificador]
