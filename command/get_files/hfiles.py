@@ -77,7 +77,10 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                     img_file.write(requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}).content)
 
                 page_number += 1
-
+                
+            page_title = f"{page_title} {code}"
+            page_title = re.sub("Page 1  nhentai hentai doujinshi and manga|Page 1  3Hentai", "", page_title)
+            
             # Usar el título como nombre de archivo
             zip_filename = f"{page_title}.cbz"
             pdf_filename = f"{page_title}.pdf"
@@ -90,9 +93,9 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
 
             # Crear PDF
             pdf_result = crear_pdf(folder_name, pdf_filename)
-            page_title = f"{page_title} {code}"
-            page_title = re.sub("Page 1  nhentai hentai doujinshi and manga|Page 1  3Hentai", "", page_title)
 
+            page_title = f"{page_title} `{code}` [Link](https://{base_url}/{code}/)"
+            
             results = {
                 "caption": page_title,
                 "img_file": first_img_filename, 
@@ -100,7 +103,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                 "pdf_file": pdf_result
             }
         else:
-            page_title = f"{page_title} `{code}`"
+            page_title = f"{page_title} `{code}` [Link](https://{base_url}/{code}/)"
             page_title = re.sub("Page 1  nhentai hentai doujinshi and manga|Page 1  3Hentai", "", page_title)
             
             results = {"caption": page_title, "img_file": first_img_filename}  # Usar la primera imagen
