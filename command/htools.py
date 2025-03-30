@@ -4,6 +4,8 @@ import zipfile
 from uuid import uuid4
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.get_files.hfiles import descargar_hentai
+import shutil
+
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
 operation_status = {}
