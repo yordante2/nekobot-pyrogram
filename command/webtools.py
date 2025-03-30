@@ -111,7 +111,7 @@ def get_input():
 
     return user_lines
 
-def summarize_lines(lines):
+async def summarize_lines(lines):
     numbers = []
     for line in lines:
         matches = re.findall(r'/(?:g|d)/(\d+)', line)
