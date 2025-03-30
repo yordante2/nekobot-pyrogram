@@ -53,6 +53,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
     elif text.startswith(("/nh", "/3h", "/cover", "/covernh", "/setfile")):
         if cmd("htools", user_id in admin_users, user_id in vip_users):
             # Comando /setfile
+            global link_type
             if text.startswith("/setfile"):
                 parts = text.split(maxsplit=1)
                 if len(parts) > 1:
@@ -80,7 +81,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/nh"):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
-                global link_type
+                #global link_type
                 link_type = "nh"
                 operation_type = "download"
                 protect_content = user_id not in allowed_ids
@@ -91,7 +92,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/3h"):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
-                global link_type
+                #global link_type
                 link_type = "3h"
                 operation_type = "download"
                 protect_content = user_id not in allowed_ids
@@ -102,7 +103,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith(("/cover", "/cover3h")):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
-                global link_type
+                #global link_type
                 link_type = "3h"
                 operation_type = "cover"
                 protect_content = user_id not in allowed_ids
@@ -113,7 +114,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/covernh"):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
-                global link_type
+                #global link_type
                 link_type = "nh"
                 operation_type = "cover"
                 protect_content = user_id not in allowed_ids
