@@ -207,8 +207,8 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
 
                     # Responder con el número de líneas y manejar el contenido en `lines`
                     await message.reply(f"El archivo tiene {line_count} líneas.")
-                    text00 = summarize_lines(lines)
-                    await message.reply(f"{text00}")
+                    codes = summarize_lines(lines)
+                    await message.reply(f"{codes}")
 
                     # Eliminar el archivo descargado
                     os.remove(file_path)
