@@ -192,6 +192,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     try:
                         # Descargar el archivo primero
                         file_path = await client.download_media(message.document)
+                        print(file_path)
                         
                         # Verificar la extensión del archivo descargado
                         if file_path.endswith(".txt"):
