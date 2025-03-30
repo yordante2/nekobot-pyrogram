@@ -49,9 +49,9 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
     elif text.startswith("/help"):  # Manejo del comando /help
         await asyncio.create_task(handle_help(client, message))
         return
-        
-    elif text.startswith(("/nh", "/3h", "/cover", "/covernh", "/setfile")):
+            elif text.startswith(("/nh", "/3h", "/cover", "/covernh", "/setfile")):
         if cmd("htools", user_id in admin_users, user_id in vip_users):
+            # Comando /setfile
             if text.startswith("/setfile"):
                 parts = text.split(maxsplit=1)
                 if len(parts) > 1:
@@ -64,7 +64,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         cambiar_default_selection(user_id, new_selection)
                         await message.reply(f"¡Selección predeterminada cambiada a '{new_selection if new_selection else 'None'}'!")
                     else:
-                        await message.reply("Opción inválida. Usa: '/setfile cbz', '/setfile pdf', '/setfile both' o '/setfile None'.")
+                        await message.reply("Opción inválida. Usa: '/setfile cbz', '/setfile pdf', '/setfile both' o '/setfile none'.")
                 else:
                     await message.reply(
                         "Usa uno de los siguientes comandos para cambiar la selección predeterminada:\n\n"
@@ -74,18 +74,51 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         "`/setfile none` - Eliminar la selección predeterminada"
                     )
                 return
-            else:
+
+            # Comando /nh
+            elif text.startswith("/nh"):
                 parts = text.split(maxsplit=1)
-                command = parts[0]
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
-                operation_type = "download" if command in ("/nh", "/3h") else "cover"
                 global link_type
-                link_type = "nh" if command in ("/nh", "/covernh") else "3h"
+                link_type = "nh"
+                operation_type = "download"
                 protect_content = user_id not in allowed_ids
                 await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type))
-            return
-     
-            
+                return
+
+            # Comando /3h
+            elif text.startswith("/3h"):
+                parts = text.split(maxsplit=1)
+                codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                global link_type
+                link_type = "3h"
+                operation_type = "download"
+                protect_content = user_id not in allowed_ids
+                await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type))
+                return
+
+            # Comando /cover y /cover3h
+            elif text.startswith(("/cover", "/cover3h")):
+                parts = text.split(maxsplit=1)
+                codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                global link_type
+                link_type = "3h"
+                operation_type = "cover"
+                protect_content = user_id not in allowed_ids
+                await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type))
+                return
+
+            # Comando /covernh
+            elif text.startswith("/covernh"):
+                parts = text.split(maxsplit=1)
+                codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                global link_type
+                link_type = "nh"
+                operation_type = "cover"
+                protect_content = user_id not in allowed_ids
+                await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type))
+                return
+
     
     elif text.startswith(("/setmail", "/sendmail", "/verify", "/setmb")):
         if cmd("mailtools", user_id in admin_users, user_id in vip_users):
