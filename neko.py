@@ -54,7 +54,7 @@ async def callback_handler(client, callback_query):
     await manejar_opcion(client, callback_query, protect_content, user_id)
     
 from pyrogram import Client, filters
-from command.htools import handle_callback  # Importamos la función del manejo del callback
+from htools import handle_callback  # Importamos la función del manejo del callback
 
 @app.on_callback_query()
 async def main_callback(client, callback_query):
