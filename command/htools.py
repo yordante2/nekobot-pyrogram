@@ -39,6 +39,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         code_list = ', '.join(codes)
         await message.reply(f"Se detectaron múltiples códigos: {code_list}. ¿Qué desea hacer?", reply_markup=keyboard)
 
+
 async def manejar_opcion(client, callback_query, protect_content, user_id):
     try:
         # Separar la data del callback
@@ -66,6 +67,10 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
 
         # Procesar cada código individualmente
         for code in codes:
+            code_directory = None  # Definimos aquí para asegurar la limpieza en el finally
+            cbz_file = None
+            pdf_file = None
+
             try:
                 # Crear un directorio específico para este código
                 code_directory = os.path.join("downloads", code)
@@ -77,32 +82,36 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
                 response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
                 response.raise_for_status()
 
-                # Función para descargar imágenes y generar archivos
+                # Descargar imágenes y generar archivos
                 result = descargar_hentai(url, code, base_url, operation_type, protect_content, code_directory)
                 if result.get("error"):
                     await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
                     continue
 
-                # Crear CBZ y/o PDF, y enviarlos al usuario inmediatamente
-                if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
-                    await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
-                if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
-                    await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
+                # Recuperar archivos generados
+                cbz_file = result.get("cbz_file")
+                pdf_file = result.get("pdf_file")
 
-                # Eliminar los archivos generados para este código después de enviarlos
-                if result.get("cbz_file") and os.path.exists(result["cbz_file"]):
-                    os.remove(result["cbz_file"])
-                if result.get("pdf_file") and os.path.exists(result["pdf_file"]):
-                    os.remove(result["pdf_file"])
-
-                # Eliminar imágenes y directorios temporales relacionados con este código
-                if os.path.exists(code_directory):
-                    shutil.rmtree(code_directory)
+                # Enviar CBZ y/o PDF según la selección
+                if accion in ["multi_cbz", "multi_both"] and cbz_file:
+                    await client.send_document(callback_query.message.chat.id, cbz_file, caption=f"CBZ para el código {code} 📚")
+                if accion in ["multi_pdf", "multi_both"] and pdf_file:
+                    await client.send_document(callback_query.message.chat.id, pdf_file, caption=f"PDF para el código {code} 🖨️")
 
             except Exception as e:
                 await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
                 continue
 
+            finally:
+                # Limpieza de archivos y directorios temporales
+                if cbz_file and os.path.exists(cbz_file):
+                    os.remove(cbz_file)
+                if pdf_file and os.path.exists(pdf_file):
+                    os.remove(pdf_file)
+                if code_directory and os.path.exists(code_directory):
+                    shutil.rmtree(code_directory)
+
         await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
+                    
