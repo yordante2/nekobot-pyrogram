@@ -115,38 +115,45 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         base_url = context["base_url"]
         operation_type = context["operation_type"]
 
-        # Responder al callback lo antes posible para evitar expiración
-        await callback_query.answer("Procesando...", show_alert=False)
+        # Responder al callback rápidamente
+        await callback_query.answer("Procesando tu solicitud...", show_alert=False)
 
         # Borrar el mensaje que muestra las opciones
         await callback_query.message.delete()
 
-        # Procesar los códigos según la acción seleccionada
+        # Procesar cada código por separado
         for code in codes:
             try:
+                # Crear un directorio específico para este código
+                code_directory = os.path.join("downloads", code)
+                if not os.path.exists(code_directory):
+                    os.makedirs(code_directory)
+
+                # Descargar y procesar el contenido del código actual
                 url = f"https://{base_url}/{code}/"
                 response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
                 response.raise_for_status()
 
-                result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+                result = descargar_hentai(url, code, base_url, operation_type, protect_content, code_directory)
                 if result.get("error"):
                     await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
                     continue
 
+                # Enviar CBZ y/o PDF según la selección
                 if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
                     await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
                 if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
                     await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
 
-                # Limpieza de archivos para este código
+                # Eliminar los archivos generados para este código después de enviarlos
                 if result.get("cbz_file") and os.path.exists(result["cbz_file"]):
                     os.remove(result["cbz_file"])
                 if result.get("pdf_file") and os.path.exists(result["pdf_file"]):
                     os.remove(result["pdf_file"])
 
-                # Eliminar imágenes y directorios temporales relacionados con este código
-                if os.path.exists("downloads"):
-                    shutil.rmtree("downloads")
+                # Eliminar el directorio específico para este código
+                if os.path.exists(code_directory):
+                    shutil.rmtree(code_directory)
 
             except Exception as e:
                 await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
@@ -155,3 +162,4 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
+        
