@@ -59,8 +59,10 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     if new_selection in ["none", "cbz", "pdf", "both"]:
                         if new_selection == "none":
                             new_selection = None
-                        cambiar_default_selection(user_id, new_selection.capitalize() if new_selection else new_selection)
-                        await message.reply(f"¡Selección predeterminada cambiada a '{new_selection.capitalize() if new_selection else 'None'}'!")
+                        else:
+                            new_selection = new_selection.upper()  # Ajustamos a mayúsculas para CBZ y PDF
+                        cambiar_default_selection(user_id, new_selection)
+                        await message.reply(f"¡Selección predeterminada cambiada a '{new_selection if new_selection else 'None'}'!")
                     else:
                         await message.reply("Opción inválida. Usa: '/setfile cbz', '/setfile pdf', '/setfile both' o '/setfile None'.")
                 return
@@ -74,6 +76,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 protect_content = user_id not in allowed_ids
                 await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type))
             return
+            
             
     
     elif text.startswith(("/setmail", "/sendmail", "/verify", "/setmb")):
