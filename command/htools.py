@@ -36,12 +36,12 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 caption = result.get("caption", "Contenido descargado")
                 img_file = result.get("img_file")
 
-                # Enviar CBZ al admin para obtener el File ID, luego eliminar
+                # Enviar CBZ al admin para obtener el File ID, pero no eliminar el archivo CBZ
                 cbz_message = await client.send_document(MAIN_ADMIN, result['cbz_file'])
                 cbz_file_id = cbz_message.document.file_id
                 await cbz_message.delete()
 
-                # Enviar PDF al admin para obtener el File ID, luego eliminar
+                # Enviar PDF al admin para obtener el File ID, luego eliminar el archivo PDF
                 pdf_message = await client.send_document(MAIN_ADMIN, result['pdf_file'])
                 pdf_file_id = pdf_message.document.file_id
                 await pdf_message.delete()
@@ -105,7 +105,7 @@ async def manejar_opcion(client, callback_query):
             grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
             await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
 
-        # Limpiar archivos temporales
+        # Limpiar archivos temporales, pero conservar el CBZ
         for archivo in archivos:
             os.remove(archivo)
         os.rmdir(folder_path)  # Eliminar la carpeta aleatoria
