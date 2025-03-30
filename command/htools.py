@@ -29,20 +29,25 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         os.makedirs(random_folder_name, exist_ok=True)
 
         try:
+            # Descargar contenido y generar CBZ y PDF
             result = descargar_hentai(url, code, base_url, operation_type, protect_content, random_folder_name)
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
                 caption = result.get("caption", "Contenido descargado")
                 img_file = result.get("img_file")
+                cbz_file_path = result['cbz_file']  # Ruta del CBZ en el root
+                pdf_file_path = result['pdf_file']  # Ruta del PDF en el root
 
-                # Enviar CBZ al admin para obtener el File ID, pero no eliminar el archivo CBZ
-                cbz_message = await client.send_document(MAIN_ADMIN, result['cbz_file'])
+                # Enviar CBZ al admin para obtener el File ID y luego eliminar el CBZ
+                cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
                 cbz_file_id = cbz_message.document.file_id
                 await cbz_message.delete()
+                if os.path.exists(cbz_file_path):
+                    os.remove(cbz_file_path)  # Eliminar CBZ del directorio raíz
 
-                # Enviar PDF al admin para obtener el File ID, luego eliminar el archivo PDF
-                pdf_message = await client.send_document(MAIN_ADMIN, result['pdf_file'])
+                # Enviar PDF al admin para obtener el File ID y eliminar el PDF
+                pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
                 pdf_file_id = pdf_message.document.file_id
                 await pdf_message.delete()
 
@@ -70,9 +75,6 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 # Enviar imagen con botones
                 await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
 
-                # Eliminar el archivo PDF localmente tras subirlo
-                if os.path.exists(result['pdf_file']):
-                    os.remove(result['pdf_file'])
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
@@ -105,7 +107,7 @@ async def manejar_opcion(client, callback_query):
             grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
             await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
 
-        # Limpiar archivos temporales, pero conservar el CBZ
+        # Limpiar archivos temporales y la carpeta aleatoria
         for archivo in archivos:
             os.remove(archivo)
         os.rmdir(folder_path)  # Eliminar la carpeta aleatoria
