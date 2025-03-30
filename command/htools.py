@@ -39,12 +39,12 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 cbz_file_path = os.path.join(random_folder_name, os.path.basename(result['cbz_file']))
                 pdf_file_path = os.path.join(random_folder_name, os.path.basename(result['pdf_file']))
 
-                # Enviar CBZ al admin para obtener el File ID y eliminarlo del chat del admin
+                # Enviar CBZ al admin como archivo local y obtener el File ID
                 cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
                 cbz_file_id = cbz_message.document.file_id
                 await cbz_message.delete()
 
-                # Enviar PDF al admin para obtener el File ID y eliminarlo del chat del admin
+                # Enviar PDF al admin como archivo local y obtener el File ID
                 pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
                 pdf_file_id = pdf_message.document.file_id
                 await pdf_message.delete()
