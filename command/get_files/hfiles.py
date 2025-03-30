@@ -1,147 +1,119 @@
 import os
+import re
 import requests
-from uuid import uuid4
+import zipfile
+from bs4 import BeautifulSoup
 from fpdf import FPDF
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from PIL import Image
-import shutil
-from command.get_files.hfiles import descargar_hentai
 
-MAIN_ADMIN = os.getenv("MAIN_ADMIN")
-callback_data_map = {}
-operation_status = {}
-default_selection_map = {}  # Diccionario para asociar default_selection con user_id
+def clean_string(s):
+    return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
-def convertir_a_png_con_compresion(image_path, output_dir):
-    """Convierte imágenes de cualquier formato a PNG optimizado."""
-    try:
-        os.makedirs(output_dir, exist_ok=True)  # Crear la carpeta si no existe
-        with Image.open(image_path) as img:
-            nuevo_path = os.path.join(output_dir, f"{os.path.splitext(os.path.basename(image_path))[0]}.png")
-            img.save(nuevo_path, "PNG", optimize=True)  # Comprimir al máximo
-            return nuevo_path
-    except Exception as e:
-        print(f"Error al convertir la imagen {image_path} a PNG: {e}")
-        return None
-
-def crear_pdf_desde_png(page_title, png_dir, output_path):
-    """Crea un PDF usando las imágenes PNG en una carpeta."""
+def crear_pdf(folder_name, pdf_filename):
     try:
         pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        for image_name in sorted(os.listdir(png_dir)):
-            image_path = os.path.join(png_dir, image_name)
-            if image_name.lower().endswith('.png'):
+        pdf.set_auto_page_break(auto=True, margin=0)
+
+        for file in sorted(os.listdir(folder_name)):
+            file_path = os.path.join(folder_name, file)
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
                 pdf.add_page()
-                pdf.image(image_path, x=10, y=10, w=190)
-        pdf.output(output_path)
-        return True
+                pdf.image(file_path, x=0, y=0, w=210)
+
+        pdf.output(pdf_filename)
+        #print(f"PDF creado: {pdf_filename}")
+        return pdf_filename
     except Exception as e:
-        print(f"Error al crear el PDF: {e}")
-        return False
+        #print(f"Error al crear PDF: {e}")
+        return None
 
-def cambiar_default_selection(user_id, nueva_seleccion):
-    """Cambia la selección predeterminada del usuario."""
-    if nueva_seleccion not in [None, "PDF", "CBZ", "Both"]:
-        raise ValueError("Selección inválida. Debe ser None, 'PDF', 'CBZ', o 'Both'.")
-    default_selection_map[user_id] = nueva_seleccion
+def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
+    results = {}
+    first_img_filename = None  # Para guardar la primera imagen
+    try:
+        # Asegurar que el directorio base existe
+        os.makedirs(folder_name, exist_ok=True)
 
-async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
-    if link_type not in ["nh", "3h"]:
-        await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
-        return
+        # Descargar la portada y obtener el título para usarlo como nombre de archivo
+        page_url = f"https://{base_url}/{code}/1/"
+        response = requests.get(page_url, headers={"User-Agent": "Mozilla/5.0"})
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title_tag = soup.find('title')
 
-    # Configuración inicial del usuario
-    user_default_selection = default_selection_map.get(user_id, None)
+        page_title = clean_string(title_tag.text.strip()) if title_tag else f"Contenido_{code}"
+        img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
 
-    # Restaurando base_url
-    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
+        img_filename = None
+        if img_tag:
+            img_url = img_tag['src']
+            img_extension = os.path.splitext(img_url)[1]
+            img_filename = os.path.join(folder_name, f"1{img_extension}")
+            first_img_filename = img_filename
 
-    for code in codes:
-        try:
-            url = f"https://{base_url}/{code}/"
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            await message.reply(f"Error con el código {code}: {str(e)}")
-            continue
+            with open(img_filename, 'wb') as img_file:
+                img_data = requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}).content
+                img_file.write(img_data)
 
-        try:
-            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
-            if not result:
-                await message.reply(f"Error con el código {code}: La función descargar_hentai retornó 'None'.")
-                continue
-            if result.get("error"):
-                await message.reply(f"Error con el código {code}: {result['error']}")
-                continue
+        if operation_type == "download":
+            page_number = 1
+            while True:
+                page_url = f"https://{base_url}/{code}/{page_number}/"
+                try:
+                    response = requests.get(page_url, headers={"User-Agent": "Mozilla/5.0"})
+                    response.raise_for_status()
+                except requests.exceptions.RequestException:
+                    break
 
-            caption = result.get("caption", "Contenido descargado")
-            img_file = result.get("img_file")
-            if not img_file:
-                await message.reply(f"Error con el código {code}: Imagen no encontrada.")
-                continue
+                soup = BeautifulSoup(response.content, 'html.parser')
+                img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
+                if not img_tag:
+                    break
 
-            cbz_file_path = result.get("cbz_file")
-            pdf_file_path = result.get("pdf_file")
+                img_url = img_tag['src']
+                img_extension = os.path.splitext(img_url)[1]
+                img_filename = os.path.join(folder_name, f"{page_number}{img_extension}")
 
-            if not pdf_file_path:
-                pdf_file_path = f"{result.get('caption', 'output')}.pdf"
-                new_png_dir = "new_png"
-                os.makedirs(new_png_dir, exist_ok=True)
-                for image_name in os.listdir("downloads"):
-                    image_path = os.path.join("downloads", image_name)
-                    convertir_a_png_con_compresion(image_path, new_png_dir)
-                pdf_creado = crear_pdf_desde_png(result.get("caption", "output"), new_png_dir, pdf_file_path)
-                if not pdf_creado:
-                    await message.reply(f"Error al generar el PDF para el código {code}.")
-                    continue
+                with open(img_filename, 'wb') as img_file:
+                    img_file.write(requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}).content)
 
-            if user_default_selection:
-                if user_default_selection in ["Both", "CBZ"] and cbz_file_path:
-                    await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
-                if user_default_selection in ["Both", "PDF"] and pdf_file_path:
-                    await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
+                page_number += 1
 
-                await message.reply_photo(photo=img_file, caption=caption)  # Enviar la foto
-            else:
-                # Enviar archivo al administrador y obtener file_id
-                cbz_file_id = None
-                pdf_file_id = None
+            # Usar el título como nombre de archivo
+            zip_filename = f"{page_title}.cbz"
+            pdf_filename = f"{page_title}.pdf"
 
-                if cbz_file_path:
-                    cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
-                    cbz_file_id = cbz_message.document.file_id
-                    await cbz_message.delete()  # Borrar archivo del chat del admin
-                if pdf_file_path:
-                    pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
-                    pdf_file_id = pdf_message.document.file_id
-                    await pdf_message.delete()  # Borrar archivo del chat del admin
+            # Crear CBZ
+            with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                for root, _, files in os.walk(folder_name):
+                    for file in files:
+                        zipf.write(os.path.join(root, file), arcname=file)
 
-                # Crear botones para descargar desde file_id
-                buttons = []
-                if cbz_file_id:
-                    cbz_button_id = str(uuid4())
-                    callback_data_map[cbz_button_id] = cbz_file_id
-                    operation_status[cbz_button_id] = False
-                    buttons.append(InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"))
-                if pdf_file_id:
-                    pdf_button_id = str(uuid4())
-                    callback_data_map[pdf_button_id] = pdf_file_id
-                    operation_status[pdf_button_id] = False
-                    buttons.append(InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}"))
+            # Crear PDF
+            pdf_result = crear_pdf(folder_name, pdf_filename)
 
-                keyboard = InlineKeyboardMarkup([buttons])
+            results = {
+                "caption": page_title,
+                "img_file": first_img_filename, 
+                "cbz_file": zip_filename,
+                "pdf_file": pdf_result
+            }
+        else:
+            results = {"caption": page_title, "img_file": first_img_filename}  # Usar la primera imagen
+    except Exception as e:
+        results = {"error": str(e)}
 
-                # Enviar imagen y botones al usuario
-                await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
+    return results
 
-            # Limpieza de archivos
-            if cbz_file_path and os.path.exists(cbz_file_path):
-                os.remove(cbz_file_path)
-            if pdf_file_path and os.path.exists(pdf_file_path):
-                os.remove(pdf_file_path)
-            if os.path.exists("downloads"):
-                shutil.rmtree("downloads")
+def borrar_carpeta(folder_name, cbz_file):
+    try:
+        # Borrar archivos en la carpeta temporal
+        if os.path.exists(folder_name):
+            for file in os.listdir(folder_name):
+                os.remove(os.path.join(folder_name, file))
+            os.rmdir(folder_name)
 
-        except Exception as e:
-            await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
+        # Borrar archivo CBZ
+        if cbz_file and os.path.exists(cbz_file):
+            os.remove(cbz_file)
+    except Exception as e:
+        print(f"Error al borrar: {e}")
