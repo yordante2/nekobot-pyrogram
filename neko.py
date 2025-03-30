@@ -20,6 +20,11 @@ app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 CODEWORD = os.getenv('CODEWORD', '')
 BOT_IS_PUBLIC = os.getenv('BOT_IS_PUBLIC', 'false')
 
+vip_users = list(map(int, os.getenv('VIP_USERS', '').split(','))) if os.getenv('VIP_USERS') else []
+allowed_ids = set(admin_users).union(set(vip_users))
+protect_content_env = os.getenv('PROTECT_CONTENT', '').strip().lower()
+is_protect_content_enabled = protect_content_env == 'true'
+
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
 
@@ -40,7 +45,12 @@ from command.htools import manejar_opcion
 
 @app.on_callback_query(filters.regex("^(cbz|pdf|fotos)"))
 async def callback_handler(client, callback_query):
-    await manejar_opcion(client, callback_query)
+    if is_protect_content_enabled and user_id not in allowed_ids:
+        protect_content = True
+
+    else:
+        protect_content = False
+    await manejar_opcion(client, callback_query, protect_content)
     
 @app.on_callback_query()
 async def callback_handler(client, callback_query):
