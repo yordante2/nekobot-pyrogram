@@ -54,7 +54,7 @@ async def callback_handler(client, callback_query):
     await manejar_opcion(client, callback_query, protect_content, user_id)
 
 from pyrogram import Client, filters
-from commands.htools import nh_combined_operation, manejar_opcion
+from command.htools import nh_combined_operation, manejar_opcion
 
 app = Client("bot_session")
 
