@@ -14,10 +14,10 @@ operation_status = {}
 def convertir_a_png_con_compresion(image_path, output_dir):
     """Convierte imágenes de cualquier formato a PNG optimizado."""
     try:
-        os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)  # Crear la carpeta si no existe
         with Image.open(image_path) as img:
             nuevo_path = os.path.join(output_dir, f"{os.path.splitext(os.path.basename(image_path))[0]}.png")
-            img.save(nuevo_path, "PNG", optimize=True)
+            img.save(nuevo_path, "PNG", optimize=True)  # Comprimir al máximo
             return nuevo_path
     except Exception as e:
         print(f"Error al convertir la imagen {image_path} a PNG: {e}")
@@ -39,70 +39,136 @@ def crear_pdf_desde_png(page_title, png_dir, output_path):
         print(f"Error al crear el PDF: {e}")
         return False
 
-async def manejar_opcion_formato(client, message, codes, formato_seleccionado, protect_content):
-    """Procesa la operación según el formato seleccionado por el usuario."""
-    try:
-        base_url = "nhentai.net/g"
-        for code in codes:
+async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
+    if link_type not in ["nh", "3h"]:
+        await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
+        return
+
+    # Restaurando base_url
+    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
+
+    for code in codes:
+        try:
+            # Utilizando base_url para construir la URL
             url = f"https://{base_url}/{code}/"
-            result = descargar_hentai(url, code, base_url, "download", protect_content, "downloads")
-            if not result or result.get("error"):
-                await message.reply(f"Error al manejar el código {code}.")
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"Error con el código {code}: {str(e)}")
+            continue
+
+        try:
+            # Llama a la función para descargar y procesar el contenido
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+            if not result:
+                await message.reply(f"Error con el código {code}: La función descargar_hentai retornó 'None'.")
                 continue
-            
+            if result.get("error"):
+                await message.reply(f"Error con el código {code}: {result['error']}")
+                continue
+
+            # Extraer resultados del diccionario
             caption = result.get("caption", "Contenido descargado")
             img_file = result.get("img_file")
+            if not img_file:
+                await message.reply(f"Error con el código {code}: Imagen no encontrada.")
+                continue
+
             cbz_file_path = result.get("cbz_file")
+            pdf_file_path = result.get("pdf_file")
 
-            # Proceso según formato seleccionado
-            if formato_seleccionado in ["pdf", "cbzpdf"]:
-                new_png_dir = "new_png"
-                os.makedirs(new_png_dir, exist_ok=True)
-                for image_name in os.listdir("downloads"):
-                    image_path = os.path.join("downloads", image_name)
-                    convertir_a_png_con_compresion(image_path, new_png_dir)
+            # Crear carpeta new_png y convertir imágenes
+            new_png_dir = "new_png"
+            os.makedirs(new_png_dir, exist_ok=True)
+            for image_name in os.listdir("downloads"):
+                image_path = os.path.join("downloads", image_name)
+                convertir_a_png_con_compresion(image_path, new_png_dir)
 
-                pdf_file_path = f"{caption}.pdf"
-                pdf_creado = crear_pdf_desde_png(caption, new_png_dir, pdf_file_path)
-                if pdf_creado:
-                    await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️")
+            # Si no se genera el PDF, crearlo aquí con las imágenes en new_png
+            if not pdf_file_path:
+                pdf_file_path = f"{result.get('caption', 'output')}.pdf"
+                pdf_creado = crear_pdf_desde_png(result.get("caption", "output"), new_png_dir, pdf_file_path)
+                if not pdf_creado:
+                    await message.reply(f"Error al generar el PDF para el código {code}.")
+                    continue
+
+            # Verifica si los archivos CBZ y PDF están presentes
+            if cbz_file_path:
+                cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
+                cbz_file_id = cbz_message.document.file_id
+                await cbz_message.delete()
+            else:
+                cbz_file_id = None
+
+            if pdf_file_path:
+                pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
+                pdf_file_id = pdf_message.document.file_id
+                await pdf_message.delete()
+            else:
+                pdf_file_id = None
+
+            # Crear botones para los archivos
+            cbz_button_id = str(uuid4()) if cbz_file_id else None
+            pdf_button_id = str(uuid4()) if pdf_file_id else None
+
+            if cbz_button_id:
+                callback_data_map[cbz_button_id] = cbz_file_id
+                operation_status[cbz_button_id] = False
+            if pdf_button_id:
+                callback_data_map[pdf_button_id] = pdf_file_id
+                operation_status[pdf_button_id] = False
+
+            # Crear botones según los archivos disponibles
+            buttons = []
+            if cbz_button_id:
+                buttons.append(InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"))
+            if pdf_button_id:
+                buttons.append(InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}"))
+
+            keyboard = InlineKeyboardMarkup([buttons])
+
+            # Enviar la imagen con los botones
+            await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
+
+            # Eliminar los archivos y carpetas temporales
+            if cbz_file_path and os.path.exists(cbz_file_path):
+                os.remove(cbz_file_path)
+            if pdf_file_path and os.path.exists(pdf_file_path):
+                os.remove(pdf_file_path)
+            if os.path.exists("downloads"):
+                shutil.rmtree("downloads")
+            if os.path.exists(new_png_dir):
                 shutil.rmtree(new_png_dir)
 
-            if formato_seleccionado in ["cbz", "cbzpdf"] and cbz_file_path:
-                await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚")
+        except Exception as e:
+            await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
-            # Enviar la primera imagen con el caption
-            if img_file:
-                await message.reply_photo(photo=img_file, caption=caption)
-            
-            shutil.rmtree("downloads")
 
-    except Exception as e:
-        await message.reply(f"Error al procesar la operación: {str(e)}")
-
-async def handle_callback(client, callback_query):
-    """Maneja los callbacks que vienen del script principal."""
+async def manejar_opcion(client, callback_query, protect_content, user_id):
     data = callback_query.data.split('|')
-    user_id = callback_query.from_user.id
+    opcion = data[0]
+    identificador = data[1]
 
-    if data[0] == "select_format":
-        formato_seleccionado = data[1]
-        codes = callback_data_map.get(user_id)  # Recuperar los códigos previamente almacenados
-        if not codes:
-            await callback_query.answer("No se encontraron códigos pendientes.", show_alert=True)
-            return
+    if protect_content is True:
+        text1 = "Look Here"
+    elif protect_content is False:
+        text1 = ""
 
-        await manejar_opcion_formato(client, callback_query.message, codes, formato_seleccionado, protect_content=True)
-        callback_data_map.pop(user_id, None)
-    elif data[0] == "detect_codes":
-        codes = data[1].split(",")
-        callback_data_map[user_id] = codes
+    if operation_status.get(identificador, True):
+        await callback_query.answer("Ya realizaste esta operación. Solo puedes hacerla una vez.", show_alert=True)
+        return
 
-        keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("CBZ", callback_data="select_format|cbz"),
-                InlineKeyboardButton("PDF", callback_data="select_format|pdf"),
-                InlineKeyboardButton("CBZ+PDF", callback_data="select_format|cbzpdf"),
-            ]
-        ])
-        await callback_query.message.reply("Se han detectado varios códigos. ¿Qué formato deseas?", reply_markup=keyboard)
+    datos_reales = callback_data_map.get(identificador)
+    if not datos_reales:
+        await callback_query.answer("La opción ya no es válida.", show_alert=True)
+        return
+
+    if opcion == "cbz":
+        cbz_file_id = datos_reales
+        await client.send_document(callback_query.message.chat.id, cbz_file_id, caption=f"{text1}Aquí está tu CBZ 📚", protect_content=protect_content)
+    elif opcion == "pdf":
+        pdf_file_id = datos_reales
+        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️", protect_content=protect_content)
+
+    operation_status[identificador] = True
+    await callback_query.answer("¡Opción procesada!")
