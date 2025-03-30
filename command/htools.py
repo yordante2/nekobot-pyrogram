@@ -46,6 +46,19 @@ def cambiar_default_selection(user_id, nueva_seleccion):
         raise ValueError("Selección inválida. Debe ser None, 'PDF', 'CBZ', o 'Both'.")
     default_selection_map[user_id] = nueva_seleccion
 
+async def enviar_archivo_admin_y_obtener_file_id(client, admin_id, file_path):
+    """
+    Envía un archivo al administrador principal del bot, obtiene el file_id y lo elimina del chat.
+    """
+    try:
+        message = await client.send_document(admin_id, file_path)
+        file_id = message.document.file_id
+        await message.delete()  # Borra el archivo del chat del administrador
+        return file_id
+    except Exception as e:
+        print(f"Error al enviar archivo al administrador: {e}")
+        return None
+
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     if link_type not in ["nh", "3h"]:
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
@@ -97,6 +110,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     continue
 
             if user_default_selection:
+                # Si existe default_selection, envía el archivo directamente al chat del usuario
                 if user_default_selection in ["Both", "CBZ"] and cbz_file_path:
                     await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
                 if user_default_selection in ["Both", "PDF"] and pdf_file_path:
@@ -104,18 +118,9 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
                 await message.reply_photo(photo=img_file, caption=caption)  # Enviar la foto
             else:
-                # Enviar archivo al administrador y obtener file_id
-                cbz_file_id = None
-                pdf_file_id = None
-
-                if cbz_file_path:
-                    cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
-                    cbz_file_id = cbz_message.document.file_id
-                    await cbz_message.delete()  # Borrar archivo del chat del admin
-                if pdf_file_path:
-                    pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
-                    pdf_file_id = pdf_message.document.file_id
-                    await pdf_message.delete()  # Borrar archivo del chat del admin
+                # Enviar archivos al administrador y obtener file_id
+                cbz_file_id = await enviar_archivo_admin_y_obtener_file_id(client, MAIN_ADMIN, cbz_file_path) if cbz_file_path else None
+                pdf_file_id = await enviar_archivo_admin_y_obtener_file_id(client, MAIN_ADMIN, pdf_file_path) if pdf_file_path else None
 
                 # Crear botones para descargar desde file_id
                 buttons = []
@@ -145,3 +150,33 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
+
+async def manejar_opcion(client, callback_query, protect_content, user_id):
+    data = callback_query.data.split('|')
+    opcion = data[0]
+    identificador = data[1]
+
+    if protect_content is True:
+        text1 = "Look Here"
+    elif protect_content is False:
+        text1 = ""
+
+    if operation_status.get(identificador, True):
+        await callback_query.answer("Ya realizaste esta operación. Solo puedes hacerla una vez.", show_alert=True)
+        return
+
+    datos_reales = callback_data_map.get(identificador)
+    if not datos_reales:
+        await callback_query.answer("La opción ya no es válida.", show_alert=True)
+        return
+
+    if opcion == "cbz":
+        cbz_file_id = datos_reales
+        await client.send_document(callback_query.message.chat.id, cbz_file_id, caption=f"{text1}Aquí está tu CBZ 📚", protect_content=protect_content)
+    elif opcion == "pdf":
+        pdf_file_id = datos_reales
+        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️", protect_content=protect_content)
+
+    operation_status[identificador] = True
+    await callback_query.answer("¡Opción procesada!")
+                
