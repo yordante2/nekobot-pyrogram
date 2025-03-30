@@ -118,11 +118,10 @@ async def summarize_lines(lines):
         if matches:
             numbers.extend(matches)
 
-    # Imprimir los números separados por comas
     if numbers:
-        codes = (", ".join(numbers))
+        codes = ", ".join(numbers)
     else:
         codes = None
 
     return codes
-
+        
