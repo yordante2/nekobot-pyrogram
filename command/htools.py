@@ -26,7 +26,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             continue
         try:
             # Crear el CBZ y PDF en el root de ejecución
-            result = descargar_hentai(url, code, link_type, operation_type, protect_content, "downloads")
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
