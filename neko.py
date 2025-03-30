@@ -53,23 +53,17 @@ async def callback_handler(client, callback_query):
         protect_content = False
     await manejar_opcion(client, callback_query, protect_content, user_id)
 
-from pyrogram import Client, filters
-from command.htools import nh_combined_operation, manejar_opcion
+from command.htools import manejar_opcion
 
-# Manejar comandos
-@app.on_message(filters.command("nh"))
-async def handle_nh_command(client, message):
-    codes = message.text.split()[1:]  # Extraer los códigos del mensaje
-    if not codes:
-        await message.reply("Por favor, proporciona al menos un código.")
-        return
-
-    await nh_combined_operation(client, message, codes, link_type="nh", protect_content=False, user_id=message.from_user.id)
-
-# Manejar callbacks
 @app.on_callback_query()
 async def handle_callback_query(client, callback_query):
-    await manejar_opcion(client, callback_query, protect_content=False, user_id=callback_query.from_user.id)
+    # Llama a la función manejar_opcion desde command.htools
+    await manejar_opcion(
+        client=client,
+        callback_query=callback_query,
+        protect_content=False,  # Cambia a True si deseas contenido protegido
+        user_id=callback_query.from_user.id
+    )
 
 @app.on_callback_query()
 async def callback_handler(client, callback_query):
