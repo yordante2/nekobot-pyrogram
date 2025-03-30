@@ -136,6 +136,11 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
             if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
                 await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
 
+            os.remove(result["cbz_file"])
+            os.remmove(result["pdf_file"])
+            if os.path.exists("downloads"):
+                shutil.rmtree("downloads")
+
         await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
