@@ -2,13 +2,29 @@ import os
 import requests
 import zipfile
 from uuid import uuid4
+from fpdf import FPDF
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from command.get_files.hfiles import descargar_hentai
 import shutil
+from command.get_files.hfiles import descargar_hentai
 
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
 operation_status = {}
+
+def crear_pdf_si_no_existe(page_title, images_dir, output_path):
+    try:
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        for image_name in sorted(os.listdir(images_dir)):
+            image_path = os.path.join(images_dir, image_name)
+            if image_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                pdf.add_page()
+                pdf.image(image_path, x=10, y=10, w=190)
+        pdf.output(output_path)
+        return True
+    except Exception as e:
+        print(f"Error al crear el PDF: {e}")
+        return False
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     if link_type not in ["nh", "3h"]:
@@ -47,6 +63,15 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
             cbz_file_path = result.get("cbz_file")
             pdf_file_path = result.get("pdf_file")
+
+            # Si no se genera el PDF, crearlo aquí
+            if not pdf_file_path:
+                pdf_file_path = f"{result.get('caption', 'output')}.pdf"
+                images_dir = "downloads"  # Asegurarse de que la carpeta tenga las imágenes
+                pdf_creado = crear_pdf_si_no_existe(result.get("caption", "output"), images_dir, pdf_file_path)
+                if not pdf_creado:
+                    await message.reply(f"Error al generar el PDF para el código {code}.")
+                    continue
 
             # Verifica si los archivos CBZ y PDF están presentes
             if cbz_file_path:
