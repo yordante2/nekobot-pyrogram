@@ -181,7 +181,6 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         return
 
 
-    
     elif text.startswith(("/scan", "/multiscan", "/resumecodes")):
         if cmd("webtools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/scan"):
@@ -205,10 +204,13 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         lines = [line.strip() for line in f.readlines()]
                         line_count = len(lines)
 
-                    # Responder con el número de líneas y manejar el contenido en `lines`
+                    # Responder con el número de líneas y procesar líneas con summarize_lines
                     await message.reply(f"El archivo tiene {line_count} líneas.")
-                    codes = summarize_lines(lines)
-                    await message.reply(f"{codes}")
+                    codes = await summarize_lines(lines)
+                    if codes:
+                        await message.reply(f"Códigos encontrados: {codes}")
+                    else:
+                        await message.reply("No se encontraron códigos en el archivo.")
 
                     # Eliminar el archivo descargado
                     os.remove(file_path)
@@ -216,6 +218,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     await message.reply("Por favor, responde a un mensaje que contenga un archivo.")
 
         return
+
         
 
     
