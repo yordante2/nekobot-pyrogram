@@ -40,11 +40,17 @@ def crear_pdf_desde_png(page_title, png_dir, output_path):
         print(f"Error al crear el PDF: {e}")
         return False
 
+
 def cambiar_default_selection(user_id, nueva_seleccion):
     """Cambia la selección predeterminada del usuario."""
-    if nueva_seleccion not in [None, "PDF", "CBZ", "Both"]:
+    opciones_validas = [None, "pdf", "cbz", "both"]  # Todas las opciones en minúsculas
+    if nueva_seleccion is not None:  # Transformar a minúsculas si no es None
+        nueva_seleccion = nueva_seleccion.lower()
+
+    if nueva_seleccion not in opciones_validas:
         raise ValueError("Selección inválida. Debe ser None, 'PDF', 'CBZ', o 'Both'.")
-    default_selection_map[user_id] = nueva_seleccion
+    default_selection_map[user_id] = nueva_seleccion.capitalize() if nueva_seleccion else None
+    
 
 async def enviar_archivo_admin_y_obtener_file_id(client, admin_id, file_path):
     """
