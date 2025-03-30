@@ -99,7 +99,7 @@ async def handle_multiscan(client, message):
 
 import re
 
-def analizar_archivo(file_path):
+async def analizar_archivo(file_path):
     valores = []
 
     # Expresión regular para encontrar números después de /d/ o /g/
