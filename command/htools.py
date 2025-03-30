@@ -91,6 +91,46 @@ async def nh_combined_operation(client, message, codes, protect_content, formato
     except Exception as e:
         await message.reply(f"Error al procesar los códigos: {str(e)}")
 
+async def manejar_opcion(client, callback_query, protect_content, user_id):
+    """Maneja las solicitudes específicas del usuario según su elección de formato."""
+    data = callback_query.data.split('|')
+    opcion = data[1]  # Puede ser "cbz" o "pdf"
+    identificador = data[2]  # Identificador único asociado al archivo
+
+    if protect_content:
+        text1 = "Contenido protegido. "
+    else:
+        text1 = ""
+
+    # Verificar que el archivo aún está disponible
+    file_id = callback_data_map.get(identificador)
+    if not file_id:
+        await callback_query.answer("El archivo ya no está disponible o fue eliminado.", show_alert=True)
+        return
+
+    # Enviar el archivo al usuario según el formato elegido
+    if opcion == "cbz":
+        await client.send_document(
+            callback_query.message.chat.id,
+            file_id,
+            caption=f"{text1}Aquí está tu CBZ 📚",
+            protect_content=protect_content
+        )
+    elif opcion == "pdf":
+        await client.send_document(
+            callback_query.message.chat.id,
+            file_id,
+            caption=f"{text1}Aquí está tu PDF 🖨️",
+            protect_content=protect_content
+        )
+
+    # Confirmar la operación al usuario
+    await callback_query.answer("¡Operación completada!")
+
+    # Eliminar el identificador una vez utilizado
+    callback_data_map.pop(identificador, None)
+    
+
 async def handle_callback(client, callback_query):
     """Maneja los callbacks según la selección del usuario."""
     data = callback_query.data.split('|')
