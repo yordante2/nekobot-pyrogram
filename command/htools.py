@@ -104,6 +104,10 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             cbz_file_path = result.get("cbz_file")
             pdf_file_path = result.get("pdf_file")
 
+            if operation_type=="cover":
+                await message.reply_photo(photo=img_file, caption=caption)
+                return
+
             if not pdf_file_path and operation_type=="download":
                 pdf_file_path = f"{result.get('caption', 'output')}.pdf"
                 new_png_dir = "new_png"
