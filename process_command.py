@@ -180,6 +180,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await message.reply("Por favor, usa el comando respondiendo a una foto.")
         return
 
+
     elif text.startswith(("/scan", "/multiscan", "/resumecodes")):
         if cmd("webtools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/scan"):
@@ -187,17 +188,22 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/multiscan"):
                 await asyncio.create_task(handle_multiscan(client, message))
             elif text.startswith("/resumecodes"):
-                if message.document and message.document.file_name.endswith(".txt"):
+                if message.document:
+                    # Descargar el archivo primero
                     file_path = await client.download_media(message.document)
-                    resultados = analizar_archivo(file_path)
-                    for i in range(0, len(resultados), 25):
-                        await client.send_message(
-                            chat_id=message.chat.id,
-                            text="\n".join(resultados[i:i+25])
-                        )
-                    import os
-                    os.remove(file_path)
+                    
+                    # Verificar la extensión del archivo descargado
+                    if file_path.endswith(".txt"):
+                        resultados = analizar_archivo(file_path)
+                        for i in range(0, len(resultados), 25):
+                            await client.send_message(
+                                chat_id=message.chat.id,
+                                text="\n".join(resultados[i:i+25])
+                            )
+                        import os
+                        os.remove(file_path)
         return
+    
     
     elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
         if text.startswith("/adduser"):
