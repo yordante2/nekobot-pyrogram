@@ -187,4 +187,11 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         await client.send_document(callback_query.message.chat.id, cbz_file_id, caption=f"{text1}Aquí está tu CBZ 📚", protect_content=protect_content)
     elif opcion == "pdf":
         pdf_file_id = datos_reales
-        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️",
+        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️", protect_content=protect_content)
+    elif opcion == "pdf":
+        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️", protect_content=protect_content)
+
+    operation_status[identificador] = True
+    await callback_query.answer("¡Opción procesada!")
+    
+        
