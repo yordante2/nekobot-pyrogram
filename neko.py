@@ -45,12 +45,13 @@ from command.htools import manejar_opcion
 
 @app.on_callback_query(filters.regex("^(cbz|pdf|fotos)"))
 async def callback_handler(client, callback_query):
+    user_id = callback_query.from_user.id
     if is_protect_content_enabled and user_id not in allowed_ids:
         protect_content = True
 
     else:
         protect_content = False
-    await manejar_opcion(client, callback_query, protect_content)
+    await manejar_opcion(client, callback_query, protect_content, user_id)
     
 @app.on_callback_query()
 async def callback_handler(client, callback_query):
