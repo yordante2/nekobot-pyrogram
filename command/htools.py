@@ -29,46 +29,21 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         os.makedirs(random_folder_name, exist_ok=True)
 
         try:
-            # Descargar contenido y generar CBZ y PDF
+            # Descargar contenido y generar CBZ y PDF dentro de la carpeta aleatoria
             result = descargar_hentai(url, code, base_url, operation_type, protect_content, random_folder_name)
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
                 caption = result.get("caption", "Contenido descargado")
                 img_file = result.get("img_file")
-                cbz_file_path = result['cbz_file']  # Ruta del CBZ en el root
-                pdf_file_path = result['pdf_file']  # Ruta del PDF en el root
+                cbz_file_path = os.path.join(random_folder_name, os.path.basename(result['cbz_file']))
+                pdf_file_path = os.path.join(random_folder_name, os.path.basename(result['pdf_file']))
 
-                # Enviar CBZ al admin para obtener el File ID y luego eliminar el CBZ
-                cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
-                cbz_file_id = cbz_message.document.file_id
-                await cbz_message.delete()
-                if os.path.exists(cbz_file_path):
-                    os.remove(cbz_file_path)  # Eliminar CBZ del directorio raíz
-
-                # Enviar PDF al admin para obtener el File ID y eliminar el PDF
-                pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
-                pdf_file_id = pdf_message.document.file_id
-                await pdf_message.delete()
-
-                # Crear botones con los File IDs
-                cbz_button_id = str(uuid4())
-                pdf_button_id = str(uuid4())
+                # Crear botones con información para fotos
                 fotos_button_id = str(uuid4())
-
-                callback_data_map[cbz_button_id] = cbz_file_id
-                callback_data_map[pdf_button_id] = pdf_file_id
                 callback_data_map[fotos_button_id] = random_folder_name  # Guardar carpeta aleatoria para fotos
 
-                operation_status[cbz_button_id] = False
-                operation_status[pdf_button_id] = False
-                operation_status[fotos_button_id] = False
-
                 keyboard = InlineKeyboardMarkup([
-                    [
-                        InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
-                        InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}")
-                    ],
                     [InlineKeyboardButton("Ver Fotos", callback_data=f"fotos|{fotos_button_id}")]
                 ])
 
@@ -92,15 +67,25 @@ async def manejar_opcion(client, callback_query):
         await callback_query.answer("La opción ya no es válida.", show_alert=True)
         return
 
-    if opcion == "cbz":
-        cbz_file_id = datos_reales
-        await client.send_document(callback_query.message.chat.id, cbz_file_id, caption="Aquí está tu CBZ 📚")
-    elif opcion == "pdf":
-        pdf_file_id = datos_reales
-        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption="Aquí está tu PDF 🖨️")
-    elif opcion == "fotos":
+    if opcion == "fotos":
         folder_path = datos_reales  # Obtener la carpeta aleatoria en downloads
 
+        # Verificar si el archivo CBZ existe en la carpeta
+        cbz_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.lower().endswith(".cbz")]
+        if not cbz_files:
+            await callback_query.answer("No se encontró el archivo CBZ.", show_alert=True)
+            return
+
+        cbz_file_path = cbz_files[0]  # Tomar el archivo CBZ encontrado
+
+        # Extraer fotos desde el CBZ
+        with zipfile.ZipFile(cbz_file_path, 'r') as zipf:
+            zipf.extractall(folder_path)
+
+        # Eliminar el archivo CBZ tras extraer las fotos
+        os.remove(cbz_file_path)
+
+        # Enviar fotos al chat
         archivos = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
         lote = 10
         for i in range(0, len(archivos), lote):
