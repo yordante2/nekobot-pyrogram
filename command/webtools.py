@@ -119,7 +119,7 @@ async def summarize_lines(lines):
             numbers.extend(matches)
 
     if numbers:
-        codes = ", ".join(numbers)
+        codes = ",".join(numbers)
     else:
         codes = None
 
