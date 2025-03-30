@@ -109,7 +109,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
 
                 page_number += 1
                 
-            page_title = f"{page_title} {code}"
+            page_title = f"{page_title}"
             page_title = re.sub("Page 1  nhentai hentai doujinshi and manga|Page 1  3Hentai", "", page_title)
             
             # Usar el título como nombre de archivo
@@ -125,7 +125,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
             # Crear PDF
             pdf_result = crear_pdf(folder_name, pdf_filename)
 
-            page_title = f"{page_title}\n {last_page_number} \n\n https://{base_url}/{code}/"
+            page_title = f"{page_title}\n {last_page_number} Páginas \n\n https://{base_url}/{code}/"
             
             results = {
                 "caption": page_title,
