@@ -10,6 +10,7 @@ from command.get_files.hfiles import descargar_hentai
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
 operation_status = {}
+default_selection_map = {}  # Diccionario para asociar default_selection con user_id
 
 def convertir_a_png_con_compresion(image_path, output_dir):
     """Convierte imágenes de cualquier formato a PNG optimizado."""
@@ -39,17 +40,25 @@ def crear_pdf_desde_png(page_title, png_dir, output_path):
         print(f"Error al crear el PDF: {e}")
         return False
 
+def cambiar_default_selection(user_id, nueva_seleccion):
+    """Cambia la selección predeterminada del usuario."""
+    if nueva_seleccion not in [None, "PDF", "CBZ", "Both"]:
+        raise ValueError("Selección inválida. Debe ser None, 'PDF', 'CBZ', o 'Both'.")
+    default_selection_map[user_id] = nueva_seleccion
+
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     if link_type not in ["nh", "3h"]:
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
+
+    # Configuración inicial del usuario
+    user_default_selection = default_selection_map.get(user_id, None)
 
     # Restaurando base_url
     base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
 
     for code in codes:
         try:
-            # Utilizando base_url para construir la URL
             url = f"https://{base_url}/{code}/"
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
@@ -58,7 +67,6 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             continue
 
         try:
-            # Llama a la función para descargar y procesar el contenido
             result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
             if not result:
                 await message.reply(f"Error con el código {code}: La función descargar_hentai retornó 'None'.")
@@ -67,7 +75,6 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 await message.reply(f"Error con el código {code}: {result['error']}")
                 continue
 
-            # Extraer resultados del diccionario
             caption = result.get("caption", "Contenido descargado")
             img_file = result.get("img_file")
             if not img_file:
@@ -77,14 +84,12 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             cbz_file_path = result.get("cbz_file")
             pdf_file_path = result.get("pdf_file")
 
-            # Crear carpeta new_png y convertir imágenes
             new_png_dir = "new_png"
             os.makedirs(new_png_dir, exist_ok=True)
             for image_name in os.listdir("downloads"):
                 image_path = os.path.join("downloads", image_name)
                 convertir_a_png_con_compresion(image_path, new_png_dir)
 
-            # Si no se genera el PDF, crearlo aquí con las imágenes en new_png
             if not pdf_file_path:
                 pdf_file_path = f"{result.get('caption', 'output')}.pdf"
                 pdf_creado = crear_pdf_desde_png(result.get("caption", "output"), new_png_dir, pdf_file_path)
@@ -92,45 +97,36 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     await message.reply(f"Error al generar el PDF para el código {code}.")
                     continue
 
-            # Verifica si los archivos CBZ y PDF están presentes
-            if cbz_file_path:
-                cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
-                cbz_file_id = cbz_message.document.file_id
-                await cbz_message.delete()
+            if user_default_selection:
+                # Envía directamente el archivo según default_selection
+                if user_default_selection in ["Both", "CBZ"] and cbz_file_path:
+                    await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
+                if user_default_selection in ["Both", "PDF"] and pdf_file_path:
+                    await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
+
+                await message.reply_photo(photo=img_file, caption=caption)  # Nunca omitir la foto
             else:
-                cbz_file_id = None
+                # Manejo estándar con botones
+                cbz_button_id = str(uuid4()) if cbz_file_path else None
+                pdf_button_id = str(uuid4()) if pdf_file_path else None
 
-            if pdf_file_path:
-                pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
-                pdf_file_id = pdf_message.document.file_id
-                await pdf_message.delete()
-            else:
-                pdf_file_id = None
+                if cbz_button_id:
+                    callback_data_map[cbz_button_id] = cbz_file_path
+                    operation_status[cbz_button_id] = False
+                if pdf_button_id:
+                    callback_data_map[pdf_button_id] = pdf_file_path
+                    operation_status[pdf_button_id] = False
 
-            # Crear botones para los archivos
-            cbz_button_id = str(uuid4()) if cbz_file_id else None
-            pdf_button_id = str(uuid4()) if pdf_file_id else None
+                buttons = []
+                if cbz_button_id:
+                    buttons.append(InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"))
+                if pdf_button_id:
+                    buttons.append(InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}"))
 
-            if cbz_button_id:
-                callback_data_map[cbz_button_id] = cbz_file_id
-                operation_status[cbz_button_id] = False
-            if pdf_button_id:
-                callback_data_map[pdf_button_id] = pdf_file_id
-                operation_status[pdf_button_id] = False
+                keyboard = InlineKeyboardMarkup([buttons])
+                await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
 
-            # Crear botones según los archivos disponibles
-            buttons = []
-            if cbz_button_id:
-                buttons.append(InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"))
-            if pdf_button_id:
-                buttons.append(InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}"))
-
-            keyboard = InlineKeyboardMarkup([buttons])
-
-            # Enviar la imagen con los botones
-            await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
-
-            # Eliminar los archivos y carpetas temporales
+            # Limpieza de archivos
             if cbz_file_path and os.path.exists(cbz_file_path):
                 os.remove(cbz_file_path)
             if pdf_file_path and os.path.exists(pdf_file_path):
@@ -142,7 +138,6 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
-
 
 async def manejar_opcion(client, callback_query, protect_content, user_id):
     data = callback_query.data.split('|')
