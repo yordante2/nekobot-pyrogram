@@ -115,14 +115,14 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     await message.reply(f"Error al generar el PDF para el código {code}.")
                     continue
 
+            await message.reply_photo(photo=img_file, caption=caption)
+
             if user_default_selection:
                 # Si existe default_selection, envía el archivo directamente al chat del usuario
                 if user_default_selection in ["Both", "CBZ"] and cbz_file_path:
                     await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
                 if user_default_selection in ["Both", "PDF"] and pdf_file_path:
                     await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
-
-                await message.reply_photo(photo=img_file, caption=caption)  # Enviar la foto
             else:
                 # Enviar archivos al administrador y obtener file_id
                 cbz_file_id = await enviar_archivo_admin_y_obtener_file_id(client, MAIN_ADMIN, cbz_file_path) if cbz_file_path else None
