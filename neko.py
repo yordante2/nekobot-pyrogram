@@ -95,5 +95,7 @@ try:
     app.start()
     if MAIN_ADMIN:
         app.loop.run_until_complete(notify_main_admin(app))
+
+    app.start()
 except KeyboardInterrupt:
     print("Detención forzada realizada")
