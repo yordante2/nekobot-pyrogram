@@ -27,7 +27,6 @@ def crear_pdf(folder_name, pdf_filename):
         return None
 
 def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
-    print(operation_type)
     results = {}
     first_img_filename = None  # Para guardar la primera imagen
     try:
@@ -56,7 +55,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                 img_file.write(img_data)
 
         if operation_type == "cover":
-            page_title = f"{page_title} \n https://{base_url}/{code}/"
+            page_title = f"{page_title} \n\n https://{base_url}/{code}/"
             page_title = re.sub("Page 1  nhentai hentai doujinshi and manga|Page 1  3Hentai", "", page_title)
             
             results = {"caption": page_title, "img_file": first_img_filename}
@@ -103,7 +102,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
             # Crear PDF
             pdf_result = crear_pdf(folder_name, pdf_filename)
 
-            page_title = f"{page_title} https://{base_url}/{code}/"
+            page_title = f"{page_title} \n\n https://{base_url}/{code}/"
             
             results = {
                 "caption": page_title,
