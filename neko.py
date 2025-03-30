@@ -41,11 +41,12 @@ async def process_access_command(message):
             await message.reply("Ya estás en la lista de acceso temporal.")
     else:
         await message.reply("Palabra secreta incorrecta.")
-
+        
 async def notify_main_admin(app):
     if MAIN_ADMIN:
         try:
-            await app.send_message(chat_id=MAIN_ADMIN, text="Bot iniciado")
+            bot_username = app.me.username  # Obtiene el username del bot
+            await app.send_message(chat_id=MAIN_ADMIN, text=f"Bot @{bot_username} iniciado")
         except Exception as e:
             print(f"Error al enviar el mensaje al MAIN_ADMIN: {e}")
 
