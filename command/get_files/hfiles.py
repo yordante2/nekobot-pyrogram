@@ -27,6 +27,7 @@ def crear_pdf(folder_name, pdf_filename):
         return None
 
 def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
+    print(operation_type)
     results = {}
     first_img_filename = None  # Para guardar la primera imagen
     try:
