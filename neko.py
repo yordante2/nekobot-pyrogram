@@ -87,16 +87,18 @@ async def handle_message(client, message):
     admin_cmd = os.getenv('ADMIN_CMD', '').lower()
     await process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id)
 
-# Función principal para iniciar el bot
 async def main():
     await app.start()
     if MAIN_ADMIN:
         await notify_main_admin()
     print("Bot iniciado y operativo.")
-    await app.idle()
+
+    # Mantén el bot corriendo hasta que se detenga manualmente
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Detención forzada realizada")
+        
