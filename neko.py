@@ -56,8 +56,6 @@ async def callback_handler(client, callback_query):
 from pyrogram import Client, filters
 from command.htools import nh_combined_operation, manejar_opcion
 
-app = Client("bot_session")
-
 @app.on_message(filters.command("nh"))
 async def handle_nh_command(client, message):
     # Extraer los códigos y otros parámetros del mensaje
