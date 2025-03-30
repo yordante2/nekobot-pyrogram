@@ -137,7 +137,7 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
                 await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
 
             os.remove(result["cbz_file"])
-            os.remmove(result["pdf_file"])
+            os.remove(result["pdf_file"])
             if os.path.exists("downloads"):
                 shutil.rmtree("downloads")
 
