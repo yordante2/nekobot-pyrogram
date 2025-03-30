@@ -58,7 +58,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     new_selection = parts[1].strip().lower()
                     if new_selection in ["None", "cbz", "pdf", "both"]:
                         if new_selection == "None":
-                            new_selection == None
+                            new_selection = None
                         cambiar_default_selection(user_id, new_selection.capitalize())  # Cambia default_selection
                         await message.reply(f"¡Selección predeterminada cambiada a '{new_selection.capitalize()}'!")
                     else:
