@@ -196,7 +196,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         
                         # Verificar la extensión del archivo descargado
                         if file_path.endswith(".txt"):
-                            resultados = analizar_archivo(file_path)
+                            resultados = await asyncio.create_task(analizar_archivo(file_path))
                             
                             if resultados:
                                 for i in range(0, len(resultados), 25):
