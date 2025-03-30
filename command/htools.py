@@ -4,7 +4,8 @@ import zipfile
 from uuid import uuid4
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
 from command.get_files.hfiles import descargar_hentai
-
+import os, shutil
+    
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
 operation_status = {}
@@ -50,23 +51,19 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 # Guardar los IDs para los botones
                 cbz_button_id = str(uuid4())
                 pdf_button_id = str(uuid4())
-                fotos_button_id = str(uuid4())
 
                 callback_data_map[cbz_button_id] = cbz_file_id
                 callback_data_map[pdf_button_id] = pdf_file_id
-                callback_data_map[fotos_button_id] = cbz_file_id  # File ID para ver fotos
 
                 operation_status[cbz_button_id] = False
                 operation_status[pdf_button_id] = False
-                operation_status[fotos_button_id] = False
 
                 # Crear botones para las opciones
                 keyboard = InlineKeyboardMarkup([
                     [
                         InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
                         InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}")
-                    ],
-                    [InlineKeyboardButton("Ver Fotos", callback_data=f"fotos|{fotos_button_id}")]
+                ]
                 ])
 
                 # Enviar la imagen con los botones
@@ -77,6 +74,8 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     os.remove(cbz_file_path)
                 if os.path.exists(pdf_file_path):
                     os.remove(pdf_file_path)
+
+                if os.path.exists("downloads"): shutil.rmtree("downloads")
 
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
