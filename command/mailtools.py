@@ -173,18 +173,38 @@ async def send_mail(client, message):
             parts = compressfile(media, mail_mb)
             for part in parts:
                 try:
+                    # Definir mail_server y otros parámetros dentro del bucle
+                    mail_server = os.getenv('MAIL_SERVER')
+                    if not mail_server:
+                        raise ValueError("MAIL_SERVER no está definido en las variables de entorno.")
+
+                    server_details = mail_server.split(':')
+                    if len(server_details) < 2:
+                        raise ValueError("MAIL_SERVER debe estar en el formato 'host:puerto:opcional_tls'.")
+
+                    smtp_host = server_details[0]
+                    smtp_port = int(server_details[1])
+                    security_enabled = len(server_details) > 2 and server_details[2].lower() == 'tls'
+
+                    # Configurar el mensaje para cada parte
                     msg = EmailMessage()
-                    msg['Subject'] = f"Parte {part}"
+                    msg['Subject'] = f"Parte {os.path.basename(part)}"
                     msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
                     msg['To'] = email
+
+                    # Adjuntar la parte actual
                     with open(part, 'rb') as f:
                         msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(part))
+
+                    # Enviar la parte actual
                     with smtplib.SMTP(smtp_host, smtp_port) as server:
                         if security_enabled:
                             server.starttls()
                         server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                         server.send_message(msg)
+
                     await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.", protect_content=True)
                     time.sleep(float(mail_delay) if mail_delay else 0)
                 except Exception as e:
                     await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}", protect_content=True)
+                    
