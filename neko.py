@@ -40,20 +40,19 @@ async def process_access_command(message):
     else:
         await message.reply("Palabra secreta incorrecta.")
 
-from pyrogram import Client
-from command.htools import manejar_opcion  # Importar la función lógica
 
-@app.on_callback_query()
-async def handle_callback_query(client, callback_query):
-    # Llama a la lógica de manejo en el archivo secundario
-    await manejar_opcion(
-        client=client,
-        callback_query=callback_query,
-        protect_content=False,  # Cambia a True si deseas proteger el contenido
-        user_id=callback_query.from_user.id
-    )
+from command.htools import manejar_opcion
 
+@app.on_callback_query(filters.regex("^(cbz|pdf|fotos)"))
+async def callback_handler(client, callback_query):
+    user_id = callback_query.from_user.id
+    if is_protect_content_enabled and user_id not in allowed_ids:
+        protect_content = True
 
+    else:
+        protect_content = False
+    await manejar_opcion(client, callback_query, protect_content, user_id)
+    
 @app.on_callback_query()
 async def callback_handler(client, callback_query):
     from command.help import handle_help_callback
