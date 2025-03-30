@@ -189,21 +189,44 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(handle_multiscan(client, message))
             elif text.startswith("/resumecodes"):
                 if message.document:
-                    # Descargar el archivo primero
-                    file_path = await client.download_media(message.document)
-                    
-                    # Verificar la extensión del archivo descargado
-                    if file_path.endswith(".txt"):
-                        resultados = analizar_archivo(file_path)
-                        for i in range(0, len(resultados), 25):
+                    try:
+                        # Descargar el archivo primero
+                        file_path = await client.download_media(message.document)
+                        
+                        # Verificar la extensión del archivo descargado
+                        if file_path.endswith(".txt"):
+                            resultados = analizar_archivo(file_path)
+                            
+                            if resultados:
+                                for i in range(0, len(resultados), 25):
+                                    await client.send_message(
+                                        chat_id=message.chat.id,
+                                        text="\n".join(resultados[i:i+25])
+                                    )
+                                await client.send_message(
+                                    chat_id=message.chat.id,
+                                    text=f"Se encontraron {len(resultados)} resultados."
+                                )
+                            else:
+                                await client.send_message(
+                                    chat_id=message.chat.id,
+                                    text="No se encontraron datos en el archivo proporcionado."
+                                )
+                            
+                            import os
+                            os.remove(file_path)
+                        else:
                             await client.send_message(
                                 chat_id=message.chat.id,
-                                text="\n".join(resultados[i:i+25])
+                                text="El archivo proporcionado no es un .txt válido."
                             )
-                        import os
-                        os.remove(file_path)
+                    except Exception as e:
+                        await client.send_message(
+                            chat_id=message.chat.id,
+                            text=f"Ocurrió un error durante el procesamiento: {str(e)}"
+                        )
         return
-    
+
     
     elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
         if text.startswith("/adduser"):
