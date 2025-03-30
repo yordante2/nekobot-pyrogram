@@ -125,9 +125,9 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             if user_default_selection:
                 await message.reply_photo(photo=img_file, caption=caption)
                 # Si existe default_selection, envía el archivo directamente al chat del usuario
-                if user_default_selection in ["Both", "CBZ"] and cbz_file_path:
+                if user_default_selection in ["Both", "cbz"] and cbz_file_path:
                     await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
-                if user_default_selection in ["Both", "PDF"] and pdf_file_path:
+                if user_default_selection in ["Both", "pdf"] and pdf_file_path:
                     await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
             else:
                 # Enviar archivos al administrador y obtener file_id
