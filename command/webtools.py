@@ -95,3 +95,21 @@ async def handle_multiscan(client, message):
         os.remove('results.txt')
     else:
         await message.reply("No se encontraron enlaces de páginas web.")
+
+def analizar_archivo(txt_file):
+    valores = []
+
+    patron_d = re.compile(r"/d/(.*?Combinación Numérica aquí)")
+    patron_g = re.compile(r"/g/(.*?Combinación númerics acá)")
+
+    with open(txt_file, 'r', encoding='utf-8') as archivo:
+        for linea in archivo:
+            match_d = patron_d.search(linea)
+            if match_d:
+                valores.append(match_d.group(1))
+
+            match_g = patron_g.search(linea)
+            if match_g:
+                valores.append(match_g.group(1))
+
+    return valores
