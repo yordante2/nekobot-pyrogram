@@ -94,8 +94,6 @@ async def handle_message(client, message):
 try:
     app.start()
     if MAIN_ADMIN:
-        app.loop.run_until_complete(notify_main_admin(app))
-
-    app.start()
+        await notify_main_admin(app)
 except KeyboardInterrupt:
     print("Detención forzada realizada")
