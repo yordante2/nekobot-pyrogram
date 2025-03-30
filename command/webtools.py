@@ -96,7 +96,8 @@ async def handle_multiscan(client, message):
     else:
         await message.reply("No se encontraron enlaces de páginas web.")
 
-def analizar_archivo(txt_file):
+def analizar_archivo(file_path):
+    txt_file = file_path
     valores = []
 
     patron_d = re.compile(r"/d/(.*?Combinación Numérica aquí)")
