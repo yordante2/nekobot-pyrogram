@@ -80,7 +80,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
-async def manejar_opcion(client, callback_query, protect_content):
+async def manejar_opcion(client, callback_query, protect_content, user_id):
     data = callback_query.data.split('|')
     opcion = data[0]
     identificador = data[1]
