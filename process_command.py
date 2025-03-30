@@ -99,8 +99,8 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type))
                 return
 
-            # Comando /cover y /cover3h
-            elif text.startswith(("/cover", "/cover3h")):
+            # Comando /cover3h
+            elif text.startswith(("/cover3h")):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
                 #global link_type
