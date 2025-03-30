@@ -4,7 +4,7 @@ import nest_asyncio
 from pyrogram import Client
 from pyrogram.types import Message
 from command.moodleclient import upload_token
-from command.htools import nh_combined_operation
+from command.htools import nh_combined_operation, cambiar_default_selection
 from command.admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, handle_start
 from command.imgtools import create_imgchest_post
 from command.webtools import handle_scan, handle_multiscan
@@ -50,17 +50,36 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         await asyncio.create_task(handle_help(client, message))
         return
 
-    elif text.startswith(("/nh", "/3h", "/cover", "/covernh")):
+    elif text.startswith(("/nh", "/3h", "/cover", "/covernh", "/setfile")):
         if cmd("htools", user_id in admin_users, user_id in vip_users):
-            parts = text.split(maxsplit=1)
-            command = parts[0]
-            codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
-            operation_type = "download" if command in ("/nh", "/3h") else "cover"
-            global link_type
-            link_type = "nh" if command in ("/nh", "/covernh") else "3h"
-            protect_content = user_id not in allowed_ids
-            await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, operation_type))
-        return
+            if text.startswith("/setfile"):
+                parts = text.split(maxsplit=1)
+                if len(parts) > 1:
+                    new_selection = parts[1].strip().lower()
+                    if new_selection in ["cbz", "pdf", "both"]:
+                        cambiar_default_selection(user_id, new_selection.capitalize())  # Cambia default_selection
+                        await message.reply(f"¡Selección predeterminada cambiada a '{new_selection.capitalize()}'!")
+                    else:
+                        await message.reply("Opción inválida. Usa: '/setfile cbz', '/setfile pdf' o '/setfile both'.")
+                else:
+                    await message.reply(
+                        "Usa uno de los siguientes comandos para cambiar la selección predeterminada:\n\n"
+                        "/setfile cbz - Configurar como CBZ\n"
+                        "/setfile pdf - Configurar como PDF\n"
+                        "/setfile both - Configurar como ambos"
+                    )
+                return
+            else:
+                parts = text.split(maxsplit=1)
+                command = parts[0]
+                codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                operation_type = "download" if command in ("/nh", "/3h") else "cover"
+                global link_type
+                link_type = "nh" if command in ("/nh", "/covernh") else "3h"
+                protect_content = user_id not in allowed_ids
+                await asyncio.create_task(nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type))
+            return
+            
     
     elif text.startswith(("/setmail", "/sendmail", "/verify", "/setmb")):
         if cmd("mailtools", user_id in admin_users, user_id in vip_users):
