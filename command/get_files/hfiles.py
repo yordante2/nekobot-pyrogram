@@ -29,6 +29,8 @@ def crear_pdf(folder_name, pdf_filename):
 def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
     results = {}
     first_img_filename = None  # Para guardar la primera imagen
+    last_page_number = None  # Para almacenar el número de la última página válida
+
     try:
         # Asegurar que el directorio base existe
         os.makedirs(folder_name, exist_ok=True)
@@ -38,11 +40,13 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
         response = requests.get(page_url, headers={"User-Agent": "Mozilla/5.0"})
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Extraer el título
         title_tag = soup.find('title')
-
         page_title = clean_string(title_tag.text.strip()) if title_tag else f"Contenido_{code}"
-        img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
 
+        # Extraer la imagen
+        img_tag = soup.find('img', {'src': re.compile(r'.*\.(png|jpg|jpeg|gif|bmp|webp)$')})
         img_filename = None
         if img_tag:
             img_url = img_tag['src']
@@ -54,14 +58,33 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                 img_data = requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}).content
                 img_file.write(img_data)
 
+        # Buscar el número de la última página válida
+        page_number = 1
+        while True:
+            page_url = f"https://{base_url}/{code}/{page_number}/"
+            response = requests.get(page_url, headers={"User-Agent": "Mozilla/5.0"})
+            
+            if response.status_code == 404:  # Fin de las páginas
+                break
+
+            # Confirmar si la página tiene una imagen válida
+            soup = BeautifulSoup(response.content, 'html.parser')
+            img_tag = soup.find('img', {'src': True})
+            if img_tag:
+                last_page_number = page_number
+
+            page_number += 1
+
         if operation_type == "cover":
-            page_title = f"{page_title} \n\n https://{base_url}/{code}/"
+            page_title = f"{page_title} \n{last_page_number} Páginas\n\n https://{base_url}/{code}/"
             page_title = re.sub("Page 1  nhentai hentai doujinshi and manga|Page 1  3Hentai", "", page_title)
             
-            results = {"caption": page_title, "img_file": first_img_filename}
-            return results
+            results = {
+                "caption": page_title,
+                "img_file": first_img_filename,
+                "last_page_number": last_page_number
+            }
             
-
         if operation_type == "download":
             page_number = 1
             while True:
@@ -102,7 +125,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
             # Crear PDF
             pdf_result = crear_pdf(folder_name, pdf_filename)
 
-            page_title = f"{page_title} \n\n https://{base_url}/{code}/"
+            page_title = f"{page_title}\n {last_page_number} \n\n https://{base_url}/{code}/"
             
             results = {
                 "caption": page_title,
