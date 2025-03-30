@@ -14,19 +14,18 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
 
-    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
-
     for code in codes:
         try:
-            url = f"https://{base_url}/{code}/"
+            url = f"https://nhentai.net/g/{code}/"
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            await message.reply(f"El código {code} es erróneo: {str(e)}")
+            await message.reply(f"Error con el código {code}: {str(e)}")
             continue
+
         try:
             # Crear el CBZ y PDF en el root de ejecución
-            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+            result = descargar_hentai(url, code, link_type, operation_type, protect_content, "downloads")
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
@@ -102,6 +101,11 @@ async def manejar_opcion(client, callback_query):
         # Descargar CBZ desde File ID
         cbz_file_path = f"downloads/{uuid4()}.cbz"
         await client.download_media(datos_reales, cbz_file_path)
+
+        # Verificar si el archivo fue descargado
+        if not os.path.exists(cbz_file_path):
+            await callback_query.answer("No se pudo descargar el CBZ. Inténtalo de nuevo.", show_alert=True)
+            return
 
         # Crear carpeta temporal para fotos
         folder_path = f"downloads/{uuid4()}"
