@@ -95,7 +95,6 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
     except Exception as e:
         await message.reply(f"Error al manejar el código {code}: {str(e)}")
 
-
 async def manejar_opcion(client, callback_query, protect_content, user_id):
     try:
         # Separar la data del callback
@@ -139,19 +138,22 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
                     await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
                     continue
 
-                # Enviar CBZ y/o PDF según la selección
-                if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
-                    await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
-                if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
-                    await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
+                # Crear y enviar CBZ y/o PDF según la selección
+                cbz_file = result.get("cbz_file")
+                pdf_file = result.get("pdf_file")
 
-                # Eliminar los archivos generados para este código después de enviarlos
-                if result.get("cbz_file") and os.path.exists(result["cbz_file"]):
-                    os.remove(result["cbz_file"])
-                if result.get("pdf_file") and os.path.exists(result["pdf_file"]):
-                    os.remove(result["pdf_file"])
+                if accion in ["multi_cbz", "multi_both"] and cbz_file:
+                    await client.send_document(callback_query.message.chat.id, cbz_file, caption=f"CBZ para el código {code} 📚")
+                if accion in ["multi_pdf", "multi_both"] and pdf_file:
+                    await client.send_document(callback_query.message.chat.id, pdf_file, caption=f"PDF para el código {code} 🖨️")
 
-                # Eliminar el directorio específico para este código
+                # Limpieza de archivos para este código después de enviar los archivos
+                if cbz_file and os.path.exists(cbz_file):
+                    os.remove(cbz_file)
+                if pdf_file and os.path.exists(pdf_file):
+                    os.remove(pdf_file)
+
+                # Eliminar imágenes y directorios temporales relacionados con este código
                 if os.path.exists(code_directory):
                     shutil.rmtree(code_directory)
 
@@ -162,4 +164,4 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
-        
+
