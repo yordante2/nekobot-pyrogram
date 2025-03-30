@@ -97,17 +97,20 @@ async def handle_multiscan(client, message):
         await message.reply("No se encontraron enlaces de páginas web.")
 
 
+import re
+
 def analizar_archivo(file_path):
     valores = []
 
     # Expresión regular para encontrar números después de /d/ o /g/
     patron = re.compile(r"/[dg]/(\d+)")
 
-    with open(file_path, 'r', encoding='utf-8') as archivo:
-        for linea in archivo:
-            # Buscar todos los números que coinciden con el patrón
-            matches = patron.findall(linea)
-            valores.extend(matches)
+    try:
+        with open(file_path, 'r', encoding='utf-8') as archivo:
+            for linea in archivo:
+                matches = patron.findall(linea)
+                valores.extend(matches)
+    except Exception as e:
+        print(f"Error al analizar el archivo: {str(e)}")
 
     return valores
-    
