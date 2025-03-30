@@ -91,6 +91,46 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
+async def manejar_opcion(client, callback_query, protect_content, user_id):
+    """Maneja las opciones seleccionadas por el usuario."""
+    data = callback_query.data.split('|')
+    opcion = data[0]
+    identificador = data[1]
+
+    if protect_content:
+        text1 = "Contenido protegido. "
+    else:
+        text1 = ""
+
+    if operation_status.get(identificador, True):
+        await callback_query.answer("Ya realizaste esta operación. Solo puedes hacerla una vez.", show_alert=True)
+        return
+
+    datos_reales = callback_data_map.get(identificador)
+    if not datos_reales:
+        await callback_query.answer("La opción ya no es válida.", show_alert=True)
+        return
+
+    if opcion == "cbz":
+        cbz_file_id = datos_reales
+        await client.send_document(
+            callback_query.message.chat.id,
+            cbz_file_id,
+            caption=f"{text1}Aquí está tu CBZ 📚",
+            protect_content=protect_content
+        )
+    elif opcion == "pdf":
+        pdf_file_id = datos_reales
+        await client.send_document(
+            callback_query.message.chat.id,
+            pdf_file_id,
+            caption=f"{text1}Aquí está tu PDF 🖨️",
+            protect_content=protect_content
+        )
+
+    operation_status[identificador] = True
+    await callback_query.answer("¡Opción procesada!")
+
 async def handle_callback(client, callback_query):
     """Maneja los callbacks que vienen del script principal."""
     data = callback_query.data.split('|')
