@@ -95,9 +95,9 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
     except Exception as e:
         await message.reply(f"Error al manejar el código {code}: {str(e)}")
 
-# Función para manejar opciones en el callback
 async def manejar_opcion(client, callback_query, protect_content, user_id):
     try:
+        # Separar la data del callback
         data = callback_query.data.split('|')
         if len(data) != 2:
             raise ValueError("Callback data no válida o mal formateada.")
@@ -113,6 +113,11 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         codes = context["codes"]
         base_url = context["base_url"]
         operation_type = context["operation_type"]
+
+        await callback_query.answer("Procesando tu solicitud...", show_alert=False)
+
+        # Borrar el mensaje con las opciones
+        await callback_query.message.delete()
 
         # Procesar los códigos según la acción seleccionada
         for code in codes:
