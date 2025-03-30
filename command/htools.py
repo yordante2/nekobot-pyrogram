@@ -128,7 +128,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             # Envío según la selección del usuario
             if user_default_selection:
                 await message.reply_photo(photo=img_file, caption=caption)
-                os.remoce(img_file)
+                os.remove(img_file)
                 # Enviar archivo según selección
                 if user_default_selection == "cbz" and cbz_file_path:
                     await client.send_document(message.chat.id, cbz_file_path, caption="", protect_content=protect_content)
