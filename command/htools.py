@@ -9,7 +9,6 @@ from command.get_files.hfiles import descargar_hentai
 
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
-operation_status = {}
 
 def convertir_a_png_con_compresion(image_path, output_dir):
     """Convierte imágenes de cualquier formato a PNG optimizado."""
@@ -39,121 +38,100 @@ def crear_pdf_desde_png(page_title, png_dir, output_path):
         print(f"Error al crear el PDF: {e}")
         return False
 
-async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
-    """Realiza operaciones combinadas: descarga, conversión y manejo de archivos."""
-    if link_type not in ["nh", "3h"]:
-        await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
-        return
-
-    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
-
-    for code in codes:
-        try:
+async def nh_combined_operation(client, message, codes, protect_content, formato_seleccionado):
+    """Realiza la descarga y manejo de archivos según el formato seleccionado."""
+    try:
+        base_url = "nhentai.net/g"
+        for code in codes:
             url = f"https://{base_url}/{code}/"
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            await message.reply(f"Error con el código {code}: {str(e)}")
-            continue
-
-        try:
-            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+            result = descargar_hentai(url, code, base_url, "download", protect_content, "downloads")
             if not result or result.get("error"):
-                await message.reply(f"Error con el código {code}: {result.get('error', 'La función descargar_hentai retornó un error desconocido.')}")
+                await message.reply(f"Error al manejar el código {code}: {result.get('error', 'Desconocido')}")
                 continue
 
             caption = result.get("caption", "Contenido descargado")
             img_file = result.get("img_file")
             cbz_file_path = result.get("cbz_file")
 
-            new_png_dir = "new_png"
-            os.makedirs(new_png_dir, exist_ok=True)
+            # Proceso según el formato seleccionado
+            if formato_seleccionado in ["pdf", "cbzpdf"]:
+                new_png_dir = "new_png"
+                os.makedirs(new_png_dir, exist_ok=True)
+                for image_name in os.listdir("downloads"):
+                    image_path = os.path.join("downloads", image_name)
+                    convertir_a_png_con_compresion(image_path, new_png_dir)
 
-            for image_name in os.listdir("downloads"):
-                image_path = os.path.join("downloads", image_name)
-                convertir_a_png_con_compresion(image_path, new_png_dir)
+                pdf_file_path = f"{caption}.pdf"
+                pdf_creado = crear_pdf_desde_png(caption, new_png_dir, pdf_file_path)
+                if pdf_creado:
+                    pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
+                    pdf_file_id = pdf_message.document.file_id
+                    callback_data_map[f"pdf_{code}"] = pdf_file_id
+                    await pdf_message.delete()
+                shutil.rmtree(new_png_dir)
 
-            pdf_file_path = f"{caption}.pdf"
-            pdf_creado = crear_pdf_desde_png(caption, new_png_dir, pdf_file_path)
+            if formato_seleccionado in ["cbz", "cbzpdf"] and cbz_file_path:
+                cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
+                cbz_file_id = cbz_message.document.file_id
+                callback_data_map[f"cbz_{code}"] = cbz_file_id
+                await cbz_message.delete()
 
-            if pdf_creado and operation_type in ["pdf", "both"]:
-                await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️")
+            # Enviar la primera imagen con su caption si es individual
+            if len(codes) == 1 and img_file:
+                buttons = [
+                    InlineKeyboardButton("CBZ", callback_data=f"select_file|cbz|cbz_{code}"),
+                    InlineKeyboardButton("PDF", callback_data=f"select_file|pdf|pdf_{code}")
+                ]
+                keyboard = InlineKeyboardMarkup([buttons])
+                await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
 
-            if cbz_file_path and operation_type in ["cbz", "both"]:
-                await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚")
-
-            if img_file:
-                await message.reply_photo(photo=img_file, caption=caption)
-
+            # Limpieza de directorios
             shutil.rmtree("downloads")
-            shutil.rmtree(new_png_dir)
 
-        except Exception as e:
-            await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
-
-async def manejar_opcion(client, callback_query, protect_content, user_id):
-    """Maneja las opciones seleccionadas por el usuario."""
-    data = callback_query.data.split('|')
-    opcion = data[0]
-    identificador = data[1]
-
-    if protect_content:
-        text1 = "Contenido protegido. "
-    else:
-        text1 = ""
-
-    if operation_status.get(identificador, True):
-        await callback_query.answer("Ya realizaste esta operación. Solo puedes hacerla una vez.", show_alert=True)
-        return
-
-    datos_reales = callback_data_map.get(identificador)
-    if not datos_reales:
-        await callback_query.answer("La opción ya no es válida.", show_alert=True)
-        return
-
-    if opcion == "cbz":
-        cbz_file_id = datos_reales
-        await client.send_document(
-            callback_query.message.chat.id,
-            cbz_file_id,
-            caption=f"{text1}Aquí está tu CBZ 📚",
-            protect_content=protect_content
-        )
-    elif opcion == "pdf":
-        pdf_file_id = datos_reales
-        await client.send_document(
-            callback_query.message.chat.id,
-            pdf_file_id,
-            caption=f"{text1}Aquí está tu PDF 🖨️",
-            protect_content=protect_content
-        )
-
-    operation_status[identificador] = True
-    await callback_query.answer("¡Opción procesada!")
+    except Exception as e:
+        await message.reply(f"Error al procesar los códigos: {str(e)}")
 
 async def handle_callback(client, callback_query):
-    """Maneja los callbacks que vienen del script principal."""
+    """Maneja los callbacks según la selección del usuario."""
     data = callback_query.data.split('|')
     user_id = callback_query.from_user.id
 
-    if data[0] == "select_format":
-        formato_seleccionado = data[1]
-        codes = callback_data_map.get(user_id)  # Recuperar los códigos previamente almacenados
-        if not codes:
-            await callback_query.answer("No se encontraron códigos pendientes.", show_alert=True)
+    if data[0] == "select_file":
+        formato = data[1]
+        identificador = data[2]
+        file_id = callback_data_map.get(identificador)
+
+        if not file_id:
+            await callback_query.answer("Archivo no disponible o ya eliminado.", show_alert=True)
             return
 
-        await nh_combined_operation(client, callback_query.message, codes, "nh", protect_content=True, user_id=user_id, operation_type=formato_seleccionado)
-        callback_data_map.pop(user_id, None)
+        if formato == "cbz":
+            await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu CBZ 📚")
+        elif formato == "pdf":
+            await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu PDF 🖨️")
+
+        # Elimina la referencia después de enviar el archivo
+        callback_data_map.pop(identificador, None)
+
     elif data[0] == "detect_codes":
-        codes = data[1].split(",")
+        codes = data[1].split(',')
         callback_data_map[user_id] = codes
 
+        # Preguntar formato si hay múltiples códigos
         keyboard = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("CBZ", callback_data="select_format|cbz"),
                 InlineKeyboardButton("PDF", callback_data="select_format|pdf"),
-                InlineKeyboardButton("CBZ+PDF", callback_data="select_format|both"),
+                InlineKeyboardButton("CBZ+PDF", callback_data="select_format|cbzpdf"),
             ]
         ])
         await callback_query.message.reply("Se han detectado varios códigos. ¿Qué formato deseas?", reply_markup=keyboard)
+
+    elif data[0] == "select_format":
+        formato_seleccionado = data[1]
+        codes = callback_data_map.pop(user_id, None)
+        if not codes:
+            await callback_query.answer("No se encontraron códigos pendientes.", show_alert=True)
+            return
+
+        await nh_combined_operation(client, callback_query.message, codes, protect_content=True, formato_seleccionado=formato_seleccionado)
