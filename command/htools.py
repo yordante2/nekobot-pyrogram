@@ -84,6 +84,11 @@ async def manejar_opcion(client, callback_query):
     data = callback_query.data.split('|')
     opcion = data[0]
     identificador = data[1]
+    if protect_content is True:
+        text1 = "Look Here"
+
+    elif protect_content is False:
+        text1 = ""
 
     if operation_status.get(identificador, True):
         await callback_query.answer("Ya realizaste esta operación. Solo puedes hacerla una vez.", show_alert=True)
@@ -96,19 +101,11 @@ async def manejar_opcion(client, callback_query):
 
     if opcion == "cbz":
         cbz_file_id = datos_reales
-        await client.send_document(callback_query.message.chat.id, cbz_file_id, caption="Aquí está tu CBZ 📚")
+        await client.send_document(callback_query.message.chat.id, cbz_file_id, caption=f"{text1}Aquí está tu CBZ 📚", protect_content=protect_content)
     elif opcion == "pdf":
         pdf_file_id = datos_reales
-        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption="Aquí está tu PDF 🖨️")
-    elif opcion == "fotos":
-        # Descargar CBZ desde File ID
-        cbz_file_path = f"downloads/{uuid4()}.cbz"
-        await client.download_media(datos_reales, cbz_file_path)
-
-        # Verificar si el archivo fue descargado
-        if not os.path.exists(cbz_file_path):
-            await callback_query.answer("No se pudo descargar el CBZ. Inténtalo de nuevo.", show_alert=True)
-            return
+        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️", protect_content=protect_content)
+    
 
         # Crear carpeta temporal para fotos
         folder_path = f"downloads/{uuid4()}"
