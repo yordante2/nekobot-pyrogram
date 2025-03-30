@@ -93,18 +93,67 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
 
 # Función para manejar el callback
 async def manejar_opcion(client, callback_query, protect_content, user_id):
+    # Separar la data del callback
     data = callback_query.data.split('|')
-    opcion = data[0]
-    identificador = data[1]
-
-    file_id = callback_data_map.get(identificador)
-    if not file_id:
+    
+    # Validar que el formato del callback sea correcto
+    if len(data) < 2:
         await callback_query.answer("Opción inválida o expirada.", show_alert=True)
         return
 
-    if opcion == "cbz":
-        await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
-    elif opcion == "pdf":
-        await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
+    opcion = data[0]  # Puede ser "multi_cbz", "multi_pdf" o "multi_both"
+    identificador = data[1]
 
-    await callback_query.answer("Archivo enviado correctamente.")
+    # Obtener la información relacionada al identificador
+    callback_data = callback_data_map.get(data[1])
+    if not callback_data:
+        await callback_query.answer("La opción ya no es válida o el archivo no está disponible.", show_alert=True)
+        return
+
+    codes = callback_data["codes"]
+    format = callback_data["format"]
+    base_url = callback_data["base_url"]
+    operation_type = callback_data["operation_type"]
+
+    await callback_query.answer("Procesando tu solicitud...", show_alert=False)
+
+    try:
+        cover_images = []
+        captions = []
+
+        for code in codes:
+            try:
+                url = f"https://{base_url}/{code}/"
+                response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+                response.raise_for_status()
+
+                # Descargar el contenido
+                result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+                if result.get("error"):
+                    await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
+                    continue
+
+                # Registrar la portada
+                if result.get("img_file"):
+                    cover_images.append(result["img_file"])
+                captions.append(code)
+
+                # Enviar archivos según la opción seleccionada
+                if format in ["cbz", "both"] and result.get("cbz_file"):
+                    await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
+                if format in ["pdf", "both"] and result.get("pdf_file"):
+                    await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
+            except Exception as e:
+                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
+                continue
+
+        # Enviar portada combinada
+        if cover_images:
+            first_cover = cover_images[0]  # Usar la primera imagen como portada
+            combined_caption = "Códigos procesados: " + ", ".join(captions)
+            await client.send_photo(callback_query.message.chat.id, photo=first_cover, caption=combined_caption)
+
+    finally:
+        # Limpieza de archivos
+        if os.path.exists("downloads"):
+            shutil.rmtree("downloads")
