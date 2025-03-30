@@ -7,6 +7,7 @@ from command.get_files.hfiles import descargar_hentai
 
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
+operation_status = {}  # Almacena el estado de cada operación (CBZ, PDF, Fotos)
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     if link_type not in ["nh", "3h"]:
@@ -35,13 +36,15 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 caption = result.get("caption", "Contenido descargado")
                 img_file = result.get("img_file")
 
-                # Enviar CBZ al admin y obtener su File ID
+                # Enviar CBZ al admin para obtener el File ID, luego eliminar
                 cbz_message = await client.send_document(MAIN_ADMIN, result['cbz_file'])
                 cbz_file_id = cbz_message.document.file_id
+                await cbz_message.delete()
 
-                # Enviar PDF al admin y obtener su File ID
+                # Enviar PDF al admin para obtener el File ID, luego eliminar
                 pdf_message = await client.send_document(MAIN_ADMIN, result['pdf_file'])
                 pdf_file_id = pdf_message.document.file_id
+                await pdf_message.delete()
 
                 # Crear botones con los File IDs
                 cbz_button_id = str(uuid4())
@@ -50,7 +53,12 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
                 callback_data_map[cbz_button_id] = cbz_file_id
                 callback_data_map[pdf_button_id] = pdf_file_id
-                callback_data_map[fotos_button_id] = result['cbz_file']  # Aquí almacenamos el archivo CBZ real
+                callback_data_map[fotos_button_id] = result['cbz_file']  # Almacenar CBZ para fotos
+
+                # Inicializar estado de operaciones
+                operation_status[cbz_button_id] = False
+                operation_status[pdf_button_id] = False
+                operation_status[fotos_button_id] = False
 
                 keyboard = InlineKeyboardMarkup([
                     [
@@ -73,6 +81,11 @@ async def manejar_opcion(client, callback_query):
     data = callback_query.data.split('|')
     opcion = data[0]
     identificador = data[1]
+
+    # Bloqueo para evitar operaciones múltiples
+    if operation_status.get(identificador, True):
+        await callback_query.answer("Ya realizaste esta operación. Solo puedes hacerla una vez.", show_alert=True)
+        return
 
     datos_reales = callback_data_map.get(identificador)
     if not datos_reales:
@@ -111,4 +124,6 @@ async def manejar_opcion(client, callback_query):
             os.remove(archivo)
         os.rmdir(temp_folder)
 
+    # Marcar la operación como completada
+    operation_status[identificador] = True
     await callback_query.answer("¡Opción procesada!")
