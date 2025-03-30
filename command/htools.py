@@ -67,6 +67,11 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
     # Configuración inicial del usuario
     user_default_selection = default_selection_map.get(user_id, None)
 
+    # Verificación de múltiples códigos y default_selection
+    if len(codes) > 1 and user_default_selection is None:
+        await message.reply("Para la descarga múltiple debe seleccionar un tipo de archivo con `/setfile`.")
+        return
+
     # Restaurando base_url
     base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
 
@@ -78,6 +83,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         except requests.exceptions.RequestException as e:
             await message.reply(f"Error con el código {code}: {str(e)}")
             continue
+
 
         try:
             result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
