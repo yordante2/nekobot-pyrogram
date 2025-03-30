@@ -7,7 +7,7 @@ from command.get_files.hfiles import descargar_hentai
 
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
-operation_status = {}  # Almacena el estado de cada operación (CBZ, PDF, Fotos)
+operation_status = {}
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
     if link_type not in ["nh", "3h"]:
@@ -53,9 +53,8 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
                 callback_data_map[cbz_button_id] = cbz_file_id
                 callback_data_map[pdf_button_id] = pdf_file_id
-                callback_data_map[fotos_button_id] = result['cbz_file']  # Almacenar CBZ para fotos
+                callback_data_map[fotos_button_id] = result['cbz_file']
 
-                # Inicializar estado de operaciones
                 operation_status[cbz_button_id] = False
                 operation_status[pdf_button_id] = False
                 operation_status[fotos_button_id] = False
@@ -82,7 +81,6 @@ async def manejar_opcion(client, callback_query):
     opcion = data[0]
     identificador = data[1]
 
-    # Bloqueo para evitar operaciones múltiples
     if operation_status.get(identificador, True):
         await callback_query.answer("Ya realizaste esta operación. Solo puedes hacerla una vez.", show_alert=True)
         return
@@ -93,15 +91,12 @@ async def manejar_opcion(client, callback_query):
         return
 
     if opcion == "cbz":
-        # Enviar CBZ
         cbz_file_id = datos_reales
         await client.send_document(callback_query.message.chat.id, cbz_file_id, caption="Aquí está tu CBZ 📚")
     elif opcion == "pdf":
-        # Enviar PDF
         pdf_file_id = datos_reales
         await client.send_document(callback_query.message.chat.id, pdf_file_id, caption="Aquí está tu PDF 🖨️")
     elif opcion == "fotos":
-        # Gestionar y descomprimir el CBZ para enviar fotos
         cbz_file_path = datos_reales
         temp_folder = f"temp/{uuid4()}"
         os.makedirs(temp_folder, exist_ok=True)
@@ -109,21 +104,18 @@ async def manejar_opcion(client, callback_query):
         with zipfile.ZipFile(cbz_file_path, 'r') as zipf:
             zipf.extractall(temp_folder)
 
-        # Eliminar el CBZ original
         os.remove(cbz_file_path)
 
-        # Enviar fotos en lotes
         archivos = sorted([os.path.join(temp_folder, f) for f in os.listdir(temp_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
         lote = 10
         for i in range(0, len(archivos), lote):
             grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
             await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
 
-        # Limpiar carpeta temporal
+        # Limpiar archivos temporales y carpeta
         for archivo in archivos:
             os.remove(archivo)
         os.rmdir(temp_folder)
 
-    # Marcar la operación como completada
     operation_status[identificador] = True
     await callback_query.answer("¡Opción procesada!")
