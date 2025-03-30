@@ -7,7 +7,7 @@ from command.moodleclient import upload_token
 from command.htools import nh_combined_operation, cambiar_default_selection
 from command.admintools import add_user, remove_user, add_chat, remove_chat, ban_user, deban_user, handle_start
 from command.imgtools import create_imgchest_post
-from command.webtools import handle_scan, handle_multiscan
+from command.webtools import handle_scan, handle_multiscan, summarize_lines
 from command.mailtools import send_mail, set_mail, verify_mail, set_mail_limit
 from command.videotools import update_video_settings, compress_video, cancelar_tarea, listar_tareas
 from command.filetools import handle_compress, rename, set_size
@@ -181,6 +181,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         return
 
 
+    
     elif text.startswith(("/scan", "/multiscan", "/resumecodes")):
         if cmd("webtools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/scan"):
@@ -199,13 +200,15 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                         await message.reply("Solo usar con TXT.")
                         return
 
-                    # Contar las líneas del archivo
+                    # Procesar el archivo línea por línea
                     with open(file_path, "r", encoding="utf-8") as f:
-                        lines = f.readlines()
+                        lines = [line.strip() for line in f.readlines()]
                         line_count = len(lines)
 
-                    # Responder con el número de líneas
+                    # Responder con el número de líneas y manejar el contenido en `lines`
                     await message.reply(f"El archivo tiene {line_count} líneas.")
+                    text00 = summarize_lines(lines)
+                    await message.reply(f"{text00}")
 
                     # Eliminar el archivo descargado
                     os.remove(file_path)
@@ -213,7 +216,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                     await message.reply("Por favor, responde a un mensaje que contenga un archivo.")
 
         return
-
+        
 
     
     elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
