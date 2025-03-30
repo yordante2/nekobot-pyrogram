@@ -28,6 +28,7 @@ def crear_pdf(folder_name, pdf_filename):
 
 def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
     results = {}
+    first_img_filename = None  # Para guardar la primera imagen
     try:
         # Asegurar que el directorio base existe
         os.makedirs(folder_name, exist_ok=True)
@@ -47,13 +48,13 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
             img_url = img_tag['src']
             img_extension = os.path.splitext(img_url)[1]
             img_filename = os.path.join(folder_name, f"1{img_extension}")
+            first_img_filename = img_filename
 
             with open(img_filename, 'wb') as img_file:
                 img_data = requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}).content
                 img_file.write(img_data)
 
         if operation_type == "download":
-            # Descargar páginas y guardar en la carpeta temporal
             page_number = 1
             while True:
                 page_url = f"https://{base_url}/{code}/{page_number}/"
@@ -92,12 +93,12 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
 
             results = {
                 "caption": page_title,
-                "img_file": img_filename,  # La portada será la primera imagen
+                "img_file": first_img_filename, 
                 "cbz_file": zip_filename,
                 "pdf_file": pdf_result
             }
         else:
-            results = {"caption": page_title, "img_file": img_filename}
+            results = {"caption": page_title, "img_file": first_img_filename}  # Usar la primera imagen
     except Exception as e:
         results = {"error": str(e)}
 
