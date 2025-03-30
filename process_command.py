@@ -49,7 +49,8 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
     elif text.startswith("/help"):  # Manejo del comando /help
         await asyncio.create_task(handle_help(client, message))
         return
-            elif text.startswith(("/nh", "/3h", "/cover", "/covernh", "/setfile")):
+    
+    elif text.startswith(("/nh", "/3h", "/cover", "/covernh", "/setfile")):
         if cmd("htools", user_id in admin_users, user_id in vip_users):
             # Comando /setfile
             if text.startswith("/setfile"):
