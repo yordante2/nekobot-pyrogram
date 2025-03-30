@@ -4,14 +4,13 @@ import shutil
 import py7zr
 import smtplib
 from email.message import EmailMessage
+import random
 
 # Diccionarios para almacenar información de los usuarios
 user_emails = {}
 verification_storage = {}
 user_limits = {}
 exceeded_users = []
-
-import random
 
 # Función para generar un código de verificación de 6 números
 def generate_verification_code():
@@ -21,49 +20,32 @@ def generate_verification_code():
 async def set_mail_limit(client, message):
     user_id = message.from_user.id
     try:
-        # Obtener el nuevo límite desde el mensaje
         new_limit = int(message.text.split(' ', 1)[1])
-
-        # Verificar si el límite es menor a 1
         if new_limit < 1:
-            # Enviar el sticker
             await client.send_sticker(
                 chat_id=message.chat.id,
                 sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
             )
-            time.sleep(3)  # Pausa de 3 segundos entre el sticker y el mensaje
-
-            # Enviar el mensaje
+            time.sleep(3)
             await message.reply("¿Qué haces pendejo?")
             return
-
-        # Verificar si el límite supera los 20 MB
         if new_limit > 20:
-            # Si el usuario ya está en la lista de excedidos
             if user_id in exceeded_users:
-                # Enviar el sticker
                 await client.send_sticker(
                     chat_id=message.chat.id,
                     sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
                 )
-                time.sleep(3)  # Pausa de 3 segundos entre el sticker y el mensaje
-
-                # Enviar el mensaje
+                time.sleep(3)
                 await message.reply("¿Qué haces pendejo? 20 es el límite.")
                 return
             else:
-                # Agregar usuario a la lista de excedidos
                 exceeded_users.append(user_id)
-                new_limit = 20  # Ajustar el límite a 20 MB
-
-        # Establecer el límite en el diccionario
+                new_limit = 20
         user_limits[user_id] = new_limit
-
-        # Confirmar al usuario
         await message.reply(f"El límite personal del usuario ha sido cambiado a {new_limit} MB.")
     except ValueError:
         await message.reply("Por favor, proporciona un número válido como límite.")
-        
+
 # Función para obtener el límite de MAIL_MB para un usuario
 def get_mail_limit(user_id):
     return user_limits.get(user_id, int(os.getenv('MAIL_MB', 20)))
@@ -72,7 +54,6 @@ def get_mail_limit(user_id):
 async def set_mail(client, message):
     email = message.text.split(' ', 1)[1]
     user_id = message.from_user.id
-
     mail_confirmed = os.getenv('MAIL_CONFIRMED')
     if mail_confirmed:
         confirmed_users = {
@@ -83,9 +64,7 @@ async def set_mail(client, message):
             user_emails[user_id] = email
             await message.reply("Correo electrónico registrado automáticamente porque el administrador de bot reconoce tu dirección.")
             return
-
     verification_code = generate_verification_code()
-
     try:
         msg = EmailMessage()
         msg['Subject'] = 'Código de Verificación'
@@ -95,19 +74,20 @@ async def set_mail(client, message):
         Tu código de verificación de correo es: {verification_code}
         Si no solicitaste este código simplemente ignóralo.
         """)
-
         mail_server = os.getenv('MAIL_SERVER')
+        if not mail_server:
+            raise ValueError("La configuración de MAIL_SERVER no está definida. Asegúrate de configurarla correctamente.")
         server_details = mail_server.split(':')
+        if len(server_details) < 2:
+            raise ValueError("MAIL_SERVER debe estar en el formato 'host:puerto:opcional_tls'.")
         smtp_host = server_details[0]
         smtp_port = int(server_details[1])
         security_enabled = len(server_details) > 2 and server_details[2].lower() == 'tls'
-
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             if security_enabled:
                 server.starttls()
             server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
             server.send_message(msg)
-
         verification_storage[user_id] = {'email': email, 'code': verification_code}
         await message.reply("Código de verificación enviado a tu correo. Introduce el código usando /verify.")
     except Exception as e:
@@ -117,7 +97,6 @@ async def set_mail(client, message):
 async def verify_mail(client, message):
     user_id = message.from_user.id
     code = message.text.split(' ', 1)[1]
-
     if user_id in verification_storage:
         stored_email = verification_storage[user_id]['email']
         stored_code = verification_storage[user_id]['code']
@@ -157,35 +136,17 @@ async def send_mail(client, message):
         await message.reply("No has registrado ningún correo, usa /setmail para hacerlo.", protect_content=True)
         return
     email = user_emails[user_id]
-
     if not message.reply_to_message:
         await message.reply("Por favor, responde a un mensaje.", protect_content=True)
         return
-
-    # Validación: Verificar si el caption empieza con "Look Here" y si el remitente es el bot
     reply_message = message.reply_to_message
     if reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
         await message.reply("No puedes enviar este contenido debido a restricciones.", protect_content=True)
         return
-
     mail_mb = get_mail_limit(user_id)
     mail_delay = os.getenv('MAIL_DELAY')
-
     if message.reply_to_message.document or message.reply_to_message.photo:
         media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
-
-        # Verificar si se excede el límite de 20 MB
-        if mail_mb > 20:
-            mail_mb = 20
-            user_attempts[user_id] = user_attempts.get(user_id, 0) + 1  # Incrementar intentos
-            if user_attempts[user_id] >= 1:
-                await client.send_sticker(
-                    chat_id=message.chat.id,
-                    sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
-                )
-                await message.reply("¿Qué haces pendejo? 20 es el límite.", protect_content=True)
-                return
-
         if os.path.getsize(media) <= mail_mb * 1024 * 1024:
             try:
                 msg = EmailMessage()
@@ -194,19 +155,16 @@ async def send_mail(client, message):
                 msg['To'] = email
                 with open(media, 'rb') as f:
                     msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(media))
-
                 mail_server = os.getenv('MAIL_SERVER')
                 server_details = mail_server.split(':')
                 smtp_host = server_details[0]
                 smtp_port = int(server_details[1])
                 security_enabled = len(server_details) > 2 and server_details[2].lower() == 'tls'
-
                 with smtplib.SMTP(smtp_host, smtp_port) as server:
                     if security_enabled:
                         server.starttls()
                     server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                     server.send_message(msg)
-
                 await message.reply("Archivo enviado correctamente sin compresión.", protect_content=True)
             except Exception as e:
                 await message.reply(f"Error al enviar el archivo: {e}", protect_content=True)
@@ -221,13 +179,11 @@ async def send_mail(client, message):
                     msg['To'] = email
                     with open(part, 'rb') as f:
                         msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(part))
-
                     with smtplib.SMTP(smtp_host, smtp_port) as server:
                         if security_enabled:
                             server.starttls()
                         server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                         server.send_message(msg)
-
                     await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.", protect_content=True)
                     time.sleep(float(mail_delay) if mail_delay else 0)
                 except Exception as e:
