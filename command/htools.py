@@ -120,28 +120,43 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
 
         await callback_query.answer("Procesando tu solicitud...", show_alert=False)
 
+        # Lista para recopilar archivos generados
+        generated_cbz_files = []
+        generated_pdf_files = []
+
         # Procesar los códigos según la acción seleccionada
         for code in codes:
-            url = f"https://{base_url}/{code}/"
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-            response.raise_for_status()
+            try:
+                url = f"https://{base_url}/{code}/"
+                response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+                response.raise_for_status()
 
-            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
-            if result.get("error"):
-                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
+                result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+                if result.get("error"):
+                    await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
+                    continue
+
+                # Registrar archivos generados para su posterior eliminación
+                if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
+                    generated_cbz_files.append(result["cbz_file"])
+                    await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
+                if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
+                    generated_pdf_files.append(result["pdf_file"])
+                    await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
+
+            except Exception as e:
+                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
                 continue
 
-            if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
-                await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
-            if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
-                await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
+        # Limpiar los archivos generados al finalizar el procesamiento de todos los códigos
+        for file_path in generated_cbz_files + generated_pdf_files:
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
-            os.remove(result["cbz_file"])
-            os.remove(result["pdf_file"])
-            if os.path.exists("downloads"):
-                shutil.rmtree("downloads")
+        # Eliminar el directorio de descargas si existe
+        if os.path.exists("downloads"):
+            shutil.rmtree("downloads")
 
         await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
-        
