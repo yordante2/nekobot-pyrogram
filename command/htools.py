@@ -14,54 +14,49 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
 
-    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
-
     for code in codes:
         try:
-            url = f"https://{base_url}/{code}/"
+            url = f"https://nhentai.net/g/{code}/"
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             await message.reply(f"Error con el código {code} es erróneo: {str(e)}")
             continue
 
-        random_folder_name = f"downloads/{uuid4()}"  # Crear carpeta aleatoria en downloads
-        os.makedirs(random_folder_name, exist_ok=True)
-
         try:
-            # Descargar contenido y generar CBZ y PDF dentro de la carpeta aleatoria
-            result = descargar_hentai(url, code, base_url, operation_type, protect_content, random_folder_name)
+            # Crear el CBZ y PDF en el root de ejecución
+            result = descargar_hentai(url, code, link_type, operation_type, protect_content, "downloads")
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
                 caption = result.get("caption", "Contenido descargado")
                 img_file = result.get("img_file")
-                cbz_file_path = os.path.join(random_folder_name, os.path.basename(result['cbz_file']))
-                pdf_file_path = os.path.join(random_folder_name, os.path.basename(result['pdf_file']))
+                cbz_file_path = result['cbz_file']  # CBZ en el root
+                pdf_file_path = result['pdf_file']  # PDF en el root
 
-                # Enviar CBZ al admin como archivo local y obtener el File ID
+                # Enviar CBZ y PDF al admin
                 cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
                 cbz_file_id = cbz_message.document.file_id
                 await cbz_message.delete()
-
-                # Enviar PDF al admin como archivo local y obtener el File ID
+                
                 pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
                 pdf_file_id = pdf_message.document.file_id
                 await pdf_message.delete()
 
-                # Crear botones con los File IDs
+                # Guardar los IDs para los botones
                 cbz_button_id = str(uuid4())
                 pdf_button_id = str(uuid4())
                 fotos_button_id = str(uuid4())
 
-                callback_data_map[cbz_button_id] = cbz_file_id  # Asociar botón con File ID del CBZ
-                callback_data_map[pdf_button_id] = pdf_file_id  # Asociar botón con File ID del PDF
-                callback_data_map[fotos_button_id] = cbz_file_id  # Guardar File ID del CBZ para descomprimir fotos
+                callback_data_map[cbz_button_id] = cbz_file_id
+                callback_data_map[pdf_button_id] = pdf_file_id
+                callback_data_map[fotos_button_id] = cbz_file_id  # File ID para ver fotos
 
                 operation_status[cbz_button_id] = False
                 operation_status[pdf_button_id] = False
                 operation_status[fotos_button_id] = False
 
+                # Crear botones para las opciones
                 keyboard = InlineKeyboardMarkup([
                     [
                         InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
@@ -70,8 +65,14 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     [InlineKeyboardButton("Ver Fotos", callback_data=f"fotos|{fotos_button_id}")]
                 ])
 
-                # Enviar imagen con botones
+                # Enviar la imagen con los botones
                 await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
+
+                # Eliminar los archivos del root tras enviarlos al admin
+                if os.path.exists(cbz_file_path):
+                    os.remove(cbz_file_path)
+                if os.path.exists(pdf_file_path):
+                    os.remove(pdf_file_path)
 
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
@@ -97,32 +98,30 @@ async def manejar_opcion(client, callback_query):
         pdf_file_id = datos_reales
         await client.send_document(callback_query.message.chat.id, pdf_file_id, caption="Aquí está tu PDF 🖨️")
     elif opcion == "fotos":
-        # Descargar CBZ desde el File ID
+        # Descargar CBZ desde File ID
         cbz_file_path = f"downloads/{uuid4()}.cbz"
         await client.download_media(datos_reales, cbz_file_path)
 
-        # Crear carpeta aleatoria para fotos
+        # Crear carpeta temporal para fotos
         folder_path = f"downloads/{uuid4()}"
         os.makedirs(folder_path, exist_ok=True)
 
-        # Extraer fotos desde el CBZ
+        # Extraer fotos y limpiar
         with zipfile.ZipFile(cbz_file_path, 'r') as zipf:
             zipf.extractall(folder_path)
 
-        # Eliminar el archivo CBZ tras extraer las fotos
-        os.remove(cbz_file_path)
+        os.remove(cbz_file_path)  # Borrar CBZ descargado
 
-        # Enviar fotos al chat
         archivos = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
         lote = 10
         for i in range(0, len(archivos), lote):
             grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
             await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
 
-        # Limpiar archivos temporales y la carpeta aleatoria
+        # Limpiar archivos de fotos y carpeta
         for archivo in archivos:
             os.remove(archivo)
-        os.rmdir(folder_path)  # Eliminar la carpeta aleatoria
+        os.rmdir(folder_path)
 
     operation_status[identificador] = True
     await callback_query.answer("¡Opción procesada!")
