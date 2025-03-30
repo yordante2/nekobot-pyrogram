@@ -45,8 +45,12 @@ async def process_access_command(message):
 async def notify_main_admin(app):
     if MAIN_ADMIN:
         try:
-            bot_username = app.me.username  # Obtiene el username del bot
-            await app.send_message(chat_id=MAIN_ADMIN, text=f"Bot @{bot_username} iniciado")
+            if MAIN_ADMIN.isdigit():
+                # MAIN_ADMIN is a user ID
+                await app.send_message(chat_id=int(MAIN_ADMIN), text=f"Bot @{app.me.username} iniciado")
+            else:
+                # MAIN_ADMIN is a username
+                await app.send_message(chat_id=MAIN_ADMIN, text=f"Bot @{app.me.username} iniciado")
         except Exception as e:
             print(f"Error al enviar el mensaje al MAIN_ADMIN: {e}")
 
