@@ -181,14 +181,39 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         return
 
 
-    elif text.startswith(("/scan", "/multiscan")):
+    elif text.startswith(("/scan", "/multiscan", "/resumecodes")):
         if cmd("webtools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/scan"):
                 await asyncio.create_task(handle_scan(client, message))
             elif text.startswith("/multiscan"):
                 await asyncio.create_task(handle_multiscan(client, message))
-            
+            elif text.startswith("/resumecodes"):
+                if message.reply_to_message and message.reply_to_message.document:
+                    # Descargar el archivo
+                    file = message.reply_to_message.document
+                    file_path = await client.download_media(file)
+
+                    # Validar que sea un archivo .txt
+                    if not file_path.endswith(".txt"):
+                        os.remove(file_path)  # Borrar archivo no válido
+                        await message.reply("Solo usar con TXT.")
+                        return
+
+                    # Contar las líneas del archivo
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                        line_count = len(lines)
+
+                    # Responder con el número de líneas
+                    await message.reply(f"El archivo tiene {line_count} líneas.")
+
+                    # Eliminar el archivo descargado
+                    os.remove(file_path)
+                else:
+                    await message.reply("Por favor, responde a un mensaje que contenga un archivo.")
+
         return
+
 
     
     elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
