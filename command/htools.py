@@ -105,28 +105,6 @@ async def manejar_opcion(client, callback_query, protect_content):
     elif opcion == "pdf":
         pdf_file_id = datos_reales
         await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️", protect_content=protect_content)
-    
-
-        # Crear carpeta temporal para fotos
-        folder_path = f"downloads/{uuid4()}"
-        os.makedirs(folder_path, exist_ok=True)
-
-        # Extraer fotos y limpiar
-        with zipfile.ZipFile(cbz_file_path, 'r') as zipf:
-            zipf.extractall(folder_path)
-
-        os.remove(cbz_file_path)  # Borrar CBZ descargado
-
-        archivos = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
-        lote = 10
-        for i in range(0, len(archivos), lote):
-            grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
-            await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
-
-        # Limpiar archivos de fotos y carpeta
-        for archivo in archivos:
-            os.remove(archivo)
-        os.rmdir(folder_path)
-
+       
     operation_status[identificador] = True
     await callback_query.answer("¡Opción procesada!")
