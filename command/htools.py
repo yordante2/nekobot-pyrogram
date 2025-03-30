@@ -41,6 +41,9 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
 async def manejar_opcion(client, callback_query, protect_content, user_id):
     try:
+        # Responder rápidamente al callback query para evitar expiración
+        await callback_query.answer("Procesando tu solicitud...", show_alert=False)
+
         # Separar la data del callback
         data = callback_query.data.split('|')
         if len(data) != 2:
@@ -58,26 +61,21 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         base_url = context["base_url"]
         operation_type = context["operation_type"]
 
-        # Responder al callback rápidamente
-        await callback_query.answer("Procesando tu solicitud...", show_alert=False)
-
-        # Borrar el mensaje que muestra las opciones
-        await callback_query.message.delete()
-
         # Procesar cada código uno por uno
         for code in codes:
+            code_directory = None
+            cbz_file = None
+            pdf_file = None
+
             try:
-                # Paso 1: Crear un directorio específico para este código
+                # Crear un directorio específico para este código
                 code_directory = os.path.join("downloads", code)
-                if not os.path.exists(code_directory):
-                    os.makedirs(code_directory)
+                os.makedirs(code_directory, exist_ok=True)
 
-                # Paso 2: Descargar imágenes del código
+                # Descargar imágenes y generar archivos
                 url = f"https://{base_url}/{code}/"
-                response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-                response.raise_for_status()
-
                 result = descargar_hentai(url, code, base_url, operation_type, protect_content, code_directory)
+
                 if result.get("error"):
                     await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
                     continue
@@ -86,17 +84,32 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
                 cbz_file = result.get("cbz_file")
                 pdf_file = result.get("pdf_file")
 
-                # Paso 3: Crear y enviar los archivos CBZ y/o PDF
-                if accion in ["multi_cbz", "multi_both"] and cbz_file:
+                # Asegúrate de que ambos archivos se han generado antes de continuar
+                if not cbz_file or not pdf_file:
+                    await client.send_message(callback_query.message.chat.id, f"Error generando archivos para el código {code}.")
+                    continue
+
+                # Enviar CBZ y/o PDF según la selección
+                if accion in ["multi_cbz", "multi_both"]:
                     await client.send_document(callback_query.message.chat.id, cbz_file, caption=f"CBZ para el código {code} 📚")
-                if accion in ["multi_pdf", "multi_both"] and pdf_file:
+                if accion in ["multi_pdf", "multi_both"]:
                     await client.send_document(callback_query.message.chat.id, pdf_file, caption=f"PDF para el código {code} 🖨️")
 
             except Exception as e:
-                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
+                await client.send_message(callback_query.message.chat.id, f"Error procesando el código {code}: {str(e)}")
                 continue
 
+            finally:
+                # Limpieza (puedes desactivarla para depuración, si es necesario)
+                if cbz_file and os.path.exists(cbz_file):
+                    os.remove(cbz_file)
+                if pdf_file and os.path.exists(pdf_file):
+                    os.remove(pdf_file)
+                if code_directory and os.path.exists(code_directory):
+                    shutil.rmtree(code_directory)
+
         # Confirmar finalización
-        await callback_query.answer("¡Operación completada correctamente!")
+        await client.send_message(callback_query.message.chat.id, "¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
+                                                                                                                         
