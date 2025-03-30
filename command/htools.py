@@ -68,8 +68,8 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
             # Crear botones para enviar archivos al usuario
             cbz_button_id = str(uuid4())
             pdf_button_id = str(uuid4())
-            callback_data_map[cbz_button_id] = cbz_file_id
-            callback_data_map[pdf_button_id] = pdf_file_id
+            callback_data_map[f"cbz|{cbz_button_id}"] = cbz_file_id
+            callback_data_map[f"pdf|{pdf_button_id}"] = pdf_file_id
 
             keyboard = InlineKeyboardMarkup([
                 [
@@ -95,65 +95,28 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
 async def manejar_opcion(client, callback_query, protect_content, user_id):
     # Separar la data del callback
     data = callback_query.data.split('|')
-    
+
     # Validar que el formato del callback sea correcto
-    if len(data) < 2:
+    if len(data) != 2:  # Revisar si `data` contiene exactamente dos elementos
         await callback_query.answer("Opción inválida o expirada.", show_alert=True)
         return
 
-    opcion = data[0]  # Puede ser "multi_cbz", "multi_pdf" o "multi_both"
+    opcion = data[0]  # Puede ser "cbz" o "pdf"
     identificador = data[1]
 
-    # Obtener la información relacionada al identificador
-    callback_data = callback_data_map.get(data[1])
-    if not callback_data:
+    # Obtener el file_id del mapa
+    file_id = callback_data_map.get(callback_query.data)
+    if not file_id:
         await callback_query.answer("La opción ya no es válida o el archivo no está disponible.", show_alert=True)
         return
 
-    codes = callback_data["codes"]
-    format = callback_data["format"]
-    base_url = callback_data["base_url"]
-    operation_type = callback_data["operation_type"]
-
-    await callback_query.answer("Procesando tu solicitud...", show_alert=False)
-
+    # Enviar el archivo según la opción seleccionada
     try:
-        cover_images = []
-        captions = []
+        if opcion == "cbz":
+            await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
+        elif opcion == "pdf":
+            await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
 
-        for code in codes:
-            try:
-                url = f"https://{base_url}/{code}/"
-                response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-                response.raise_for_status()
-
-                # Descargar el contenido
-                result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
-                if result.get("error"):
-                    await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
-                    continue
-
-                # Registrar la portada
-                if result.get("img_file"):
-                    cover_images.append(result["img_file"])
-                captions.append(code)
-
-                # Enviar archivos según la opción seleccionada
-                if format in ["cbz", "both"] and result.get("cbz_file"):
-                    await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
-                if format in ["pdf", "both"] and result.get("pdf_file"):
-                    await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
-            except Exception as e:
-                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
-                continue
-
-        # Enviar portada combinada
-        if cover_images:
-            first_cover = cover_images[0]  # Usar la primera imagen como portada
-            combined_caption = "Códigos procesados: " + ", ".join(captions)
-            await client.send_photo(callback_query.message.chat.id, photo=first_cover, caption=combined_caption)
-
-    finally:
-        # Limpieza de archivos
-        if os.path.exists("downloads"):
-            shutil.rmtree("downloads")
+        await callback_query.answer("Archivo enviado correctamente.")
+    except Exception as e:
+        await callback_query.answer(f"Ocurrió un error al enviar el archivo: {str(e)}", show_alert=True)
