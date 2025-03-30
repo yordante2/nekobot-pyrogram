@@ -25,7 +25,7 @@ allowed_ids = set(admin_users).union(set(vip_users))
 protect_content_env = os.getenv('PROTECT_CONTENT', '').strip().lower()
 is_protect_content_enabled = protect_content_env == 'true'
 
-MAIN_ADMIN = int(os.getenv("MAIN_ADMIN")) if os.getenv("MAIN_ADMIN") else None
+MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 
 def is_bot_public():
     return BOT_IS_PUBLIC and BOT_IS_PUBLIC.lower() == "true"
