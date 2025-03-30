@@ -67,10 +67,6 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
 
         # Procesar cada código individualmente
         for code in codes:
-            code_directory = None  # Definimos aquí para asegurar la limpieza en el finally
-            cbz_file = None
-            pdf_file = None
-
             try:
                 # Crear un directorio específico para este código
                 code_directory = os.path.join("downloads", code)
@@ -82,7 +78,7 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
                 response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
                 response.raise_for_status()
 
-                # Descargar imágenes y generar archivos
+                # Obtener resultado para el código actual
                 result = descargar_hentai(url, code, base_url, operation_type, protect_content, code_directory)
                 if result.get("error"):
                     await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
@@ -92,26 +88,24 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
                 cbz_file = result.get("cbz_file")
                 pdf_file = result.get("pdf_file")
 
-                # Enviar CBZ y/o PDF según la selección
+                # Enviar CBZ y/o PDF antes de procesar el siguiente código
                 if accion in ["multi_cbz", "multi_both"] and cbz_file:
                     await client.send_document(callback_query.message.chat.id, cbz_file, caption=f"CBZ para el código {code} 📚")
                 if accion in ["multi_pdf", "multi_both"] and pdf_file:
                     await client.send_document(callback_query.message.chat.id, pdf_file, caption=f"PDF para el código {code} 🖨️")
 
-            except Exception as e:
-                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
-                continue
-
-            finally:
-                # Limpieza de archivos y directorios temporales
+                # Limpieza de archivos y directorio específico para este código
                 if cbz_file and os.path.exists(cbz_file):
                     os.remove(cbz_file)
                 if pdf_file and os.path.exists(pdf_file):
                     os.remove(pdf_file)
-                if code_directory and os.path.exists(code_directory):
+                if os.path.exists(code_directory):
                     shutil.rmtree(code_directory)
+
+            except Exception as e:
+                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {str(e)}")
+                continue
 
         await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
-                    
