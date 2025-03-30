@@ -10,17 +10,22 @@ callback_data_map = {}
 operation_status = {}
 
 async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
+    # Verificar el tipo de enlace
     if link_type not in ["nh", "3h"]:
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
 
+    # Determinar el dominio base según el tipo de enlace
+    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
+
     for code in codes:
         try:
-            url = f"https://nhentai.net/g/{code}/"
+            # Construir la URL correctamente
+            url = f"https://{base_url}/{code}/"
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-            response.raise_for_status()
+            response.raise_for_status()  # Asegurarse de que la solicitud sea exitosa
         except requests.exceptions.RequestException as e:
-            await message.reply(f"Error con el código {code} es erróneo: {str(e)}")
+            await message.reply(f"Error con el código {code}: {str(e)}")
             continue
 
         try:
