@@ -39,62 +39,6 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         code_list = ', '.join(codes)
         await message.reply(f"Se detectaron múltiples códigos: {code_list}. ¿Qué desea hacer?", reply_markup=keyboard)
 
-# Función para procesar y enviar un solo código
-async def process_and_send_code(client, message, code, base_url, operation_type, protect_content):
-    try:
-        url = f"https://{base_url}/{code}/"
-        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()
-
-        result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
-        if result.get("error"):
-            await message.reply(f"Error con el código {code}: {result['error']}")
-        else:
-            caption = result.get("caption", "Contenido descargado")
-            img_file = result.get("img_file")
-            cbz_file_path = result.get("cbz_file")
-            pdf_file_path = result.get("pdf_file")
-
-            # Enviar al administrador y guardar los file_id
-            if cbz_file_path:
-                cbz_message = await client.send_document(os.getenv("MAIN_ADMIN"), cbz_file_path)
-                cbz_file_id = cbz_message.document.file_id
-                await cbz_message.delete()
-            else:
-                cbz_file_id = None
-
-            if pdf_file_path:
-                pdf_message = await client.send_document(os.getenv("MAIN_ADMIN"), pdf_file_path)
-                pdf_file_id = pdf_message.document.file_id
-                await pdf_message.delete()
-            else:
-                pdf_file_id = None
-
-            # Crear botones para enviar los archivos al usuario
-            cbz_button_id = str(uuid4())
-            pdf_button_id = str(uuid4())
-            callback_data_map[f"cbz|{cbz_button_id}"] = {"file_id": cbz_file_id}
-            callback_data_map[f"pdf|{pdf_button_id}"] = {"file_id": pdf_file_id}
-
-            keyboard = InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
-                    InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}")
-                ]
-            ])
-
-            await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
-
-            # Limpieza de archivos
-            if os.path.exists(cbz_file_path):
-                os.remove(cbz_file_path)
-            if os.path.exists(pdf_file_path):
-                os.remove(pdf_file_path)
-            if os.path.exists("downloads"):
-                shutil.rmtree("downloads")
-    except Exception as e:
-        await message.reply(f"Error al manejar el código {code}: {str(e)}")
-
 async def manejar_opcion(client, callback_query, protect_content, user_id):
     try:
         # Separar la data del callback
@@ -120,7 +64,7 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         # Borrar el mensaje que muestra las opciones
         await callback_query.message.delete()
 
-        # Procesar cada código por separado
+        # Procesar cada código individualmente
         for code in codes:
             try:
                 # Crear un directorio específico para este código
@@ -133,25 +77,23 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
                 response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
                 response.raise_for_status()
 
+                # Función para descargar imágenes y generar archivos
                 result = descargar_hentai(url, code, base_url, operation_type, protect_content, code_directory)
                 if result.get("error"):
                     await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
                     continue
 
-                # Crear y enviar CBZ y/o PDF según la selección
-                cbz_file = result.get("cbz_file")
-                pdf_file = result.get("pdf_file")
+                # Crear CBZ y/o PDF, y enviarlos al usuario inmediatamente
+                if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
+                    await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
+                if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
+                    await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
 
-                if accion in ["multi_cbz", "multi_both"] and cbz_file:
-                    await client.send_document(callback_query.message.chat.id, cbz_file, caption=f"CBZ para el código {code} 📚")
-                if accion in ["multi_pdf", "multi_both"] and pdf_file:
-                    await client.send_document(callback_query.message.chat.id, pdf_file, caption=f"PDF para el código {code} 🖨️")
-
-                # Limpieza de archivos para este código después de enviar los archivos
-                if cbz_file and os.path.exists(cbz_file):
-                    os.remove(cbz_file)
-                if pdf_file and os.path.exists(pdf_file):
-                    os.remove(pdf_file)
+                # Eliminar los archivos generados para este código después de enviarlos
+                if result.get("cbz_file") and os.path.exists(result["cbz_file"]):
+                    os.remove(result["cbz_file"])
+                if result.get("pdf_file") and os.path.exists(result["pdf_file"]):
+                    os.remove(result["pdf_file"])
 
                 # Eliminar imágenes y directorios temporales relacionados con este código
                 if os.path.exists(code_directory):
@@ -164,4 +106,3 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
         await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
-
