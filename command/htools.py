@@ -14,9 +14,13 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
 
+    # Restaurando base_url
+    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
+
     for code in codes:
         try:
-            url = f"https://nhentai.net/g/{code}/"
+            # Utilizando base_url para construir la URL
+            url = f"https://{base_url}/{code}/"
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
@@ -25,7 +29,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
         try:
             # Crear el CBZ y PDF en el root de ejecución
-            result = descargar_hentai(url, code, link_type, operation_type, protect_content, "downloads")
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
             if result.get("error"):
                 await message.reply(f"Error con el código {code}: {result['error']}")
             else:
