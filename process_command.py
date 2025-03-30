@@ -56,21 +56,13 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 parts = text.split(maxsplit=1)
                 if len(parts) > 1:
                     new_selection = parts[1].strip().lower()
-                    if new_selection in ["None", "cbz", "pdf", "both"]:
-                        if new_selection == "None":
+                    if new_selection in ["none", "cbz", "pdf", "both"]:
+                        if new_selection == "none":
                             new_selection = None
-                        cambiar_default_selection(user_id, new_selection.capitalize())  # Cambia default_selection
-                        await message.reply(f"¡Selección predeterminada cambiada a '{new_selection.capitalize()}'!")
+                        cambiar_default_selection(user_id, new_selection.capitalize() if new_selection else new_selection)
+                        await message.reply(f"¡Selección predeterminada cambiada a '{new_selection.capitalize() if new_selection else 'None'}'!")
                     else:
-                        await message.reply("Opción inválida. Usa: '/setfile cbz', '/setfile pdf' , '/setfile both' o '/setfile None'.")
-                else:
-                    await message.reply(
-                        "Usa uno de los siguientes comandos para cambiar la selección predeterminada:\n\n"
-                        "`/setfile cbz` - Configurar como CBZ\n"
-                        "`/setfile pdf` - Configurar como PDF\n"
-                        "`/setfile both` - Configurar como ambos"
-                        "`/setfile None` - Configurar sin valor default"
-                    )
+                        await message.reply("Opción inválida. Usa: '/setfile cbz', '/setfile pdf', '/setfile both' o '/setfile None'.")
                 return
             else:
                 parts = text.split(maxsplit=1)
