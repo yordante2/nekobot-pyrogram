@@ -40,7 +40,6 @@ def crear_pdf_desde_png(page_title, png_dir, output_path):
         print(f"Error al crear el PDF: {e}")
         return False
 
-
 def cambiar_default_selection(user_id, nueva_seleccion):
     """Cambia la selección predeterminada del usuario."""
     opciones_validas = [None, "pdf", "cbz", "both"]  # Todas las opciones en minúsculas
@@ -49,13 +48,10 @@ def cambiar_default_selection(user_id, nueva_seleccion):
 
     if nueva_seleccion not in opciones_validas:
         raise ValueError("Selección inválida. Debe ser None, 'PDF', 'CBZ', o 'Both'.")
-    default_selection_map[user_id] = nueva_seleccion.capitalize() if nueva_seleccion else None
-    
+    default_selection_map[user_id] = nueva_seleccion  # Almacenamos en formato uniforme
 
 async def enviar_archivo_admin_y_obtener_file_id(client, admin_id, file_path):
-    """
-    Envía un archivo al administrador principal del bot, obtiene el file_id y lo elimina del chat.
-    """
+    """Envía un archivo al administrador principal del bot, obtiene el file_id y lo elimina del chat."""
     try:
         message = await client.send_document(admin_id, file_path)
         file_id = message.document.file_id
@@ -90,7 +86,6 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             await message.reply(f"Error con el código {code}: {str(e)}")
             continue
 
-
         try:
             result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
             if not result:
@@ -121,14 +116,19 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                     await message.reply(f"Error al generar el PDF para el código {code}.")
                     continue
 
-            
+            # Envío según la selección del usuario
             if user_default_selection:
                 await message.reply_photo(photo=img_file, caption=caption)
-                # Si existe default_selection, envía el archivo directamente al chat del usuario
-                if user_default_selection in ["Both", "cbz"] and cbz_file_path:
+                # Enviar archivo según selección
+                if user_default_selection == "cbz" and cbz_file_path:
                     await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
-                if user_default_selection in ["Both", "pdf"] and pdf_file_path:
+                elif user_default_selection == "pdf" and pdf_file_path:
                     await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
+                elif user_default_selection == "both":
+                    if cbz_file_path:
+                        await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
+                    if pdf_file_path:
+                        await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
             else:
                 # Enviar archivos al administrador y obtener file_id
                 cbz_file_id = await enviar_archivo_admin_y_obtener_file_id(client, MAIN_ADMIN, cbz_file_path) if cbz_file_path else None
@@ -187,8 +187,4 @@ async def manejar_opcion(client, callback_query, protect_content, user_id):
         await client.send_document(callback_query.message.chat.id, cbz_file_id, caption=f"{text1}Aquí está tu CBZ 📚", protect_content=protect_content)
     elif opcion == "pdf":
         pdf_file_id = datos_reales
-        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️", protect_content=protect_content)
-
-    operation_status[identificador] = True
-    await callback_query.answer("¡Opción procesada!")
-                
+        await client.send_document(callback_query.message.chat.id, pdf_file_id, caption=f"{text1}Aquí está tu PDF 🖨️",
