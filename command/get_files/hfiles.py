@@ -20,10 +20,10 @@ def crear_pdf(folder_name, pdf_filename):
                 pdf.image(file_path, x=0, y=0, w=210)
 
         pdf.output(pdf_filename)
-        print(f"PDF creado: {pdf_filename}")
+        #print(f"PDF creado: {pdf_filename}")
         return pdf_filename
     except Exception as e:
-        print(f"Error al crear PDF: {e}")
+        #print(f"Error al crear PDF: {e}")
         return None
 
 def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
