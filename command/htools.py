@@ -12,33 +12,28 @@ MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
 operation_status = {}
 
-def validar_y_convertir_imagen(image_path):
-    """Valida y convierte imágenes a PNG si no lo son."""
+def convertir_a_webp(image_path, output_dir):
+    """Convierte imágenes a WebP y las guarda en new_webp."""
     try:
+        os.makedirs(output_dir, exist_ok=True)  # Crear carpeta si no existe
         with Image.open(image_path) as img:
-            if img.format != "PNG":
-                nuevo_path = f"{os.path.splitext(image_path)[0]}.png"
-                img.convert("RGB").save(nuevo_path, "PNG")
-                return nuevo_path
-            return image_path
+            nuevo_path = os.path.join(output_dir, f"{os.path.splitext(os.path.basename(image_path))[0]}.webp")
+            img.convert("RGB").save(nuevo_path, "WebP", quality=85)  # Ajusta la calidad si es necesario
+            return nuevo_path
     except Exception as e:
-        print(f"Error al procesar la imagen {image_path}: {e}")
+        print(f"Error al convertir la imagen {image_path} a WebP: {e}")
         return None
 
-def crear_pdf_si_no_existe(page_title, images_dir, output_path):
-    """Crea un PDF a partir de imágenes si no se encuentra un PDF existente."""
+def crear_pdf_con_webp(page_title, new_webp_dir, output_path):
+    """Crea un PDF usando las imágenes WebP en la carpeta new_webp."""
     try:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
-        for image_name in sorted(os.listdir(images_dir)):
-            image_path = os.path.join(images_dir, image_name)
-            if image_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                valid_image_path = validar_y_convertir_imagen(image_path)
-                if valid_image_path:
-                    pdf.add_page()
-                    pdf.image(valid_image_path, x=10, y=10, w=190)
-                else:
-                    print(f"Imagen no válida: {image_path}")
+        for image_name in sorted(os.listdir(new_webp_dir)):
+            image_path = os.path.join(new_webp_dir, image_name)
+            if image_name.lower().endswith('.webp'):
+                pdf.add_page()
+                pdf.image(image_path, x=10, y=10, w=190)
         pdf.output(output_path)
         return True
     except Exception as e:
@@ -83,11 +78,17 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             cbz_file_path = result.get("cbz_file")
             pdf_file_path = result.get("pdf_file")
 
-            # Si no se genera el PDF, crearlo aquí
+            # Crear carpeta new_webp y convertir imágenes
+            new_webp_dir = "new_webp"
+            os.makedirs(new_webp_dir, exist_ok=True)
+            for image_name in os.listdir("downloads"):
+                image_path = os.path.join("downloads", image_name)
+                convertir_a_webp(image_path, new_webp_dir)
+
+            # Si no se genera el PDF, crearlo aquí con las imágenes en new_webp
             if not pdf_file_path:
                 pdf_file_path = f"{result.get('caption', 'output')}.pdf"
-                images_dir = "downloads"  # Asegurarse de que la carpeta tenga las imágenes
-                pdf_creado = crear_pdf_si_no_existe(result.get("caption", "output"), images_dir, pdf_file_path)
+                pdf_creado = crear_pdf_con_webp(result.get("caption", "output"), new_webp_dir, pdf_file_path)
                 if not pdf_creado:
                     await message.reply(f"Error al generar el PDF para el código {code}.")
                     continue
@@ -130,14 +131,15 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             # Enviar la imagen con los botones
             await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
 
-            # Eliminar los archivos del root tras enviarlos al admin
+            # Eliminar los archivos y carpetas temporales
             if cbz_file_path and os.path.exists(cbz_file_path):
                 os.remove(cbz_file_path)
             if pdf_file_path and os.path.exists(pdf_file_path):
                 os.remove(pdf_file_path)
-
             if os.path.exists("downloads"):
                 shutil.rmtree("downloads")
+            if os.path.exists(new_webp_dir):
+                shutil.rmtree(new_webp_dir)
 
         except Exception as e:
             await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
