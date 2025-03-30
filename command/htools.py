@@ -25,7 +25,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             await message.reply(f"Error con el código {code} es erróneo: {str(e)}")
             continue
 
-        random_folder_name = f"downloads/{uuid4()}"
+        random_folder_name = f"downloads/{uuid4()}"  # Crear carpeta aleatoria en downloads
         os.makedirs(random_folder_name, exist_ok=True)
 
         try:
@@ -53,7 +53,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
                 callback_data_map[cbz_button_id] = cbz_file_id
                 callback_data_map[pdf_button_id] = pdf_file_id
-                callback_data_map[fotos_button_id] = result['cbz_file']
+                callback_data_map[fotos_button_id] = random_folder_name  # Guardar carpeta aleatoria para fotos
 
                 operation_status[cbz_button_id] = False
                 operation_status[pdf_button_id] = False
@@ -97,25 +97,18 @@ async def manejar_opcion(client, callback_query):
         pdf_file_id = datos_reales
         await client.send_document(callback_query.message.chat.id, pdf_file_id, caption="Aquí está tu PDF 🖨️")
     elif opcion == "fotos":
-        cbz_file_path = datos_reales
-        temp_folder = f"temp/{uuid4()}"
-        os.makedirs(temp_folder, exist_ok=True)
+        folder_path = datos_reales  # Obtener la carpeta aleatoria en downloads
 
-        with zipfile.ZipFile(cbz_file_path, 'r') as zipf:
-            zipf.extractall(temp_folder)
-
-        os.remove(cbz_file_path)
-
-        archivos = sorted([os.path.join(temp_folder, f) for f in os.listdir(temp_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+        archivos = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
         lote = 10
         for i in range(0, len(archivos), lote):
             grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
             await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
 
-        # Limpiar archivos temporales y carpeta
+        # Limpiar archivos temporales
         for archivo in archivos:
             os.remove(archivo)
-        os.rmdir(temp_folder)
+        os.rmdir(folder_path)  # Eliminar la carpeta aleatoria
 
     operation_status[identificador] = True
     await callback_query.answer("¡Opción procesada!")
