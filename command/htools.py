@@ -4,6 +4,7 @@ import zipfile
 from uuid import uuid4
 from fpdf import FPDF
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from PIL import Image
 import shutil
 from command.get_files.hfiles import descargar_hentai
 
@@ -11,15 +12,33 @@ MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 callback_data_map = {}
 operation_status = {}
 
+def validar_y_convertir_imagen(image_path):
+    """Valida y convierte imágenes a PNG si no lo son."""
+    try:
+        with Image.open(image_path) as img:
+            if img.format != "PNG":
+                nuevo_path = f"{os.path.splitext(image_path)[0]}.png"
+                img.convert("RGB").save(nuevo_path, "PNG")
+                return nuevo_path
+            return image_path
+    except Exception as e:
+        print(f"Error al procesar la imagen {image_path}: {e}")
+        return None
+
 def crear_pdf_si_no_existe(page_title, images_dir, output_path):
+    """Crea un PDF a partir de imágenes si no se encuentra un PDF existente."""
     try:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
         for image_name in sorted(os.listdir(images_dir)):
             image_path = os.path.join(images_dir, image_name)
             if image_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                pdf.add_page()
-                pdf.image(image_path, x=10, y=10, w=190)
+                valid_image_path = validar_y_convertir_imagen(image_path)
+                if valid_image_path:
+                    pdf.add_page()
+                    pdf.image(valid_image_path, x=10, y=10, w=190)
+                else:
+                    print(f"Imagen no válida: {image_path}")
         pdf.output(output_path)
         return True
     except Exception as e:
