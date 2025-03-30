@@ -5,7 +5,7 @@ from uuid import uuid4
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.get_files.hfiles import descargar_hentai
 
-MAIN_ADMIN = os.getenv("MAIN_ADMIN")
+# Mapa global para almacenar datos de callbacks
 callback_data_map = {}
 
 # Función principal para manejar operaciones
@@ -19,16 +19,8 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
     if len(codes) == 1:  # Un solo código
         await process_and_send_code(client, message, codes[0], base_url, operation_type, protect_content)
     else:  # Múltiples códigos
-        # Generar teclados con opciones
-        keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("CBZ", callback_data=f"multi_cbz|{uuid4()}"),
-                InlineKeyboardButton("PDF", callback_data=f"multi_pdf|{uuid4()}"),
-                InlineKeyboardButton("CBZ + PDF", callback_data=f"multi_both|{uuid4()}")
-            ]
-        ])
-        code_list = ', '.join(codes)  # Lista de códigos en un string
-        callback_id = str(uuid4())  # Identificador único para esta operación
+        # Generar identificador único para esta operación
+        callback_id = str(uuid4())
         callback_data_map[callback_id] = {
             "codes": codes,
             "base_url": base_url,
@@ -36,6 +28,15 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             "protect_content": protect_content
         }
 
+        # Crear botones de opciones para múltiples descargas
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("CBZ", callback_data=f"multi_cbz|{callback_id}"),
+                InlineKeyboardButton("PDF", callback_data=f"multi_pdf|{callback_id}"),
+                InlineKeyboardButton("CBZ + PDF", callback_data=f"multi_both|{callback_id}")
+            ]
+        ])
+        code_list = ', '.join(codes)
         await message.reply(f"Se detectaron múltiples códigos: {code_list}. ¿Qué desea hacer?", reply_markup=keyboard)
 
 # Función para procesar y enviar un solo código
@@ -54,26 +55,26 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
             cbz_file_path = result.get("cbz_file")
             pdf_file_path = result.get("pdf_file")
 
-            # Enviar archivos al administrador y obtener los file_id
+            # Enviar al administrador y guardar los file_id
             if cbz_file_path:
-                cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
+                cbz_message = await client.send_document(os.getenv("MAIN_ADMIN"), cbz_file_path)
                 cbz_file_id = cbz_message.document.file_id
                 await cbz_message.delete()
             else:
                 cbz_file_id = None
 
             if pdf_file_path:
-                pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
+                pdf_message = await client.send_document(os.getenv("MAIN_ADMIN"), pdf_file_path)
                 pdf_file_id = pdf_message.document.file_id
                 await pdf_message.delete()
             else:
                 pdf_file_id = None
 
-            # Crear botones para enviar archivos al usuario
+            # Crear botones para enviar los archivos al usuario
             cbz_button_id = str(uuid4())
             pdf_button_id = str(uuid4())
-            callback_data_map[f"cbz|{cbz_button_id}"] = cbz_file_id
-            callback_data_map[f"pdf|{pdf_button_id}"] = pdf_file_id
+            callback_data_map[f"cbz|{cbz_button_id}"] = {"file_id": cbz_file_id}
+            callback_data_map[f"pdf|{pdf_button_id}"] = {"file_id": pdf_file_id}
 
             keyboard = InlineKeyboardMarkup([
                 [
@@ -82,10 +83,9 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
                 ]
             ])
 
-            # Enviar la portada con los botones
             await message.reply_photo(photo=img_file, caption=caption, reply_markup=keyboard)
 
-            # Limpieza de archivos después de procesarlos
+            # Limpieza de archivos
             if os.path.exists(cbz_file_path):
                 os.remove(cbz_file_path)
             if os.path.exists(pdf_file_path):
@@ -95,50 +95,41 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
     except Exception as e:
         await message.reply(f"Error al manejar el código {code}: {str(e)}")
 
-# Función para manejar el callback de múltiples descargas
+# Función para manejar opciones en el callback
 async def manejar_opcion(client, callback_query, protect_content, user_id):
-    data = callback_query.data.split('|')
-
-    # Validar que el formato del callback sea correcto
-    if len(data) != 2:
-        await callback_query.answer("Opción inválida o expirada.", show_alert=True)
-        return
-
-    accion = data[0]  # "multi_cbz", "multi_pdf", "multi_both"
-    callback_id = data[1]
-
-    # Obtener los datos asociados al callback
-    context = callback_data_map.get(callback_id)
-    if not context:
-        await callback_query.answer("La opción ya no es válida o el archivo no está disponible.", show_alert=True)
-        return
-
-    codes = context["codes"]
-    base_url = context["base_url"]
-    operation_type = context["operation_type"]
-
-    await callback_query.answer("Procesando tu solicitud...", show_alert=False)
-
     try:
+        data = callback_query.data.split('|')
+        if len(data) != 2:
+            raise ValueError("Callback data no válida o mal formateada.")
+
+        accion, callback_id = data[0], data[1]
+
+        # Recuperar datos del mapa
+        context = callback_data_map.get(callback_id)
+        if not context:
+            await callback_query.answer("La opción ya no es válida o ha expirado.", show_alert=True)
+            return
+
+        codes = context["codes"]
+        base_url = context["base_url"]
+        operation_type = context["operation_type"]
+
+        # Procesar los códigos según la acción seleccionada
         for code in codes:
             url = f"https://{base_url}/{code}/"
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
 
-            # Descargar el contenido
             result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
             if result.get("error"):
                 await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
                 continue
 
-            # Enviar archivos según la opción seleccionada
             if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
                 await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
             if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
                 await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
 
+        await callback_query.answer("¡Operación completada correctamente!")
     except Exception as e:
-        await client.send_message(callback_query.message.chat.id, f"Error procesando múltiples códigos: {str(e)}")
-    finally:
-        if os.path.exists("downloads"):
-            shutil.rmtree("downloads")
+        await callback_query.answer(f"Error procesando la solicitud: {str(e)}", show_alert=True)
