@@ -99,18 +99,28 @@ async def handle_multiscan(client, message):
 
 import re
 
-async def analizar_archivo(file_path):
-    valores = []
+def get_input():
+    print("Introduce líneas de texto. Escribe 'End imput' para finalizar.")
+    user_lines = []
 
-    # Expresión regular para encontrar números después de /d/ o /g/
-    patron = re.compile(r"/[dg]/(\d+)")
+    while True:
+        line = input()  # Leer una línea de texto
+        if line.strip().lower() == "end imput":  # Verificar si es el comando de cierre
+            break
+        user_lines.append(line)
 
-    try:
-        with open(file_path, 'r', encoding='utf-8') as archivo:
-            for linea in archivo:
-                matches = patron.findall(linea)
-                valores.extend(matches)
-    except Exception as e:
-        print(f"Error al analizar el archivo: {str(e)}")
+    return user_lines
 
-    return valores
+def summarize_lines(lines):
+    numbers = []
+    for line in lines:
+        matches = re.findall(r'/(?:g|d)/(\d+)', line)
+        if matches:
+            numbers.extend(matches)
+
+    # Imprimir los números separados por comas
+    if numbers:
+        codes = (", ".join(numbers))
+    else:
+        codes = None
+
