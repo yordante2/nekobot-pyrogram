@@ -124,5 +124,5 @@ async def summarize_lines(lines):
     else:
         codes = None
 
-   return codes
+    return codes
 
