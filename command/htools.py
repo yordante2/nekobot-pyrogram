@@ -1,8 +1,7 @@
 import os
 import requests
-import zipfile
 from uuid import uuid4
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.get_files.hfiles import descargar_hentai
 
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
@@ -14,12 +13,10 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
 
-    # Restaurando base_url
     base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
 
     for code in codes:
         try:
-            # Utilizando base_url para construir la URL
             url = f"https://{base_url}/{code}/"
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
@@ -42,7 +39,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 cbz_message = await client.send_document(MAIN_ADMIN, cbz_file_path)
                 cbz_file_id = cbz_message.document.file_id
                 await cbz_message.delete()
-                
+
                 pdf_message = await client.send_document(MAIN_ADMIN, pdf_file_path)
                 pdf_file_id = pdf_message.document.file_id
                 await pdf_message.delete()
@@ -50,23 +47,19 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                 # Guardar los IDs para los botones
                 cbz_button_id = str(uuid4())
                 pdf_button_id = str(uuid4())
-                fotos_button_id = str(uuid4())
 
                 callback_data_map[cbz_button_id] = cbz_file_id
                 callback_data_map[pdf_button_id] = pdf_file_id
-                callback_data_map[fotos_button_id] = cbz_file_id  # File ID para ver fotos
 
                 operation_status[cbz_button_id] = False
                 operation_status[pdf_button_id] = False
-                operation_status[fotos_button_id] = False
 
                 # Crear botones para las opciones
                 keyboard = InlineKeyboardMarkup([
                     [
                         InlineKeyboardButton("Descargar CBZ", callback_data=f"cbz|{cbz_button_id}"),
                         InlineKeyboardButton("Descargar PDF", callback_data=f"pdf|{pdf_button_id}")
-                    ],
-                    [InlineKeyboardButton("Ver Fotos", callback_data=f"fotos|{fotos_button_id}")]
+                    ]
                 ])
 
                 # Enviar la imagen con los botones
@@ -101,36 +94,6 @@ async def manejar_opcion(client, callback_query):
     elif opcion == "pdf":
         pdf_file_id = datos_reales
         await client.send_document(callback_query.message.chat.id, pdf_file_id, caption="Aquí está tu PDF 🖨️")
-    elif opcion == "fotos":
-        # Descargar CBZ desde File ID
-        cbz_file_path = f"downloads/{uuid4()}.cbz"
-        await client.download_media(datos_reales, cbz_file_path)
-
-        # Verificar si el archivo fue descargado
-        if not os.path.exists(cbz_file_path):
-            await callback_query.answer("No se pudo descargar el CBZ. Inténtalo de nuevo.", show_alert=True)
-            return
-
-        # Crear carpeta temporal para fotos
-        folder_path = f"downloads/{uuid4()}"
-        os.makedirs(folder_path, exist_ok=True)
-
-        # Extraer fotos y limpiar
-        with zipfile.ZipFile(cbz_file_path, 'r') as zipf:
-            zipf.extractall(folder_path)
-
-        os.remove(cbz_file_path)  # Borrar CBZ descargado
-
-        archivos = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
-        lote = 10
-        for i in range(0, len(archivos), lote):
-            grupo_fotos = [InputMediaPhoto(open(archivo, 'rb')) for archivo in archivos[i:i + lote]]
-            await client.send_media_group(callback_query.message.chat.id, grupo_fotos)
-
-        # Limpiar archivos de fotos y carpeta
-        for archivo in archivos:
-            os.remove(archivo)
-        os.rmdir(folder_path)
 
     operation_status[identificador] = True
     await callback_query.answer("¡Opción procesada!")
