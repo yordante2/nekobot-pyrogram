@@ -39,46 +39,57 @@ def crear_pdf_desde_png(page_title, png_dir, output_path):
         print(f"Error al crear el PDF: {e}")
         return False
 
-async def manejar_opcion_formato(client, message, codes, formato_seleccionado, protect_content):
-    """Procesa la operación según el formato seleccionado por el usuario."""
-    try:
-        base_url = "nhentai.net/g"
-        for code in codes:
+async def nh_combined_operation(client, message, codes, link_type, protect_content, user_id, operation_type="download"):
+    """Realiza operaciones combinadas: descarga, conversión y manejo de archivos."""
+    if link_type not in ["nh", "3h"]:
+        await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
+        return
+
+    base_url = "nhentai.net/g" if link_type == "nh" else "3hentai.net/d"
+
+    for code in codes:
+        try:
             url = f"https://{base_url}/{code}/"
-            result = descargar_hentai(url, code, base_url, "download", protect_content, "downloads")
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            await message.reply(f"Error con el código {code}: {str(e)}")
+            continue
+
+        try:
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
             if not result or result.get("error"):
-                await message.reply(f"Error al manejar el código {code}.")
+                await message.reply(f"Error con el código {code}: {result.get('error', 'La función descargar_hentai retornó un error desconocido.')}")
                 continue
-            
+
             caption = result.get("caption", "Contenido descargado")
             img_file = result.get("img_file")
             cbz_file_path = result.get("cbz_file")
 
-            # Proceso según formato seleccionado
-            if formato_seleccionado in ["pdf", "cbzpdf"]:
-                new_png_dir = "new_png"
-                os.makedirs(new_png_dir, exist_ok=True)
-                for image_name in os.listdir("downloads"):
-                    image_path = os.path.join("downloads", image_name)
-                    convertir_a_png_con_compresion(image_path, new_png_dir)
+            new_png_dir = "new_png"
+            os.makedirs(new_png_dir, exist_ok=True)
 
-                pdf_file_path = f"{caption}.pdf"
-                pdf_creado = crear_pdf_desde_png(caption, new_png_dir, pdf_file_path)
-                if pdf_creado:
-                    await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️")
-                shutil.rmtree(new_png_dir)
+            for image_name in os.listdir("downloads"):
+                image_path = os.path.join("downloads", image_name)
+                convertir_a_png_con_compresion(image_path, new_png_dir)
 
-            if formato_seleccionado in ["cbz", "cbzpdf"] and cbz_file_path:
+            pdf_file_path = f"{caption}.pdf"
+            pdf_creado = crear_pdf_desde_png(caption, new_png_dir, pdf_file_path)
+
+            if pdf_creado and operation_type in ["pdf", "both"]:
+                await client.send_document(message.chat.id, pdf_file_path, caption="Aquí está tu PDF 🖨️")
+
+            if cbz_file_path and operation_type in ["cbz", "both"]:
                 await client.send_document(message.chat.id, cbz_file_path, caption="Aquí está tu CBZ 📚")
 
-            # Enviar la primera imagen con el caption
             if img_file:
                 await message.reply_photo(photo=img_file, caption=caption)
-            
-            shutil.rmtree("downloads")
 
-    except Exception as e:
-        await message.reply(f"Error al procesar la operación: {str(e)}")
+            shutil.rmtree("downloads")
+            shutil.rmtree(new_png_dir)
+
+        except Exception as e:
+            await message.reply(f"Error al manejar archivos para el código {code}: {str(e)}")
 
 async def handle_callback(client, callback_query):
     """Maneja los callbacks que vienen del script principal."""
@@ -92,7 +103,7 @@ async def handle_callback(client, callback_query):
             await callback_query.answer("No se encontraron códigos pendientes.", show_alert=True)
             return
 
-        await manejar_opcion_formato(client, callback_query.message, codes, formato_seleccionado, protect_content=True)
+        await nh_combined_operation(client, callback_query.message, codes, "nh", protect_content=True, user_id=user_id, operation_type=formato_seleccionado)
         callback_data_map.pop(user_id, None)
     elif data[0] == "detect_codes":
         codes = data[1].split(",")
@@ -102,7 +113,7 @@ async def handle_callback(client, callback_query):
             [
                 InlineKeyboardButton("CBZ", callback_data="select_format|cbz"),
                 InlineKeyboardButton("PDF", callback_data="select_format|pdf"),
-                InlineKeyboardButton("CBZ+PDF", callback_data="select_format|cbzpdf"),
+                InlineKeyboardButton("CBZ+PDF", callback_data="select_format|both"),
             ]
         ])
         await callback_query.message.reply("Se han detectado varios códigos. ¿Qué formato deseas?", reply_markup=keyboard)
