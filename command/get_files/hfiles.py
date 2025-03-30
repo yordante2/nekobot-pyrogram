@@ -56,8 +56,9 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                 img_file.write(img_data)
 
         if operation_type == "cover":
-            page_title = f"{page_title} `{code}` [Link](https://{base_url}/{code}/)"
+            page_title = f"{page_title} [Link](https://{base_url}/{code}/)"
             page_title = re.sub("Page 1  nhentai hentai doujinshi and manga|Page 1  3Hentai", "", page_title)
+            page_title = f"{page_title} `{code}`"
             
             results = {"caption": page_title, "img_file": first_img_filename}
             return results
