@@ -181,48 +181,49 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         return
 
 
-    elif text.startswith(("/scan", "/multiscan", "/resumecodes")):
+    elif text.startswith(("/scan", "/multiscan", "/resumecodes", "/resumetxtcodes")):
         if cmd("webtools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/scan"):
                 await asyncio.create_task(handle_scan(client, message))
             elif text.startswith("/multiscan"):
                 await asyncio.create_task(handle_multiscan(client, message))
-            elif text.startswith("/resumecodes"):
-                if message.reply_to_message and message.reply_to_message.document:
-                    # Descargar el archivo
-                    file = message.reply_to_message.document
-                    file_path = await client.download_media(file)
-
-                    # Validar que sea un archivo .txt
-                    if not file_path.endswith(".txt"):
-                        os.remove(file_path)  # Borrar archivo no válido
-                        await message.reply("Solo usar con TXT.")
-                        return
-
-                    # Procesar el archivo línea por línea
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        lines = [line.strip() for line in f.readlines()]
-                        line_count = len(lines)
-
-                    # Responder con el número de líneas y procesar líneas con summarize_lines
-                    await message.reply(f"El archivo tiene {line_count} líneas.")
-                    codes = await summarize_lines(lines)
-                    if codes:
-                        await message.reply(f"Códigos encontrados: {codes}")
-                    else:
-                        await message.reply("No se encontraron códigos en el archivo.")
-
-                    # Eliminar el archivo descargado
+            elif text.startswith("/resumecodes") and message.reply_to_message and message.reply_to_message.document:
+                file_path = await client.download_media(message.reply_to_message.document)
+                if not file_path.endswith(".txt"):
                     os.remove(file_path)
+                    await message.reply("Solo usar con TXT.")
+                    return
+                with open(file_path, "r", encoding="utf-8") as f:
+                    lines = [line.strip() for line in f.readlines()]
+                codes = await summarize_lines(lines)
+                if codes:
+                    codes_list = codes.split(", ")
+                    for i in range(0, len(codes_list), 25):
+                        await message.reply(", ".join(codes_list[i:i+25]))
                 else:
-                    await message.reply("Por favor, responde a un mensaje que contenga un archivo.")
-
+                    await message.reply("No se encontraron códigos en el archivo.")
+                os.remove(file_path)
+            elif text.startswith("/resumetxtcodes") and message.reply_to_message and message.reply_to_message.document:
+                file_path = await client.download_media(message.reply_to_message.document)
+                if not file_path.endswith(".txt"):
+                    os.remove(file_path)
+                    await message.reply("Solo usar con TXT.")
+                    return
+                with open(file_path, "r", encoding="utf-8") as f:
+                    lines = [line.strip() for line in f.readlines()]
+                codes = await summarize_lines(lines)
+                if codes:
+                    txt_file_path = "codes_summary.txt"
+                    with open(txt_file_path, "w", encoding="utf-8") as txt_file:
+                        txt_file.write(codes)
+                    await client.send_document(chat_id=message.chat.id, document=txt_file_path, caption="Aquí están todos los códigos.")
+                    os.remove(txt_file_path)
+                else:
+                    await message.reply("No se encontraron códigos en el archivo.")
+                os.remove(file_path)
         return
-
-        
-
     
-    elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat")) and user_id in admin_users:
+    elif text.startswith(("/adduser", "/remuser", "/addchat", "/remchat", "/ban", "/unban")) and user_id in admin_users:
         if text.startswith("/adduser"):
             await asyncio.create_task(add_user(client, message, user_id, chat_id))
         elif text.startswith("/remuser"):
@@ -231,5 +232,9 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             await asyncio.create_task(add_chat(client, message, user_id, chat_id))
         elif text.startswith("/remchat"):
             await asyncio.create_task(remove_chat(client, message, user_id, chat_id))
+        elif text.startswith("/ban"):
+            await asyncio.create_task(ban_user(client, message, user_id, chat_id))
+        elif text.startswith("/unban"):
+            await asyncio.create_task(deban_user(client, message, user_id, chat_id))
         return
             
