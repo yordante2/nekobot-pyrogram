@@ -19,20 +19,24 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
     if len(codes) == 1:  # Un solo código
         await process_and_send_code(client, message, codes[0], base_url, operation_type, protect_content)
     else:  # Múltiples códigos
+        # Generar teclados con opciones
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("CBZ", callback_data="multi_cbz"),
-                InlineKeyboardButton("PDF", callback_data="multi_pdf"),
-                InlineKeyboardButton("CBZ + PDF", callback_data="multi_both")
+                InlineKeyboardButton("CBZ", callback_data=f"multi_cbz|{uuid4()}"),
+                InlineKeyboardButton("PDF", callback_data=f"multi_pdf|{uuid4()}"),
+                InlineKeyboardButton("CBZ + PDF", callback_data=f"multi_both|{uuid4()}")
             ]
         ])
         code_list = ', '.join(codes)  # Lista de códigos en un string
-        await message.reply(f"Se detectaron múltiples códigos: {code_list}. ¿Qué desea hacer?", reply_markup=keyboard)
+        callback_id = str(uuid4())  # Identificador único para esta operación
+        callback_data_map[callback_id] = {
+            "codes": codes,
+            "base_url": base_url,
+            "operation_type": operation_type,
+            "protect_content": protect_content
+        }
 
-        # Guardar los códigos y contexto para el callback
-        callback_data_map["multi_cbz"] = {"codes": codes, "format": "cbz", "base_url": base_url, "operation_type": operation_type, "protect_content": protect_content}
-        callback_data_map["multi_pdf"] = {"codes": codes, "format": "pdf", "base_url": base_url, "operation_type": operation_type, "protect_content": protect_content}
-        callback_data_map["multi_both"] = {"codes": codes, "format": "both", "base_url": base_url, "operation_type": operation_type, "protect_content": protect_content}
+        await message.reply(f"Se detectaron múltiples códigos: {code_list}. ¿Qué desea hacer?", reply_markup=keyboard)
 
 # Función para procesar y enviar un solo código
 async def process_and_send_code(client, message, code, base_url, operation_type, protect_content):
@@ -91,32 +95,50 @@ async def process_and_send_code(client, message, code, base_url, operation_type,
     except Exception as e:
         await message.reply(f"Error al manejar el código {code}: {str(e)}")
 
-# Función para manejar el callback
+# Función para manejar el callback de múltiples descargas
 async def manejar_opcion(client, callback_query, protect_content, user_id):
-    # Separar la data del callback
     data = callback_query.data.split('|')
 
     # Validar que el formato del callback sea correcto
-    if len(data) != 2:  # Revisar si `data` contiene exactamente dos elementos
+    if len(data) != 2:
         await callback_query.answer("Opción inválida o expirada.", show_alert=True)
         return
 
-    opcion = data[0]  # Puede ser "cbz" o "pdf"
-    identificador = data[1]
+    accion = data[0]  # "multi_cbz", "multi_pdf", "multi_both"
+    callback_id = data[1]
 
-    # Obtener el file_id del mapa
-    file_id = callback_data_map.get(callback_query.data)
-    if not file_id:
+    # Obtener los datos asociados al callback
+    context = callback_data_map.get(callback_id)
+    if not context:
         await callback_query.answer("La opción ya no es válida o el archivo no está disponible.", show_alert=True)
         return
 
-    # Enviar el archivo según la opción seleccionada
-    try:
-        if opcion == "cbz":
-            await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu CBZ 📚", protect_content=protect_content)
-        elif opcion == "pdf":
-            await client.send_document(callback_query.message.chat.id, file_id, caption="Aquí está tu PDF 🖨️", protect_content=protect_content)
+    codes = context["codes"]
+    base_url = context["base_url"]
+    operation_type = context["operation_type"]
 
-        await callback_query.answer("Archivo enviado correctamente.")
+    await callback_query.answer("Procesando tu solicitud...", show_alert=False)
+
+    try:
+        for code in codes:
+            url = f"https://{base_url}/{code}/"
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+
+            # Descargar el contenido
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+            if result.get("error"):
+                await client.send_message(callback_query.message.chat.id, f"Error con el código {code}: {result['error']}")
+                continue
+
+            # Enviar archivos según la opción seleccionada
+            if accion in ["multi_cbz", "multi_both"] and result.get("cbz_file"):
+                await client.send_document(callback_query.message.chat.id, result["cbz_file"], caption=f"CBZ para el código {code} 📚")
+            if accion in ["multi_pdf", "multi_both"] and result.get("pdf_file"):
+                await client.send_document(callback_query.message.chat.id, result["pdf_file"], caption=f"PDF para el código {code} 🖨️")
+
     except Exception as e:
-        await callback_query.answer(f"Ocurrió un error al enviar el archivo: {str(e)}", show_alert=True)
+        await client.send_message(callback_query.message.chat.id, f"Error procesando múltiples códigos: {str(e)}")
+    finally:
+        if os.path.exists("downloads"):
+            shutil.rmtree("downloads")
