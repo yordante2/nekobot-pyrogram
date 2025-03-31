@@ -19,8 +19,10 @@ h1, h2 {
 }
 
 h1 {
-    font-size: 20em;
+    font-size: 80px;
+    font-family: Arial, sans-serif;
 }
+
 img {
     margin-top: 20px;
     max-width: 100%;
