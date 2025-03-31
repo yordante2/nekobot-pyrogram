@@ -26,7 +26,7 @@ def no_crear_pdf(folder_name, pdf_filename):
         #print(f"Error al crear PDF: {e}")
         return None
 
-def descargar_hentai(url, code, base_url, operation_type, protect_content, folder_name):
+def descargar_hentai(url, code, base_url, operation_type, protect_content, user_default_selection, folder_name):
     results = {}
     first_img_filename = None  # Para guardar la primera imagen
     last_page_number = None  # Para almacenar el número de la última página válida
@@ -117,10 +117,11 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
             #pdf_filename = f"{page_title}.pdf"
 
             # Crear CBZ
-            with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                for root, _, files in os.walk(folder_name):
-                    for file in files:
-                        zipf.write(os.path.join(root, file), arcname=file)
+            if user_default_selection in ["CBZ", "Both"]:
+                with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                    for root, _, files in os.walk(folder_name):
+                        for file in files:
+                            zipf.write(os.path.join(root, file), arcname=file)
 
             # Crear PDF
             #pdf_result = crear_pdf(folder_name, pdf_filename)
