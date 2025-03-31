@@ -135,7 +135,6 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, user_
                 "img_file": first_img_filename, 
                 "cbz_file": zip_filename,
                 "last_page_number": last_page_number,
-                #"pdf_file": pdf_result,
                 "file_name": file_name
             }
             return results
