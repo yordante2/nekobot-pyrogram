@@ -23,6 +23,12 @@
             margin-top: 50px;
         }
 
+        h3 {
+            font-size: 1.5em;
+            margin-top: 30px;
+            text-align: center;
+        }
+
         img {
             margin-top: 20px;
             max-width: 100%;
@@ -33,6 +39,16 @@
             margin-top: 20px;
             font-size: 1em;
             text-align: center;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            margin: 10px 0;
         }
 
         a {
@@ -64,22 +80,30 @@
         /* Media queries para pantallas móviles */
         @media (max-width: 768px) {
             h1 {
-                font-size: 2em; /* Reducir tamaño de texto en móviles */
+                font-size: 2em;
             }
 
             h2 {
                 font-size: 1.5em;
             }
 
+            h3 {
+                font-size: 1.3em;
+            }
+
             .description {
-                font-size: 0.9em; /* Reducir tamaño de fuente */
-                padding: 0 10px; /* Agregar espacio para evitar solapamiento */
+                font-size: 0.9em;
+                padding: 0 10px;
+            }
+
+            ul {
+                padding: 0 10px;
             }
 
             .mode-toggle {
-                padding: 8px 16px; /* Ajustar tamaño del botón */
+                padding: 8px 16px;
                 font-size: 0.9em;
-                top: 5px; /* Mejor ubicación para móviles */
+                top: 5px;
                 left: 5px;
             }
         }
@@ -94,6 +118,11 @@
         Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interés y para uso personal.
         El bot Neko es un bot.
     </div>
+    <h3>Tutoriales de Comando</h3> <!-- Texto añadido encima de la lista -->
+    <ul>
+        <li><a href="/pages/tutorial_x_comandos.html" target="_blank">Tutoriales de X Comandos</a></li>
+        <li><a href="/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
+    </ul>
 
     <script>
         function toggleMode() {
