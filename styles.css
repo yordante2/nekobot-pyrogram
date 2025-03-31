@@ -1,11 +1,17 @@
-/* Estilos generales */
+/* Estilo general */
 body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #121212; /* Modo nocturno por defecto */
+    background-color: #121212; /* Modo nocturno activado por defecto */
     color: #FFFFFF;
 }
 
+/* Contenedor principal */
 .main-container {
     display: flex;
     flex-direction: column; /* Orden vertical por defecto */
@@ -26,57 +32,118 @@ body {
     margin-top: 20px;
 }
 
-/* H1 y foto */
+/* Títulos e imágenes */
 h1 {
     font-size: 4em;
+    font-family: Arial, sans-serif;
     margin: 0;
+    text-align: center; /* Centrado por defecto */
 }
 
 img {
     margin-top: 20px;
-    max-width: 100%; /* Ajusta el ancho para que nunca exceda su contenedor */
+    max-width: 100%; /* No excede el contenedor */
     height: auto;
-    width: 300px; /* Controla el tamaño de la imagen en computadoras */
+    width: 300px; /* Ancho para pantallas pequeñas */
 }
 
-/* Tutoriales */
+/* Sección de descripción */
+.description {
+    margin-top: 20px;
+    font-size: 1em;
+    text-align: center;
+}
+
+/* Rectángulo para tutoriales */
 .rectangulo {
+    margin-top: 20px;
     padding: 15px;
-    background-color: #1E1E1E;
+    background-color: #1E1E1E; /* Fondo oscuro en modo nocturno */
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    margin-top: 20px;
+    width: 80%; /* Ajuste al ancho de la pantalla */
+    color: #FFFFFF;
 }
 
-/* Ajustes para computadoras */
+/* Botón de modo oscuro/claro */
+.mode-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px; /* Esquina superior izquierda */
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.mode-toggle:hover {
+    background-color: #0056b3;
+}
+
+/* Listas */
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: none; /* Oculta inicialmente */
+}
+
+ul.visible {
+    display: block; /* Muestra la lista al expandir */
+}
+
+li {
+    margin: 10px 0;
+    border-bottom: 1px solid #444444; /* Separador entre elementos */
+    padding-bottom: 5px;
+}
+
+/* Enlaces */
+a {
+    text-decoration: none;
+    color: #FFFFFF; /* Blanco en modo nocturno */
+}
+
+.rectangulo.modo-claro a {
+    color: #000000; /* Negro en modo claro */
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Diseño responsivo para computadoras */
 @media screen and (min-width: 768px) {
     .main-container {
-        display: flex; /* Configuración de fila */
-        flex-direction: row; /* Orden horizontal */
+        display: flex; /* Configuración en fila */
+        flex-direction: row;
         justify-content: space-between;
         align-items: flex-start;
         gap: 20px; /* Espaciado entre columnas */
     }
 
     .left-section {
-        order: 1; /* Mantener descripciones y tutoriales a la izquierda */
-        align-self: flex-start; /* Asegura que quede alineado correctamente */
+        order: 1; /* Descripciones y tutoriales a la izquierda */
+        align-self: flex-start;
     }
 
     .right-section {
-        order: 2; /* Mantener H1 y foto a la derecha */
+        order: 2; /* H1 y foto a la derecha */
         text-align: center;
-        align-self: flex-start; /* Asegura que quede alineado correctamente */
+        align-self: flex-start;
     }
 
     img {
-        width: 200px; /* Imagen más pequeña en pantallas grandes */
+        width: 200px; /* Imagen más pequeña en computadoras */
     }
 }
 
 /* Diseño responsivo para móviles */
 @media screen and (max-width: 767px) {
     img {
-        width: 100%; /* Imagen ajustada al ancho de la pantalla */
+        width: 100%; /* Imagen ajustada al ancho del contenedor */
     }
 }
