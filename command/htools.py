@@ -111,7 +111,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             if operation_type=="cover":
                 await message.reply_photo(photo=img_file, caption=caption)
                 os.remove(img_file)
-                return
+                continue
 
             if not pdf_file_path and operation_type=="download":
                 pdf_file_path = f"{result.get('caption', 'output')}.pdf"
