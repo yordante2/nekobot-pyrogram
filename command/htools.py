@@ -93,7 +93,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             continue
 
         try:
-            result = descargar_hentai(url, code, base_url, operation_type, protect_content, "downloads")
+            result = descargar_hentai(url, code, base_url, operation_type, protect_content, user_default_selection, "downloads")
             if not result:
                 await message.reply(f"Error con el código {code}: La función descargar_hentai retornó 'None'.")
                 continue
