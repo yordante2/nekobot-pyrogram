@@ -124,6 +124,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
 
             # Crear PDF
             #pdf_result = crear_pdf(folder_name, pdf_filename)
+            file_name = page_title
 
             page_title = f"{page_title}\n {last_page_number} Páginas \n\n https://{base_url}/{code}/"
             
@@ -132,7 +133,8 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                 "img_file": first_img_filename, 
                 "cbz_file": zip_filename,
                 "last_page_number": last_page_number,
-                #"pdf_file": pdf_result
+                #"pdf_file": pdf_result,
+                "file_name": "file_name"
             }
             return results
     except Exception as e:
