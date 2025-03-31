@@ -13,12 +13,12 @@
             height: 100vh;
             margin: 0;
             font-family: Arial, sans-serif;
+            background-color: #121212; /* Modo nocturno activado por defecto */
+            color: #FFFFFF;
         }
 
-        h1 {
-            font-size: 3em;
+        h1, h2 {
             font-weight: bold;
-            margin-top: 20px;
             text-align: center;
         }
 
@@ -28,16 +28,9 @@
             height: auto;
         }
 
-        h2 {
-            font-size: 2em;
-            font-weight: bold;
-            margin-top: 20px;
-            text-align: center;
-        }
-
         .description {
             margin-top: 20px;
-            font-size: 1em; /* Tamaño normal */
+            font-size: 1em;
             text-align: center;
         }
 
@@ -49,15 +42,45 @@
         a:hover {
             text-decoration: underline;
         }
+
+        .mode-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .mode-toggle:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
+    <button class="mode-toggle" onclick="toggleMode()">Modo Nocturno</button>
     <h1>Neko Bot</h1>
     <img src="https://cdn.imgchest.com/files/49zc2glz9ey.png" alt="Imagen de Neko Bot">
     <h2>Descripción</h2>
     <div class="description">
-        Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interes y para uso personal.
-        El bot Neko es un bot
+        Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interés y para uso personal.
+        El bot Neko es un bot.
     </div>
+
+    <script>
+        function toggleMode() {
+            const body = document.body;
+            if (body.style.backgroundColor === 'white') {
+                body.style.backgroundColor = '#121212'; // Activar modo nocturno
+                body.style.color = '#FFFFFF';
+            } else {
+                body.style.backgroundColor = 'white'; // Desactivar modo nocturno
+                body.style.color = '#000000';
+            }
+        }
+    </script>
 </body>
 </html>
