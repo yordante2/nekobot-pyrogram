@@ -1,0 +1,131 @@
+/* Estilo general */
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #121212; /* Modo nocturno activado por defecto */
+    color: #FFFFFF;
+}
+
+/* Títulos e imágenes */
+h1, h2 {
+    font-weight: bold;
+    text-align: center;
+    margin-top: 50px;
+}
+
+img {
+    margin-top: 20px;
+    max-width: 100%;
+    height: auto;
+}
+
+.description {
+    margin-top: 20px;
+    font-size: 1em;
+    text-align: center;
+}
+
+/* Rectángulo para tutoriales */
+.rectangulo {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.1); /* Fondo transparente */
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra ligera */
+    width: 80%; /* Ajuste al ancho de la pantalla */
+    color: #FFFFFF; /* Texto en modo nocturno */
+}
+
+.rectangulo.modo-claro {
+    background-color: rgba(0, 0, 0, 0.1); /* Fondo transparente en modo claro */
+    color: #000000; /* Texto en modo claro */
+}
+
+.rectangulo h3 {
+    font-size: 1.5em;
+    text-align: center;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #CCCCCC; /* Raya notable */
+    padding-bottom: 10px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: none; /* Lista oculta inicialmente */
+}
+
+ul.visible {
+    display: block; /* Mostrar lista cuando se despliegue */
+}
+
+li {
+    margin: 10px 0;
+    border-bottom: 1px solid #666666; /* Raya pequeña entre elementos */
+    padding-bottom: 5px;
+}
+
+a {
+    text-decoration: none;
+    color: #B0B0B0; /* Texto gris claro */
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Botón de modo oscuro/claro */
+.mode-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px; /* Esquina superior izquierda */
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.mode-toggle:hover {
+    background-color: #0056b3;
+}
+
+/* Espacio adicional al final */
+.espacio-final {
+    margin-top: 50px;
+    width: 100%;
+    height: 100px;
+}
+
+/* Diseño responsivo para móviles */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2em;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    .rectangulo {
+        padding: 10px;
+        margin-top: 15px;
+        width: 90%; /* Mejor ajuste en móviles */
+    }
+
+    .mode-toggle {
+        padding: 8px 16px;
+        font-size: 0.9em;
+        top: 5px;
+        left: 5px;
+    }
+}
+  
