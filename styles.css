@@ -18,15 +18,6 @@ h1, h2 {
     margin-top: 50px;
 }
 
-h1 {
-    font-size: 100em; /* Ajusta el tamaño de fuente según el número de palabras */
-    font-family: Arial, sans-serif;
-    text-align: center; /* Para centrar el texto */
-    max-width: 90%; /* Limita el ancho al 90% de la pantalla */
-    white-space: nowrap; /* Evita que el texto se divida en varias líneas */
-    overflow: hidden; /* Oculta el texto desbordado si es necesario */
-}
-
 
 img {
     margin-top: 20px;
