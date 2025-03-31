@@ -20,6 +20,7 @@
         h1, h2 {
             font-weight: bold;
             text-align: center;
+            margin-top: 50px;
         }
 
         img {
@@ -46,22 +47,46 @@
         .mode-toggle {
             position: absolute;
             top: 10px;
-            right: 10px;
+            left: 10px; /* Esquina superior izquierda */
             padding: 10px 20px;
             background-color: #007BFF;
             color: #FFFFFF;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            z-index: 1000;
         }
 
         .mode-toggle:hover {
             background-color: #0056b3;
         }
+
+        /* Media queries para pantallas móviles */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em; /* Reducir tamaño de texto en móviles */
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .description {
+                font-size: 0.9em; /* Reducir tamaño de fuente */
+                padding: 0 10px; /* Agregar espacio para evitar solapamiento */
+            }
+
+            .mode-toggle {
+                padding: 8px 16px; /* Ajustar tamaño del botón */
+                font-size: 0.9em;
+                top: 5px; /* Mejor ubicación para móviles */
+                left: 5px;
+            }
+        }
     </style>
 </head>
 <body>
-    <button class="mode-toggle" onclick="toggleMode()">Modo Nocturno</button>
+    <button class="mode-toggle" onclick="toggleMode()">Modo Claro</button>
     <h1>Neko Bot</h1>
     <img src="https://cdn.imgchest.com/files/49zc2glz9ey.png" alt="Imagen de Neko Bot">
     <h2>Descripción</h2>
@@ -73,12 +98,15 @@
     <script>
         function toggleMode() {
             const body = document.body;
+            const button = document.querySelector('.mode-toggle');
             if (body.style.backgroundColor === 'white') {
                 body.style.backgroundColor = '#121212'; // Activar modo nocturno
                 body.style.color = '#FFFFFF';
+                button.textContent = 'Modo Claro'; // Cambiar texto del botón
             } else {
-                body.style.backgroundColor = 'white'; // Desactivar modo nocturno
+                body.style.backgroundColor = 'white'; // Activar modo claro
                 body.style.color = '#000000';
+                button.textContent = 'Modo Nocturno'; // Cambiar texto del botón
             }
         }
     </script>
