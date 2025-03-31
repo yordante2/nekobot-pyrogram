@@ -1,21 +1,21 @@
-
-
 function toggleMode() {
     const body = document.body;
-    const rectangulo = document.querySelectorAll('.rectangulo');
+    const rectangulos = document.querySelectorAll('.rectangulo');
     const links = document.querySelectorAll('a');
-    
+
+    // Alterna la clase en el cuerpo
     body.classList.toggle('modo-claro');
 
-    // Actualiza los colores dinámicamente
-    rectangulo.forEach(element => {
+    // Cambia dinámicamente las clases de los rectángulos
+    rectangulos.forEach(rectangulo => {
         if (body.classList.contains('modo-claro')) {
-            element.classList.add('modo-claro');
+            rectangulo.classList.add('modo-claro');
         } else {
-            element.classList.remove('modo-claro');
+            rectangulo.classList.remove('modo-claro');
         }
     });
 
+    // Cambia dinámicamente las clases de los enlaces
     links.forEach(link => {
         if (body.classList.contains('modo-claro')) {
             link.classList.add('modo-claro');
@@ -23,4 +23,9 @@ function toggleMode() {
             link.classList.remove('modo-claro');
         }
     });
+}
+
+function toggleList() {
+    const tutorialList = document.getElementById('tutorial-list');
+    tutorialList.classList.toggle('visible');
 }
