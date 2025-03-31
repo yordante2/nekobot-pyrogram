@@ -8,7 +8,7 @@ from fpdf import FPDF
 def clean_string(s):
     return re.sub(r'[^a-zA-Z0-9\[\] ]', '', s)
 
-def crear_pdf(folder_name, pdf_filename):
+def no_crear_pdf(folder_name, pdf_filename):
     try:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=0)
