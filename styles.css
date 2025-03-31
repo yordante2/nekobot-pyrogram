@@ -54,7 +54,6 @@ img {
     transition: width 0.3s; /* Transición para tamaño dinámico */
 }
 
-/* Cambios dinámicos para modo claro */
 body.modo-claro img {
     filter: brightness(1.1); /* Ajuste de brillo opcional */
 }
@@ -174,3 +173,7 @@ a:hover {
         width: 100%; /* Imagen ajustada al ancho del contenedor */
     }
 }
+}
+
+/* Listas */
+ul {
