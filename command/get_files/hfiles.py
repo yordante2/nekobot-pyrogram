@@ -114,7 +114,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
             
             # Usar el título como nombre de archivo
             zip_filename = f"{page_title}.cbz"
-            pdf_filename = f"{page_title}.pdf"
+            #pdf_filename = f"{page_title}.pdf"
 
             # Crear CBZ
             with zipfile.ZipFile(zip_filename, 'w') as zipf:
@@ -123,15 +123,15 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, folde
                         zipf.write(os.path.join(root, file), arcname=file)
 
             # Crear PDF
-            pdf_result = crear_pdf(folder_name, pdf_filename)
+            #pdf_result = crear_pdf(folder_name, pdf_filename)
 
-            page_title = f"{page_title}\n {last_page_number} Páginas \n\n https://{base_url}/{code}/"
+            #page_title = f"{page_title}\n {last_page_number} Páginas \n\n https://{base_url}/{code}/"
             
             results = {
                 "caption": page_title,
                 "img_file": first_img_filename, 
                 "cbz_file": zip_filename,
-                "pdf_file": pdf_result
+                #"pdf_file": pdf_result
             }
             return results
     except Exception as e:
