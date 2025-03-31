@@ -118,7 +118,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, user_
             #pdf_filename = f"{page_title}.pdf"
 
             # Crear CBZ
-            if user_default_selection in ["cbz", "both"]:
+            if user_default_selection in ["cbz", "both", "none"]:
                 with zipfile.ZipFile(zip_filename, 'w') as zipf:
                     for root, _, files in os.walk(folder_name):
                         for file in files:
