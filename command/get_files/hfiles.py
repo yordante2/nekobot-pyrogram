@@ -30,6 +30,7 @@ def descargar_hentai(url, code, base_url, operation_type, protect_content, user_
     results = {}
     first_img_filename = None  # Para guardar la primera imagen
     last_page_number = None  # Para almacenar el número de la última página válida
+    print(user_default_selection)
 
     try:
         # Asegurar que el directorio base existe
