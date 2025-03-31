@@ -19,7 +19,7 @@ h1, h2 {
 }
 
 h1 {
-    font-size: calc(25vw / 7); /* Ajusta el tamaño de fuente según el número de palabras */
+    font-size: 100em; /* Ajusta el tamaño de fuente según el número de palabras */
     font-family: Arial, sans-serif;
     text-align: center; /* Para centrar el texto */
     max-width: 90%; /* Limita el ancho al 90% de la pantalla */
