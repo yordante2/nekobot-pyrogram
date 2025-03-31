@@ -4,123 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neko Bot</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #121212; /* Modo nocturno activado por defecto */
-            color: #FFFFFF;
-        }
-
-        h1, h2 {
-            font-weight: bold;
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        h3 {
-            font-size: 1.5em;
-            margin-top: 30px;
-            text-align: center;
-        }
-
-        img {
-            margin-top: 20px;
-            max-width: 100%;
-            height: auto;
-        }
-
-        .description {
-            margin-top: 20px;
-            font-size: 1em;
-            text-align: center;
-        }
-
-        .rectangulo {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #F8F9FA; /* Fondo claro similar al de Wikipedia */
-            border: 1px solid #CCCCCC; /* Bordes sólidos con color suave */
-            border-radius: 5px; /* Bordes ligeramente redondeados */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-            width: 80%; /* Ajuste al ancho de la pantalla */
-            color: #000000; /* Texto oscuro */
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        li {
-            margin: 10px 0;
-        }
-
-        a {
-            text-decoration: none;
-            color: #007BFF;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        .mode-toggle {
-            position: absolute;
-            top: 10px;
-            left: 10px; /* Esquina superior izquierda */
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 1000;
-        }
-
-        .mode-toggle:hover {
-            background-color: #0056b3;
-        }
-
-        /* Media queries para pantallas móviles */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-
-            h2 {
-                font-size: 1.5em;
-            }
-
-            h3 {
-                font-size: 1.3em;
-            }
-
-            .description {
-                font-size: 0.9em;
-                padding: 0 10px;
-            }
-
-            .rectangulo {
-                padding: 10px;
-                margin-top: 15px;
-                width: 90%; /* Mejor ajuste en móviles */
-            }
-
-            .mode-toggle {
-                padding: 8px 16px;
-                font-size: 0.9em;
-                top: 5px;
-                left: 5px;
-            }
-        }
-    </style>
+    <!-- Importar el archivo CSS -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <button class="mode-toggle" onclick="toggleMode()">Modo Claro</button>
@@ -131,27 +16,37 @@
         Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interés y para uso personal.
         El bot Neko es un bot.
     </div>
-    <h3>Tutoriales de Comando</h3>
-    <div class="rectangulo">
-        <ul>
+    <div class="rectangulo" id="tutorial-container">
+        <h3 onclick="toggleList()">Tutoriales de Comando</h3>
+        <ul id="tutorial-list">
             <li><a href="/neklbot-pyrogram/pages/tutorial_x_comandos.html" target="_blank">Tutoriales de X Comandos</a></li>
             <li><a href="/neklbot-pyrogram/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
         </ul>
     </div>
+    <div class="espacio-final"></div>
 
     <script>
         function toggleMode() {
             const body = document.body;
             const button = document.querySelector('.mode-toggle');
+            const rectangulo = document.getElementById('tutorial-container');
+
             if (body.style.backgroundColor === 'white') {
                 body.style.backgroundColor = '#121212'; // Activar modo nocturno
                 body.style.color = '#FFFFFF';
+                rectangulo.classList.remove('modo-claro');
                 button.textContent = 'Modo Claro'; // Cambiar texto del botón
             } else {
                 body.style.backgroundColor = 'white'; // Activar modo claro
                 body.style.color = '#000000';
+                rectangulo.classList.add('modo-claro');
                 button.textContent = 'Modo Nocturno'; // Cambiar texto del botón
             }
+        }
+
+        function toggleList() {
+            const tutorialList = document.getElementById('tutorial-list');
+            tutorialList.classList.toggle('visible'); // Mostrar u ocultar la lista
         }
     </script>
 </body>
