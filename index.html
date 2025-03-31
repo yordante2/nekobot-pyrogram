@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neko Bot</title>
+    <!-- Favicon -->
+    <link rel="icon" href="https://cdn.imgchest.com/files/49zc2glz9ey.png" type="image/png">
     <!-- Importar el archivo CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -25,29 +27,7 @@
     </div>
     <div class="espacio-final"></div>
 
-    <script>
-        function toggleMode() {
-            const body = document.body;
-            const button = document.querySelector('.mode-toggle');
-            const rectangulo = document.getElementById('tutorial-container');
-
-            if (body.style.backgroundColor === 'white') {
-                body.style.backgroundColor = '#121212'; // Activar modo nocturno
-                body.style.color = '#FFFFFF';
-                rectangulo.classList.remove('modo-claro');
-                button.textContent = 'Modo Claro'; // Cambiar texto del botón
-            } else {
-                body.style.backgroundColor = 'white'; // Activar modo claro
-                body.style.color = '#000000';
-                rectangulo.classList.add('modo-claro');
-                button.textContent = 'Modo Nocturno'; // Cambiar texto del botón
-            }
-        }
-
-        function toggleList() {
-            const tutorialList = document.getElementById('tutorial-list');
-            tutorialList.classList.toggle('visible'); // Mostrar u ocultar la lista
-        }
-    </script>
+    <!-- Importar archivo JavaScript -->
+    <script src="scripts.js"></script>
 </body>
 </html>
