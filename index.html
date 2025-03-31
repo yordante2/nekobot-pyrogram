@@ -41,10 +41,21 @@
             text-align: center;
         }
 
+        .rectangulo {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #F8F9FA; /* Fondo claro similar al de Wikipedia */
+            border: 1px solid #CCCCCC; /* Bordes sólidos con color suave */
+            border-radius: 5px; /* Bordes ligeramente redondeados */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+            width: 80%; /* Ajuste al ancho de la pantalla */
+            color: #000000; /* Texto oscuro */
+        }
+
         ul {
             list-style-type: none;
             padding: 0;
-            margin-top: 20px;
+            margin: 0;
         }
 
         li {
@@ -96,8 +107,10 @@
                 padding: 0 10px;
             }
 
-            ul {
-                padding: 0 10px;
+            .rectangulo {
+                padding: 10px;
+                margin-top: 15px;
+                width: 90%; /* Mejor ajuste en móviles */
             }
 
             .mode-toggle {
@@ -118,11 +131,13 @@
         Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interés y para uso personal.
         El bot Neko es un bot.
     </div>
-    <h3>Tutoriales de Comando</h3> <!-- Texto añadido encima de la lista -->
-    <ul>
-        <li><a href="/pages/test.html" target="_blank">Tutoriales de X Comandos</a></li>
-        <li><a href="/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
-    </ul>
+    <h3>Tutoriales de Comando</h3>
+    <div class="rectangulo">
+        <ul>
+            <li><a href="/neklbot-pyrogram/pages/tutorial_x_comandos.html" target="_blank">Tutoriales de X Comandos</a></li>
+            <li><a href="/neklbot-pyrogram/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
+        </ul>
+    </div>
 
     <script>
         function toggleMode() {
