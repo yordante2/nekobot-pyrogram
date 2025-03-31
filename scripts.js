@@ -1,22 +1,26 @@
+
+
 function toggleMode() {
     const body = document.body;
-    const button = document.querySelector('.mode-toggle');
-    const rectangulo = document.getElementById('tutorial-container');
+    const rectangulo = document.querySelectorAll('.rectangulo');
+    const links = document.querySelectorAll('a');
+    
+    body.classList.toggle('modo-claro');
 
-    if (body.style.backgroundColor === 'white') {
-        body.style.backgroundColor = '#121212'; // Activar modo nocturno
-        body.style.color = '#FFFFFF';
-        rectangulo.classList.remove('modo-claro');
-        button.textContent = 'Modo Claro'; // Cambiar texto del botón
-    } else {
-        body.style.backgroundColor = 'white'; // Activar modo claro
-        body.style.color = '#000000';
-        rectangulo.classList.add('modo-claro');
-        button.textContent = 'Modo Nocturno'; // Cambiar texto del botón
-    }
-}
+    // Actualiza los colores dinámicamente
+    rectangulo.forEach(element => {
+        if (body.classList.contains('modo-claro')) {
+            element.classList.add('modo-claro');
+        } else {
+            element.classList.remove('modo-claro');
+        }
+    });
 
-function toggleList() {
-    const tutorialList = document.getElementById('tutorial-list');
-    tutorialList.classList.toggle('visible'); // Mostrar u ocultar la lista
+    links.forEach(link => {
+        if (body.classList.contains('modo-claro')) {
+            link.classList.add('modo-claro');
+        } else {
+            link.classList.remove('modo-claro');
+        }
+    });
 }
