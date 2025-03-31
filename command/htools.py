@@ -66,12 +66,14 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
         await message.reply("Tipo de enlace no válido. Use 'nh' o '3h'.")
         return
 
+    
+    # Configuración inicial del usuario
+    user_default_selection = default_selection_map.get(user_id, None)
+
     if MAIN_ADMIN is None and user_default_selection is None and operation_type=="download":
         await message.reply("Debe usar `/setfile` antes de descargar.")
         return
 
-    # Configuración inicial del usuario
-    user_default_selection = default_selection_map.get(user_id, None)
 
     # Verificación de múltiples códigos y default_selection
     if len(codes) > 1 and user_default_selection is None and operation_type=="download":
