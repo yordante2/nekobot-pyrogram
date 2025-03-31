@@ -1,33 +1,33 @@
-/* Estilo general */
+/* Diseño principal */
 body {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    min-height: 100vh;
     margin: 0;
     font-family: Arial, sans-serif;
     background-color: #121212; /* Modo nocturno activado por defecto */
     color: #FFFFFF;
 }
 
-/* Títulos e imágenes */
-h1, h2 {
-    font-weight: bold;
+.main-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px; /* Espaciado entre columnas */
+    margin: 20px;
+}
+
+.left-section {
+    flex: 1; /* Ocupa una parte de la pantalla */
+}
+
+.right-section {
+    flex: 1; /* Ocupa otra parte de la pantalla */
     text-align: center;
-    margin-top: 50px;
 }
 
 h1 {
-    font-size: 4em;/* Ajusta el tamaño de fuente según el número de palabras */
-    font-family: Arial, sans-serif;
-    text-align: center; /* Para centrar el texto */
-    /* max-width: 90%; */ /* Limita el ancho al 90% de la pantalla */
-    white-space: nowrap; /* Evita que el texto se divida en varias líneas */
-    overflow: hidden; /* Oculta el texto desbordado si es necesario */
+    font-size: 4em;
+    margin: 0;
 }
-
-
 
 img {
     margin-top: 20px;
@@ -35,113 +35,28 @@ img {
     height: auto;
 }
 
-.description {
-    margin-top: 20px;
-    font-size: 1em;
-    text-align: center;
-}
-
 /* Rectángulo para tutoriales */
 .rectangulo {
-    margin-top: 20px;
     padding: 15px;
-    background-color: #1E1E1E; /* Fondo oscuro para modo nocturno */
+    background-color: #1E1E1E;
     border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra ligera */
-    width: 80%; /* Ajuste al ancho de la pantalla */
-    color: #FFFFFF; /* Texto blanco en modo nocturno */
-}
-
-.rectangulo.modo-claro {
-    background-color: #F5F5F5; /* Fondo claro para modo claro */
-    color: #000000; /* Texto negro en modo claro */
-}
-
-.rectangulo h3 {
-    font-size: 1.5em;
-    text-align: center;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #CCCCCC; /* Raya notable */
-    padding-bottom: 10px;
-}
-
-/* Lista de tutoriales */
-ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    display: none; /* Lista oculta inicialmente */
-}
-
-ul.visible {
-    display: block; /* Mostrar lista cuando se despliegue */
-}
-
-li {
-    margin: 10px 0;
-    border-bottom: 1px solid #444444; /* Raya pequeña entre elementos */
-    padding-bottom: 5px;
-}
-
-/* Estilo de hipervínculos */
-a {
-    text-decoration: none;
-    color: #FFFFFF; /* Blanco en modo nocturno */
-}
-
-.rectangulo.modo-claro a {
-    color: #000000; /* Negro en modo claro */
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-/* Botón de modo oscuro/claro */
-.mode-toggle {
-    position: absolute;
-    top: 10px;
-    left: 10px; /* Esquina superior izquierda */
-    padding: 10px 20px;
-    background-color: #007BFF;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     color: #FFFFFF;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    z-index: 1000;
-}
-
-.mode-toggle:hover {
-    background-color: #0056b3;
-}
-
-/* Espacio adicional al final */
-.espacio-final {
-    margin-top: 50px;
-    width: 100%;
-    height: 100px; /* Espacio extra al final */
+    margin-top: 20px;
 }
 
 /* Diseño responsivo para móviles */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .left-section, .right-section {
+        width: 100%;
+    }
+
     h1 {
         font-size: 2em;
-    }
-
-    h2 {
-        font-size: 1.5em;
-    }
-
-    .rectangulo {
-        padding: 10px;
-        margin-top: 15px;
-        width: 90%; /* Mejor ajuste en móviles */
-    }
-
-    .mode-toggle {
-        padding: 8px 16px;
-        font-size: 0.9em;
-        top: 5px;
-        left: 5px;
     }
 }
