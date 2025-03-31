@@ -11,22 +11,27 @@
 </head>
 <body>
     <button class="mode-toggle" onclick="toggleMode()">Modo Claro</button>
-    <h1>Neko Bot</h1>
-    <img src="https://cdn.imgchest.com/files/49zc2glz9ey.png" alt="Imagen de Neko Bot">
-    <h2>Descripción</h2>
-    <div class="description">
-        Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interés y para uso personal.
-        El bot Neko es un bot.
-    </div>
-    <div class="rectangulo" id="tutorial-container">
-        <h3 onclick="toggleList()">Tutoriales de Comando</h3>
-        <ul id="tutorial-list">
-            <li><a href="/neklbot-pyrogram/pages/tutorial_x_comandos.html" target="_blank">Tutoriales de X Comandos</a></li>
-            <li><a href="/neklbot-pyrogram/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
-        </ul>
+    <div class="main-container">
+        <div class="left-section">
+            <div class="description">
+                <h2>Descripción</h2>
+                Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interés y para uso personal.
+                El bot Neko es un bot.
+            </div>
+            <div class="rectangulo">
+                <h3 onclick="toggleList()">Tutoriales de Comando</h3>
+                <ul id="tutorial-list">
+                    <li><a href="/neklbot-pyrogram/pages/tutorial_x_comandos.html" target="_blank">Tutoriales de X Comandos</a></li>
+                    <li><a href="/neklbot-pyrogram/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="right-section">
+            <h1>Neko Bot</h1>
+            <img src="https://cdn.imgchest.com/files/49zc2glz9ey.png" alt="Imagen de Neko Bot">
+        </div>
     </div>
     <div class="espacio-final"></div>
-
     <!-- Importar archivo JavaScript -->
     <script src="scripts.js"></script>
 </body>
