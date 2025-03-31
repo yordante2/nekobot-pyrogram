@@ -35,6 +35,7 @@ def crear_pdf_desde_png(page_title, png_dir, output_path):
                 pdf.add_page()
                 pdf.image(image_path, x=10, y=10, w=190)
         pdf.output(output_path)
+        shutil.rmtree(png_dir)
         return True
     except Exception as e:
         print(f"Error al crear el PDF: {e}")
