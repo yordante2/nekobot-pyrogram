@@ -9,6 +9,12 @@ body {
     font-family: Arial, sans-serif;
     background-color: #121212; /* Modo nocturno activado por defecto */
     color: #FFFFFF;
+    transition: background-color 0.3s, color 0.3s; /* Transición para cambios de modo */
+}
+
+body.modo-claro {
+    background-color: #FFFFFF; /* Fondo claro en modo claro */
+    color: #000000; /* Texto negro en modo claro */
 }
 
 /* Contenedor principal */
@@ -45,6 +51,12 @@ img {
     max-width: 100%; /* No excede el contenedor */
     height: auto;
     width: 300px; /* Ancho para pantallas pequeñas */
+    transition: width 0.3s; /* Transición para tamaño dinámico */
+}
+
+/* Cambios dinámicos para modo claro */
+body.modo-claro img {
+    filter: brightness(1.1); /* Ajuste de brillo opcional */
 }
 
 /* Sección de descripción */
@@ -63,6 +75,12 @@ img {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     width: 80%; /* Ajuste al ancho de la pantalla */
     color: #FFFFFF;
+    transition: background-color 0.3s, color 0.3s; /* Transición para cambios de modo */
+}
+
+.rectangulo.modo-claro {
+    background-color: #F5F5F5; /* Fondo claro en modo claro */
+    color: #000000; /* Texto negro en modo claro */
 }
 
 /* Botón de modo oscuro/claro */
@@ -77,6 +95,7 @@ img {
     border-radius: 5px;
     cursor: pointer;
     z-index: 1000;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .mode-toggle:hover {
@@ -105,9 +124,10 @@ li {
 a {
     text-decoration: none;
     color: #FFFFFF; /* Blanco en modo nocturno */
+    transition: color 0.3s; /* Transición para cambios de modo */
 }
 
-.rectangulo.modo-claro a {
+a.modo-claro {
     color: #000000; /* Negro en modo claro */
 }
 
@@ -115,11 +135,18 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Espacio adicional al final */
+.espacio-final {
+    margin-top: 50px;
+    width: 100%;
+    height: 100px; /* Espacio extra al final */
+}
+
 /* Diseño responsivo para computadoras */
 @media screen and (min-width: 768px) {
     .main-container {
         display: flex; /* Configuración en fila */
-        flex-direction: row;
+        flex-direction: row; /* Orden horizontal */
         justify-content: space-between;
         align-items: flex-start;
         gap: 20px; /* Espaciado entre columnas */
