@@ -51,13 +51,6 @@ def comprimir_video(original_video_path, compressed_video_path):
         compressed_video_path
     ]
     return subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
-    except Exception as e:
-        print(f"Error al comprimir el video: {e}")
-        return {
-            "compressed_video": None,
-            "thumbnail": None,
-            "duration": 0
-        }
 
 # Función para convertir tamaño de archivo a formato legible
 def human_readable_size(size, decimal_places=2):
