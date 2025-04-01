@@ -3,6 +3,7 @@ import os
 import uuid
 import re
 import subprocess
+import random
 from command.video_processor import procesar_video
 
 # Configuración inicial
