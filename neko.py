@@ -169,15 +169,12 @@ async def callback_handler(client, callback_query):
     user_id = callback_query.from_user.id
     protect_content = PROTECT_CONTENT and user_id not in allowed_ids
     await manejar_opcion(client, callback_query, protect_content, user_id)
+    
+
+
 @app.on_callback_query()
 async def help_callback_handler(client, callback_query):
-    if callback_query.data == "help":
-        await handle_help(client, message)
-
-        
-#@app.on_callback_query()
-#async def help_callback_handler(client, callback_query):
-    #await handle_help_callback(client, callback_query)
+    await handle_help_callback(client, callback_query)
     
 async def main():
     await app.start()
