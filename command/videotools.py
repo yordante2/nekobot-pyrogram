@@ -99,7 +99,66 @@ async def listar_tareas(client, chat_id, allowed_ids, message):
 
     await client.send_message(chat_id=chat_id, text=lista_tareas, protect_content=protect_content)
 
+import random
+import subprocess
+import os
 
+# Función para obtener el número total de fotogramas
+def get_video_metadata(video_path):
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "stream=nb_frames",
+             "-of", "default=noprint_wrappers=1:nokey=1", video_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        metadata = result.stdout.strip()
+        total_frames = int(metadata) if metadata.isdigit() else None
+
+        if total_frames is None or total_frames == 0:
+            raise ValueError("No se pudo obtener el número de fotogramas del video.")
+
+        return total_frames
+    except Exception as e:
+        print(f"Error al obtener los metadatos del video: {e}")
+        return 0
+
+
+# Función para generar una miniatura desde un fotograma aleatorio
+async def generate_thumbnail(video_path):
+    try:
+        # Obtener el número total de fotogramas
+        total_frames = get_video_metadata(video_path)
+        if total_frames <= 0:
+            raise ValueError("No se pudo determinar el número de fotogramas.")
+
+        # Limitar la selección a los primeros 10,000 fotogramas
+        max_frames = min(total_frames, 10000)
+        random_frame = random.randint(0, max_frames - 1)  # Fotograma aleatorio entre 0 y max_frames - 1
+
+        output_thumb = f"{os.path.splitext(video_path)[0]}_miniatura.jpg"
+
+        # Extraer el fotograma aleatorio
+        subprocess.run([
+            "ffmpeg",
+            "-i", video_path,
+            "-vf", f"select='eq(n,{random_frame})'",
+            "-vframes", "1",
+            output_thumb
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+        # Verificar que la miniatura se haya generado correctamente
+        if not os.path.exists(output_thumb):
+            raise IOError("No se pudo generar la miniatura.")
+
+        return output_thumb
+    except Exception as e:
+        print(f"Error al generar la miniatura: {e}")
+        return None
+
+
+# Ajuste en compress_video
 async def compress_video(admin_users, client, message, allowed_ids):
     user_id = message.from_user.id
     protect_content = user_id not in allowed_ids
@@ -135,7 +194,7 @@ async def compress_video(admin_users, client, message, allowed_ids):
             return
 
         # Generar la miniatura del video
-        thumb_path = generate_thumbnail(video_path)
+        thumb_path = await generate_thumbnail(video_path)
         if not thumb_path:
             await client.send_message(chat_id=chat_id, text="⚠️ No se pudo generar una miniatura para el video.", protect_content=protect_content)
 
@@ -147,26 +206,24 @@ async def compress_video(admin_users, client, message, allowed_ids):
         # Procesar el video
         file_name, description, chat_id, file_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
 
-        # Enviar el video comprimido con miniatura, duración y caption
+        # Enviar el video comprimido con la miniatura generada
         await client.send_video(
             chat_id=user_id,
             video=file_path,
-            thumb=thumb_path,
+            thumb=thumb_path,  # Miniatura generada aleatoriamente
             caption=file_name,
             duration=duration,
             protect_content=protect_content
         )
 
-        # Borrar la miniatura después de enviar el video
-        if thumb_path:
-            os.remove(thumb_path)
-
         # Notificar el resultado al usuario
         await client.send_message(chat_id=chat_id, text=description, protect_content=protect_content)
 
-        # Eliminar los archivos del video procesado
+        # Eliminar los archivos temporales
         os.remove(original_video_path)
         os.remove(file_path)
+        if thumb_path:
+            os.remove(thumb_path)  # Eliminar la miniatura
     finally:
         try:
             del tareas_en_ejecucion[task_id]
@@ -176,12 +233,6 @@ async def compress_video(admin_users, client, message, allowed_ids):
         if cola_de_tareas:
             siguiente_tarea = cola_de_tareas.pop(0)
             await compress_video(admin_users, siguiente_tarea["client"], siguiente_tarea["message"], allowed_ids)
-
-# Función para generar miniaturas
-
-def generate_thumbnail(video_path):
-    try:
-        random_time = random.randint(0, 10)  # Generar tiempo aleatorio entre 1:00 y 3:00
         print(f"Generando miniatura en el segundo {random_time}...")
 
         output_thumb = "miniatura.jpg"  # Nombre fijo para la miniatura
