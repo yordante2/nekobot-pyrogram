@@ -99,6 +99,9 @@ async def listar_tareas(client, chat_id, allowed_ids, message):
 
     await client.send_message(chat_id=chat_id, text=lista_tareas, protect_content=protect_content)
 
+
+
+
 import random
 import subprocess
 import os
@@ -233,14 +236,4 @@ async def compress_video(admin_users, client, message, allowed_ids):
         if cola_de_tareas:
             siguiente_tarea = cola_de_tareas.pop(0)
             await compress_video(admin_users, siguiente_tarea["client"], siguiente_tarea["message"], allowed_ids)
-        print(f"Generando miniatura en el segundo {random_time}...")
-
-        output_thumb = "miniatura.jpg"  # Nombre fijo para la miniatura
-        subprocess.run([
-            "ffmpeg",
-            "-i", video_path,
-            "-ss", str(random_time),
-            "-vframes", "1",
-            output_thumb
-        ], stdout=devnull, stderr=devnull, check=True)
-        return output_thumb
+            
