@@ -7,6 +7,7 @@ from command.htools import manejar_opcion
 from command.help import handle_help_callback
 import time  # Importación necesaria
 from stickers import saludos
+import random
 
 nest_asyncio.apply()
 
