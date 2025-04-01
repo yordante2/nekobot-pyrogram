@@ -132,7 +132,7 @@ async def handle_message(client, message):
             bot_is_sleeping = False
 
             # Notificar al MAIN_ADMIN que terminó el descanso
-            await client.send_sticker(
+            await message.send_sticker(
                 chat_id=message.chat.id,
                 sticker="CAACAgIAAxkBAAIKa2fr9k_RUYKn3a2ESnotX5OZix-DAAJlOgAC4KOCB0AuzmaDZs-sHgQ"
             )
