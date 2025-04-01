@@ -31,15 +31,14 @@ async def handle_compress(client, message, username):
     reply_message = message.reply_to_message
     os.mkdir('server')
 
-    # Verificar si el caption empieza con "Look Here" y el remitente es el bot
     if reply_message and reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
         await message.reply("No puedes comprimir este contenido debido a restricciones.", protect_content=True)
         return
 
     try:
         os.system("rm -rf ./server/*")
-        await message.reply("Descargando el archivo para comprimirlo...")
-        
+        progress_msg = await message.reply("Descargando el archivo para comprimirlo...")
+
         def get_file_name(message):
             if message.reply_to_message.document:
                 return os.path.basename(message.reply_to_message.document.file_name)[:50]
@@ -59,25 +58,25 @@ async def handle_compress(client, message, username):
             message.reply_to_message,
             file_name=file_name
         )
-        await message.reply("Comprimiendo el archivo...")
+        await client.edit_message_text(chat_id=message.chat.id, message_id=progress_msg.id, text="Comprimiendo el archivo...")
         
         sizd = user_comp.get(username, 10)
         parts = compressfile(file_path, sizd)
         
-        await message.reply("Se ha comprimido el archivo, ahora se enviarán las partes")
+        await client.edit_message_text(chat_id=message.chat.id, message_id=progress_msg.id, text="Se ha comprimido el archivo, ahora se enviarán las partes")
+
         for part in parts:
             try:
                 await client.send_document(message.chat.id, part)
             except Exception as e:
                 print(f"Error al enviar la parte {part}: {e}")
                 await message.reply(f"Error al enviar la parte {part}: {e}")
-        
-        await message.reply("Esas son todas las partes")
-        shutil.rmtree('server')
-        os.mkdir('server')
+
+        await client.delete_messages(chat_id=message.chat.id, message_ids=[progress_msg.id])
     
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
+        
 
 async def rename(client, message):
     reply_message = message.reply_to_message
