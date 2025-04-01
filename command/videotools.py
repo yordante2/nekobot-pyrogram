@@ -97,14 +97,7 @@ async def listar_tareas(client, chat_id, allowed_ids, message):
 
     await client.send_message(chat_id=chat_id, text=lista_tareas, protect_content=protect_content)
 
-# Comprimir videos
-import os
-import random
-import subprocess
-import uuid
-from command.video_processor import procesar_video  # Importación como indicas
 
-# Función principal para comprimir videos
 async def compress_video(admin_users, client, message, allowed_ids):
     user_id = message.from_user.id
     protect_content = user_id not in allowed_ids
@@ -140,32 +133,38 @@ async def compress_video(admin_users, client, message, allowed_ids):
             return
 
         # Generar la miniatura del video
-        thumbnail_path = generate_thumbnail(video_path)
-        if not thumbnail_path:
+        thumb_path = generate_thumbnail(video_path)
+        if not thumb_path:
             await client.send_message(chat_id=chat_id, text="⚠️ No se pudo generar una miniatura para el video.", protect_content=protect_content)
 
         # Obtener la duración del video
-        video_duration = get_video_duration(video_path)
-        if video_duration <= 0:
+        duration = get_video_duration(video_path)
+        if duration <= 0:
             await client.send_message(chat_id=chat_id, text="⚠️ No se pudo obtener la duración del video.", protect_content=protect_content)
 
         # Procesar el video
-        nombre, description, chat_id, compressed_video_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
+        file_name, description, chat_id, file_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
 
-        # Actualizar descripción con duración
-        description += f"\n\n📽️ Duración: {video_duration} segundos."
+        # Enviar el video comprimido con miniatura, duración y caption
+        await client.send_video(
+            chat_id=user_id,
+            video=file_path,
+            thumb=thumb_path,
+            caption=file_name,
+            duration=duration,
+            protect_content=protect_content
+        )
 
-        # Preparar caption e incluir datos relevantes
-        caption = f"Look Here {nombre}\n\n📽️ Duración: {video_duration} segundos." if protect_content else f"{nombre}\n\n📽️ Duración: {video_duration} segundos."
-        if thumbnail_path:
-            await client.send_photo(chat_id=chat_id, photo=thumbnail_path, caption="🖼️ Miniatura generada.", protect_content=protect_content)
+        # Borrar la miniatura después de enviar el video
+        if thumb_path:
+            os.remove(thumb_path)
 
-        # Enviar el video comprimido
-        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=caption, protect_content=protect_content)
+        # Notificar el resultado al usuario
         await client.send_message(chat_id=chat_id, text=description, protect_content=protect_content)
 
+        # Eliminar los archivos del video procesado
         os.remove(original_video_path)
-        os.remove(compressed_video_path)
+        os.remove(file_path)
     finally:
         try:
             del tareas_en_ejecucion[task_id]
@@ -222,3 +221,4 @@ def get_video_duration(video_path):
     except Exception as e:
         print(f"Error al obtener la duración del video: {e}")
         return 0
+            
