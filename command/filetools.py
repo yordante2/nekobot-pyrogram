@@ -119,7 +119,22 @@ async def rename(client, message):
         await message.reply('Ejecute el comando respondiendo a un archivo')
 
 async def set_size(client, message):
-    valor = int(message.text.split(" ")[1])
-    username = message.from_user.username
-    user_comp[username] = valor
-    await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}")
+    try:
+        valor = int(message.text.split(" ")[1])  # Intentar convertir el valor a entero
+        if valor < 1:  # Validar que el tamaño sea mayor a 0 MB
+            await client.send_sticker(
+                chat_id=message.chat.id,
+                sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
+            )
+            await message.reply("¿Qué haces pendejo? El tamaño debe ser mayor que 0 MB.")
+            return
+        username = message.from_user.username
+        user_comp[username] = valor  # Registrar el tamaño para el usuario
+        await message.reply(f"Tamaño de archivos {valor}MB registrado para el usuario @{username}.")
+    except IndexError:
+        await message.reply("Por favor, proporciona el tamaño del archivo después del comando.")
+    except ValueError:
+        await message.reply("El tamaño proporcionado no es un número válido. Intenta nuevamente.")
+    except Exception as e:  # Capturar cualquier otro error inesperado
+        await message.reply(f"Ha ocurrido un error inesperado: {str(e)}")
+        logging.error(f"Error inesperado en set_size: {str(e)}")
