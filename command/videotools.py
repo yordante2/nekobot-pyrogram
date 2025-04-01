@@ -98,6 +98,13 @@ async def listar_tareas(client, chat_id, allowed_ids, message):
     await client.send_message(chat_id=chat_id, text=lista_tareas, protect_content=protect_content)
 
 # Comprimir videos
+import os
+import random
+import subprocess
+import uuid
+from command.video_processor import procesar_video  # Importación como indicas
+
+# Función principal para comprimir videos
 async def compress_video(admin_users, client, message, allowed_ids):
     user_id = message.from_user.id
     protect_content = user_id not in allowed_ids
@@ -132,12 +139,31 @@ async def compress_video(admin_users, client, message, allowed_ids):
             await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró un video en el mensaje o respuesta asociada.", protect_content=protect_content)
             return
 
+        # Generar la miniatura del video
+        thumbnail_path = generate_thumbnail(video_path)
+        if not thumbnail_path:
+            await client.send_message(chat_id=chat_id, text="⚠️ No se pudo generar una miniatura para el video.", protect_content=protect_content)
+
+        # Obtener la duración del video
+        video_duration = get_video_duration(video_path)
+        if video_duration <= 0:
+            await client.send_message(chat_id=chat_id, text="⚠️ No se pudo obtener la duración del video.", protect_content=protect_content)
+
+        # Procesar el video
         nombre, description, chat_id, compressed_video_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
 
-        caption = f"Look Here {nombre}" if protect_content else nombre
+        # Actualizar descripción con duración
+        description += f"\n\n📽️ Duración: {video_duration} segundos."
 
+        # Preparar caption e incluir datos relevantes
+        caption = f"Look Here {nombre}\n\n📽️ Duración: {video_duration} segundos." if protect_content else f"{nombre}\n\n📽️ Duración: {video_duration} segundos."
+        if thumbnail_path:
+            await client.send_photo(chat_id=chat_id, photo=thumbnail_path, caption="🖼️ Miniatura generada.", protect_content=protect_content)
+
+        # Enviar el video comprimido
         await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=caption, protect_content=protect_content)
         await client.send_message(chat_id=chat_id, text=description, protect_content=protect_content)
+
         os.remove(original_video_path)
         os.remove(compressed_video_path)
     finally:
@@ -149,3 +175,50 @@ async def compress_video(admin_users, client, message, allowed_ids):
         if cola_de_tareas:
             siguiente_tarea = cola_de_tareas.pop(0)
             await compress_video(admin_users, siguiente_tarea["client"], siguiente_tarea["message"], allowed_ids)
+
+# Función para generar miniaturas
+def generate_thumbnail(video_path):
+    try:
+        # Obtener la duración total del video
+        video_duration = get_video_duration(video_path)
+        if video_duration <= 0:
+            raise ValueError("No se pudo obtener la duración del video.")
+
+        # Generar un tiempo aleatorio dentro de la duración total del video
+        random_time = random.randint(0, video_duration - 1)
+        print(f"Generando miniatura en el segundo {random_time}...")
+
+        output_thumb = "miniatura.jpg"  # Nombre fijo para la miniatura
+        subprocess.run([
+            "ffmpeg",
+            "-i", video_path,
+            "-ss", str(random_time),
+            "-vframes", "1",
+            output_thumb
+        ], check=True)
+        return output_thumb
+    except subprocess.CalledProcessError as e:
+        print(f"Error al ejecutar ffmpeg: {e}")
+        return None
+    except Exception as e:
+        print(f"Error al generar la miniatura: {e}")
+        return None
+
+# Función para obtener la duración del video
+def get_video_duration(video_path):
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", video_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        duration = float(result.stdout.strip())
+        return max(1, int(duration))  # Asegurarse de que la duración sea al menos 1 segundo
+    except subprocess.CalledProcessError as e:
+        print(f"Error al ejecutar ffprobe: {e}")
+        return 0
+    except Exception as e:
+        print(f"Error al obtener la duración del video: {e}")
+        return 0
