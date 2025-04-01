@@ -22,12 +22,6 @@ async def handle_start(client, message, app):
     )
     await message.reply(response, reply_markup=keyboard)
 
-# Manejo del callback del botón inline
-@app.on_callback_query()
-async def help_callback_handler(client, callback_query):
-    if callback_query.data == "help":
-        await handle_help_callback(client, callback_query)
-        
     
 async def add_user(client, message, user_id):
     new_user_id = int(message.text.split()[1])
