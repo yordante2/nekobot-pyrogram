@@ -10,12 +10,9 @@ async def procesar_video(client, message, original_video_path, task_id, tareas_e
     progress_message = await client.send_message(chat_id=chat_id, text="🚀 **Iniciando proceso de compresión...**")
 
     try:
-        total_duration = obtener_duracion_video(original_video_path)  # Duración del video original
+        total_duration = obtener_duracion_video(original_video_path)
         start_time = datetime.datetime.now()
-        process_result = comprimir_video(original_video_path, compressed_video_path)  # Procesar el video
-        process = process_result["process"]  # Obtener el proceso de compresión
-        thumbnail_path = process_result["thumbnail"]  # Miniatura generada
-        compressed_duration = process_result["duration"]  # Duración del video comprimido
+        process = comprimir_video(original_video_path, compressed_video_path)
 
         last_update_time = datetime.datetime.now()
 
@@ -25,7 +22,6 @@ async def procesar_video(client, message, original_video_path, task_id, tareas_e
                 await progress_message.edit_text(f"❌ Proceso cancelado para `{task_id}`.")
                 if os.path.exists(compressed_video_path):
                     os.remove(compressed_video_path)
-                if os.path.exists(original_video_path):
                     os.remove(original_video_path)
                 return
 
@@ -59,16 +55,13 @@ async def procesar_video(client, message, original_video_path, task_id, tareas_e
             f"📂 **Tamaño original:** {human_readable_size(original_size // 1024)}\n"
             f"📁 **Tamaño procesado:** {human_readable_size(compressed_size // 1024)}\n"
             f"⌛ **Tiempo de procesamiento:** {str(datetime.datetime.now() - start_time).split('.')[0]}\n"
-            f"🎥 **Duración del video original:** {str(datetime.timedelta(seconds=total_duration))}\n"
-            f"🎥 **Duración del video comprimido:** {str(datetime.timedelta(seconds=compressed_duration))}\n"
+            f"🎥 **Duración del video:** {str(datetime.timedelta(seconds=total_duration))}\n"
             f"🎉 **¡Gracias por usar el bot!**"
         )
 
         nombre = os.path.splitext(os.path.basename(compressed_video_path))[0]
-        return nombre, description, chat_id, compressed_video_path, original_video_path, thumbnail_path, compressed_duration
+        return nombre, description, chat_id, compressed_video_path, original_video_path
     except Exception as e:
         await client.send_message(chat_id=chat_id, text=f"❌ **Ocurrió un error al procesar el video:**\n{e}")
-        if os.path.exists(original_video_path):
-            os.remove(original_video_path)
-        if os.path.exists(compressed_video_path):
-            os.remove(compressed_video_path)
+        os.remove(original_video_path)
+        os.remove(compressed_video_path)
