@@ -145,7 +145,7 @@ async def send_mail(client, message):
         return
     mail_mb = get_mail_limit(user_id)
     mail_delay = os.getenv('MAIL_DELAY')
-    if message.reply_to_message.document or message.reply_to_message.photo:
+    if message.reply_to_message.document or message.reply_to_message.photo or message.reply_to_message.video or message.reply_to_message.sticker:
         media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
         if os.path.getsize(media) <= mail_mb * 1024 * 1024:
             try:
