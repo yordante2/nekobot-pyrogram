@@ -244,22 +244,3 @@ async def compress_video(admin_users, client, message, allowed_ids):
             output_thumb
         ], stdout=devnull, stderr=devnull, check=True)
         return output_thumb
-    except Exception as e:
-        print(f"Error al generar la miniatura: {e}")
-        return None
-
-
-def get_video_duration(video_path):
-    try:
-        result = subprocess.run(
-            ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=duration",
-             "-of", "default=noprint_wrappers=1:nokey=1", video_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        duration = float(result.stdout.strip())
-        return int(duration)  # Duración en segundos (redondeado)
-    except Exception as e:
-        print(f"Error al obtener la duración del video: {e}")
-        return 0
