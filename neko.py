@@ -172,7 +172,7 @@ async def callback_handler(client, callback_query):
 @app.on_callback_query()
 async def help_callback_handler(client, callback_query):
     if callback_query.data == "help":
-        await handle_help_callback(client, callback_query)
+        await handle_help(client, message)
 
         
 #@app.on_callback_query()
