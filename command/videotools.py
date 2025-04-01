@@ -180,6 +180,15 @@ async def compress_video(admin_users, client, message, allowed_ids):
 # Función para generar miniaturas
 def generate_thumbnail(video_path):
     try:
+        # Verificar si el archivo existe
+        if not os.path.exists(video_path):
+            raise FileNotFoundError("El archivo de video no existe.")
+
+        # Verificar el formato del archivo
+        video_extension = os.path.splitext(video_path)[-1].lower()
+        if video_extension not in ['.mp4', '.avi', '.mkv', '.mov']:
+            raise ValueError(f"Formato de video no soportado: {video_extension}")
+
         # Obtener la duración total del video
         video_duration = get_video_duration(video_path)
         if video_duration <= 0:
@@ -187,22 +196,44 @@ def generate_thumbnail(video_path):
 
         # Generar un tiempo aleatorio dentro de la duración total del video
         random_time = random.randint(0, video_duration - 1)
-        print(f"Generando miniatura en el segundo {random_time}...")
 
+        # Intentar métodos alternativos para .mkv
         output_thumb = "miniatura.jpg"  # Nombre fijo para la miniatura
-        subprocess.run([
-            "ffmpeg",
-            "-i", video_path,
-            "-ss", str(random_time),
-            "-vframes", "1",
-            output_thumb
-        ], stdout=devnull, stderr=devnull, check=True)
+        if video_extension == '.mkv':
+            subprocess.run([
+                "ffmpeg",
+                "-i", video_path,
+                "-vf", f"thumbnail,scale=320:240",
+                "-frames:v", "1",
+                output_thumb
+            ], stdout=devnull, stderr=devnull, check=True)
+        else:
+            # Método estándar para otros formatos
+            subprocess.run([
+                "ffmpeg",
+                "-i", video_path,
+                "-ss", str(random_time),
+                "-vframes", "1",
+                output_thumb
+            ], stdout=devnull, stderr=devnull, check=True)
+
+        # Verificar que se haya creado la miniatura
+        if not os.path.exists(output_thumb):
+            raise IOError("La miniatura no se generó correctamente.")
+
         return output_thumb
+
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
+    except ValueError as e:
+        print(f"Error: {e}")
+        return None
     except subprocess.CalledProcessError as e:
         print(f"Error al ejecutar ffmpeg: {e}")
         return None
     except Exception as e:
-        print(f"Error al generar la miniatura: {e}")
+        print(f"Error general: {e}")
         return None
 
 # Función para obtener la duración del video
