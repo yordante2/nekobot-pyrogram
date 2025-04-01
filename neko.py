@@ -4,7 +4,7 @@ import nest_asyncio
 from pyrogram import Client, filters
 from process_command import process_command
 from command.htools import manejar_opcion
-from command.help import handle_help_callback
+from command.help import handle_help_callback, handle_help
 import time  # Importación necesaria
 from stickers import saludos
 import random
