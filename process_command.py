@@ -28,7 +28,7 @@ protect_content_env = os.getenv('PROTECT_CONTENT', '').strip().lower()
 is_protect_content_enabled = protect_content_env == 'true'  # Evaluamos si es "True" en cualquier formato
 auto_users = {}
 
-async def process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id, app):
+async def process_command(client: Client, message: Message, active_cmd: str, admin_cmd: str, user_id: int, username: str, chat_id: int):
     global allowed_ids
     text = message.text.strip().lower() if message.text else ""
     if not is_protect_content_enabled and user_id not in allowed_ids:
