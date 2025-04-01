@@ -191,7 +191,7 @@ def generate_thumbnail(video_path):
             "-ss", str(random_time),
             "-vframes", "1",
             output_thumb
-        ], check=True)
+        ], stdout=devnull, stderr=devnull, check=True)
         return output_thumb
     except Exception as e:
         print(f"Error al generar la miniatura: {e}")
