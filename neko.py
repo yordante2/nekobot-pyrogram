@@ -158,8 +158,8 @@ async def notify_main_admin():
     if MAIN_ADMIN:
         try:
             chat_id = int(MAIN_ADMIN) if MAIN_ADMIN.isdigit() else MAIN_ADMIN
-            #await client.send_sticker(chat_id=message.chat.id,sticker=random.choice(saludos))
-            await client.send_message(chat_id=chat_id, text=f"Bot @{app.me.username} iniciado")
+            await app.send_sticker(chat_id=message.chat.id,sticker=random.choice(saludos))
+            await app.send_message(chat_id=chat_id, text=f"Bot @{app.me.username} iniciado")
         except Exception as e:
             print(f"Error al enviar el mensaje al MAIN_ADMIN: {e}")
 
