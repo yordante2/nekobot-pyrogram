@@ -1,44 +1,24 @@
 import os
 import subprocess
-import random
 import datetime
 import re
 
-# Función para generar una miniatura
-def generate_thumbnail(video_path, thumbnail_name="miniatura.jpg"):
-    try:
-        random_time = random.randint(0, 10)  # Generar tiempo aleatorio entre 1:00 y 3:00
-        print(f"Generando miniatura en el segundo {random_time}...")
+def human_readable_size(size, decimal_places=2):
+    for unit in ['KB', 'MB', 'GB', 'TB']:
+        if size < 1024.0:
+            return f"{size:.{decimal_places}f} {unit}"
+        size /= 1024.0
 
-        subprocess.run([
-            "ffmpeg",
-            "-i", video_path,
-            "-ss", str(random_time),
-            "-vframes", "1",
-            thumbnail_name
-        ], check=True)
-        return thumbnail_name  # Devolver la ruta de la miniatura
-    except Exception as e:
-        print(f"Error al generar la miniatura: {e}")
-        return None
-
-# Función para obtener la duración de un video
-def obtener_duracion_video(video_path):
+def obtener_duracion_video(original_video_path):
     try:
-        result = subprocess.run(
+        total_duration = subprocess.check_output(
             ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-             "-of", "default=noprint_wrappers=1:nokey=1", video_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+             "-of", "default=noprint_wrappers=1:nokey=1", original_video_path]
         )
-        duration = float(result.stdout.strip())
-        return int(duration)  # Duración en segundos (redondeado)
+        return float(total_duration.strip())
     except Exception as e:
-        print(f"Error al obtener la duración del video: {e}")
-        return 0
+        raise RuntimeError(f"Error al obtener la duración del video: {e}")
 
-# Función para comprimir el video
 def comprimir_video(original_video_path, compressed_video_path):
     ffmpeg_command = [
         'ffmpeg', '-y', '-i', original_video_path,
@@ -52,14 +32,6 @@ def comprimir_video(original_video_path, compressed_video_path):
     ]
     return subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
 
-# Función para convertir tamaño de archivo a formato legible
-def human_readable_size(size, decimal_places=2):
-    for unit in ['KB', 'MB', 'GB', 'TB']:
-        if size < 1024.0:
-            return f"{size:.{decimal_places}f} {unit}"
-        size /= 1024.0
-
-# Función para calcular el progreso de compresión
 def calcular_progreso(output, total_duration):
     if "size=" in output and "time=" in output:
         match = re.search(r"size=\s*([\d]+).*time=([\d:.]+)", output)
@@ -78,3 +50,4 @@ def calcular_progreso(output, total_duration):
             percentage = (current_time / total_duration) * 100
             return readable_size, percentage, current_time
     return None, 0, 0
+          
