@@ -132,14 +132,24 @@ async def compress_video(admin_users, client, message, allowed_ids):
             await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró un video en el mensaje o respuesta asociada.", protect_content=protect_content)
             return
 
-        nombre, description, chat_id, compressed_video_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
+        nombre, description, chat_id, compressed_video_path, original_video_path, thumbnail_path, compressed_duration = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
 
         caption = f"Look Here {nombre}" if protect_content else nombre
 
-        await client.send_video(chat_id=chat_id, video=compressed_video_path, caption=caption, protect_content=protect_content)
+        await client.send_video(
+            chat_id=chat_id,
+            video=compressed_video_path,
+            caption=caption,
+            protect_content=protect_content,
+            thumb=thumbnail_path,
+            duration=compressed_duration  # Duración del video añadida aquí
+        )
         await client.send_message(chat_id=chat_id, text=description, protect_content=protect_content)
+
         os.remove(original_video_path)
         os.remove(compressed_video_path)
+        if thumbnail_path and os.path.exists(thumbnail_path):
+            os.remove(thumbnail_path)
     finally:
         try:
             del tareas_en_ejecucion[task_id]
