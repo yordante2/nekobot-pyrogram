@@ -166,6 +166,7 @@ async def send_mail(client, message):
                     server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
                     server.send_message(msg)
                 await message.reply("Archivo enviado correctamente sin compresión.", protect_content=True)
+                os.remove(media)
             except Exception as e:
                 await message.reply(f"Error al enviar el archivo: {e}", protect_content=True)
         else:
@@ -204,6 +205,7 @@ async def send_mail(client, message):
                         server.send_message(msg)
 
                     await message.reply(f"Parte {os.path.basename(part)} enviada correctamente.", protect_content=True)
+                    os.remove(part)
                     time.sleep(float(mail_delay) if mail_delay else 0)
                 except Exception as e:
                     await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}", protect_content=True)
