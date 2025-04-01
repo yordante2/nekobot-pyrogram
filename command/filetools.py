@@ -28,7 +28,8 @@ def compressfile(file_path, part_size):
     return parts
 
 async def handle_compress(client, message, username):
-    reply_message = message.reply_to_message
+    reply_message = message.reply_to_message:
+    os.mkdir('server')
 
     # Verificar si el caption empieza con "Look Here" y el remitente es el bot
     if reply_message and reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
