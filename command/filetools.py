@@ -3,6 +3,7 @@ import shutil
 import random
 import string
 import py7zr
+import time
 from pyrogram import Client, filters
 
 user_comp = {} 
@@ -126,6 +127,7 @@ async def set_size(client, message):
                 chat_id=message.chat.id,
                 sticker="CAACAgIAAxkBAAIF02fm3-XonvGhnnaVYCwO-y71UhThAAJuOgAC4KOCB77pR2Nyg3apHgQ"
             )
+            time.sleep(5)
             await message.reply("¿Qué haces pendejo? El tamaño debe ser mayor que 0 MB.")
             return
         username = message.from_user.username
