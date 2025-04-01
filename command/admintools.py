@@ -11,9 +11,11 @@ from command.help import handle_help_callback, handle_help
 async def handle_start(client, message):
     username = message.from_user.username or "Usuario"
     chat_id = message.chat.id
+    name = f"{message.from_user.first_name}{message.from_user.last_name}"
+    
     await client.send_sticker(chat_id ,sticker=random.choice(saludos))
     response = (
-        f"Bienvenido {username} a Nekobot. Para conocer los comandos escriba /help "
+        f"Bienvenido [{name}](https://t.me/{username}) a Nekobot. Para conocer los comandos escriba /help "
         "o visite la [Página web](https://nakigeplayer.github.io/nekobot-pyrogram/)."
     )
     await message.reply(response)
