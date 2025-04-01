@@ -7,7 +7,7 @@ import re
 # Función para generar una miniatura
 def generate_thumbnail(video_path, thumbnail_name="miniatura.jpg"):
     try:
-        random_time = random.randint(60, 180)  # Generar tiempo aleatorio entre 1:00 y 3:00
+        random_time = random.randint(0, 30)  # Generar tiempo aleatorio entre 1:00 y 3:00
         print(f"Generando miniatura en el segundo {random_time}...")
 
         subprocess.run([
