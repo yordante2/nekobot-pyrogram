@@ -127,18 +127,20 @@ def get_video_metadata(video_path):
         print(f"Error al obtener los metadatos del video: {e}")
         return 0
 
-
-# Función para generar una miniatura desde un fotograma aleatorio
 async def generate_thumbnail(video_path):
     try:
-        # Obtener el número total de fotogramas
-        total_frames = get_video_metadata(video_path)
-        if total_frames <= 0:
-            raise ValueError("No se pudo determinar el número de fotogramas.")
+        # Obtener la duración del video
+        video_duration = get_video_duration(video_path)
+        if video_duration <= 0:
+            raise ValueError("No se pudo determinar la duración del video.")
 
-        # Limitar la selección a los primeros 10,000 fotogramas
-        max_frames = min(total_frames, 10000)
-        random_frame = random.randint(0, max_frames - 1)  # Fotograma aleatorio entre 0 y max_frames - 1
+        # Calcular un segundo aleatorio en los primeros 10,000 fotogramas (o la duración total si es menor)
+        fps = 24  # Fotogramas por segundo (supuesto común)
+        max_frames = min(video_duration * fps, 10000)
+        random_frame = random.randint(0, int(max_frames) - 1)
+
+        # Convertir fotograma en tiempo (segundos)
+        random_time = random_frame / fps
 
         output_thumb = f"{os.path.splitext(video_path)[0]}_miniatura.jpg"
 
@@ -146,7 +148,7 @@ async def generate_thumbnail(video_path):
         subprocess.run([
             "ffmpeg",
             "-i", video_path,
-            "-vf", f"select='eq(n,{random_frame})'",
+            "-ss", str(random_time),
             "-vframes", "1",
             output_thumb
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
@@ -159,7 +161,7 @@ async def generate_thumbnail(video_path):
     except Exception as e:
         print(f"Error al generar la miniatura: {e}")
         return None
-        
+
 def get_video_duration(video_path):
     try:
         result = subprocess.run(
@@ -167,7 +169,7 @@ def get_video_duration(video_path):
                 "ffprobe",
                 "-v", "error",
                 "-select_streams", "v:0",
-                "-show_entries", "stream=duration",
+                "-show_entries", "format=duration",
                 "-of", "default=noprint_wrappers=1:nokey=1",
                 video_path
             ],
@@ -175,9 +177,11 @@ def get_video_duration(video_path):
             stderr=subprocess.PIPE,
             text=True
         )
-        # Convertir el resultado a float y luego a int para representar la duración en segundos
-        duration = float(result.stdout.strip())
-        return int(duration)  # Devuelve la duración en segundos
+        # Manejar resultados no válidos
+        duration = result.stdout.strip()
+        if duration == 'N/A' or not duration:
+            raise ValueError("No se pudo obtener la duración del video.")
+        return int(float(duration))  # Convertir a segundos
     except Exception as e:
         print(f"Error al obtener la duración del video: {e}")
         return 0
