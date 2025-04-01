@@ -68,7 +68,6 @@ async def handle_message(client, message):
 
     # Comando /reactive
     if message.text.startswith("/reactive") and (str(user_id) == MAIN_ADMIN or username == MAIN_ADMIN):
-    :
         if bot_is_sleeping:
             bot_is_sleeping = False
 
