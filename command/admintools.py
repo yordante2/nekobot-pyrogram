@@ -13,14 +13,10 @@ async def handle_start(client, message):
     chat_id = message.chat.id
     await client.send_sticker(chat_id ,sticker=random.choice(saludos))
     response = (
-        f"Bienvenido {username} a Nekobot. Para conocer los comandos escriba /help, "
-        "toque el botón de abajo o visite la [Página web](https://nakigeplayer.github.io/nekobot-pyrogram/)."
+        f"Bienvenido {username} a Nekobot. Para conocer los comandos escriba /help "
+        "o visite la [Página web](https://nakigeplayer.github.io/nekobot-pyrogram/)."
     )
-    # Creación del botón inline
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Ver comandos", callback_data="help")]]
-    )
-    await message.reply(response, reply_markup=keyboard)
+    await message.reply(response)
 
     
 async def add_user(client, message, user_id):
