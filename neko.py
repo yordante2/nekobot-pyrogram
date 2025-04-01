@@ -90,18 +90,33 @@ async def handle_message(client, message):
         await message.reply("Actualmente estoy descansando, no recibo comandos.")
         return
 
-    # Comando /sleep
-    if message.text.startswith("/sleep") and (str(user_id) == MAIN_ADMIN or username.lower() == MAIN_ADMIN.lower()):
+    # Comando /sleep    if message.text.startswith("/sleep") and (str(user_id) == MAIN_ADMIN or username.lower() == MAIN_ADMIN.lower()):
         try:
             global sleep_duration
             sleep_duration = int(message.text.split(" ")[1])
             bot_is_sleeping = True
 
-            # Convertir segundos a horas, minutos y segundos
-            hours = sleep_duration // 3600
+            # Convertir segundos a años, días, horas, minutos y segundos
+            years = sleep_duration // (365 * 24 * 3600)
+            days = (sleep_duration % (365 * 24 * 3600)) // (24 * 3600)
+            hours = (sleep_duration % (24 * 3600)) // 3600
             minutes = (sleep_duration % 3600) // 60
             seconds = sleep_duration % 60
-            formatted_time = f"{hours} horas, {minutes} minutos, {seconds} segundos"
+
+            # Crear formato dinámico
+            formatted_time_parts = []
+            if years > 0:
+                formatted_time_parts.append(f"{years} años")
+            if days > 0:
+                formatted_time_parts.append(f"{days} días")
+            if hours > 0:
+                formatted_time_parts.append(f"{hours} horas")
+            if minutes > 0:
+                formatted_time_parts.append(f"{minutes} minutos")
+            if seconds > 0:
+                formatted_time_parts.append(f"{seconds} segundos")
+
+            formatted_time = ", ".join(formatted_time_parts)
 
             # Enviar sticker y mensaje
             await client.send_sticker(
@@ -126,6 +141,7 @@ async def handle_message(client, message):
         except ValueError:
             await message.reply("Por favor, proporciona un número válido en segundos.")
         return
+
 
     # Comando /access
     if message.text and message.text.startswith("/access") and message.chat.type == "private":
