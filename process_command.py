@@ -44,7 +44,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
         )
 
     if text.startswith("/start"):
-        await asyncio.create_task(handle_start(client, message))
+        await asyncio.create_task(handle_start(client, message, app))
     
     elif text.startswith("/help"):  # Manejo del comando /help
         await asyncio.create_task(handle_help(client, message))
