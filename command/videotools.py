@@ -196,7 +196,7 @@ def generate_thumbnail(video_path):
             "-ss", str(random_time),
             "-vframes", "1",
             output_thumb
-        ], check=True)
+        ], stdout=devnull, stderr=devnull, check=True)
         return output_thumb
     except subprocess.CalledProcessError as e:
         print(f"Error al ejecutar ffmpeg: {e}")
