@@ -5,7 +5,7 @@ import asyncio
 from stickers import saludos
 import random 
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from command.help import handle_help_callback
+from command.help import handle_help_callback, handle_help
 
 # Manejo del comando /start con un botón inline
 async def handle_start(client, message):
