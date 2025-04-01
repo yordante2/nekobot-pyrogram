@@ -2,9 +2,32 @@ import os
 from pyrogram import Client
 from pyrogram.types import Message
 import asyncio
+from stickers import saludos
 
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from command.help import handle_help_callback
+
+# Manejo del comando /start con un botón inline
 async def handle_start(client, message):
-    await message.reply("Funcionando")
+    username = message.from_user.username or "Usuario"
+    chah_id = message.chat_id
+    await app.send_sticker(chat_id ,sticker=random.choice(saludos))
+    response = (
+        f"Bienvenido {username} a Nekobot. Para conocer los comandos escriba /help, "
+        "toque el botón de abajo o visite la [Página web](https://nakigeplayer.github.io/nekobot-pyrogram/)."
+    )
+    # Creación del botón inline
+    keyboard = InlineKeyboardMarkup(
+        [[InlineKeyboardButton("Ver comandos", callback_data="help")]]
+    )
+    await message.reply(response, reply_markup=keyboard)
+
+# Manejo del callback del botón inline
+@app.on_callback_query()
+async def help_callback_handler(client, callback_query):
+    if callback_query.data == "help":
+        await handle_help_callback(client, callback_query)
+        
     
 async def add_user(client, message, user_id):
     new_user_id = int(message.text.split()[1])
