@@ -2,6 +2,7 @@ import asyncio
 import os
 import uuid
 import re
+import subprocess
 from command.video_processor import procesar_video
 
 # Configuración inicial
