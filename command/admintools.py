@@ -8,7 +8,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.help import handle_help_callback
 
 # Manejo del comando /start con un botón inline
-async def handle_start(client, message):
+async def handle_start(client, message, app):
     username = message.from_user.username or "Usuario"
     chah_id = message.chat_id
     await app.send_sticker(chat_id ,sticker=random.choice(saludos))
