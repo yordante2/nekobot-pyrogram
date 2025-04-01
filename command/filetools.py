@@ -27,7 +27,6 @@ def compressfile(file_path, part_size):
             part_num += 1
     return parts
 
-
 async def handle_compress(client, message, username):
     reply_message = message.reply_to_message
 
@@ -67,7 +66,13 @@ async def handle_compress(client, message, username):
         sizd = user_comp.get(username, 10)
         parts = compressfile(file_path, sizd)
         
-        await client.edit_message_text(chat_id=message.chat.id, message_id=progress_msg.id, text="Se ha comprimido el archivo, ahora se enviarán las partes")
+        # Añadir la cantidad de partes al mensaje
+        num_parts = len(parts)
+        await client.edit_message_text(
+            chat_id=message.chat.id,
+            message_id=progress_msg.id,
+            text=f"Se ha comprimido el archivo en {num_parts} partes, ahora se enviarán las partes"
+        )
 
         for part in parts:
             try:
@@ -76,6 +81,9 @@ async def handle_compress(client, message, username):
                 print(f"Error al enviar la parte {part}: {e}")
                 await message.reply(f"Error al enviar la parte {part}: {e}")
         
+        # Eliminar el mensaje de progreso
+        await client.delete_messages(chat_id=message.chat.id, message_ids=[progress_msg.id])
+
         # Enviar el mensaje final de "Esas son todas las partes"
         await message.reply("Esas son todas las partes")
 
@@ -85,6 +93,7 @@ async def handle_compress(client, message, username):
     
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
+    
         
 async def rename(client, message):
     reply_message = message.reply_to_message
