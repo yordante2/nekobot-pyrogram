@@ -3,7 +3,7 @@ from pyrogram import Client
 from pyrogram.types import Message
 import asyncio
 from stickers import saludos
-
+import random 
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.help import handle_help_callback
 
