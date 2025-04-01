@@ -8,9 +8,9 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.help import handle_help_callback
 
 # Manejo del comando /start con un botón inline
-async def handle_start(client, message, app):
+async def handle_start(client, message):
     username = message.from_user.username or "Usuario"
-    chah_id = message.chat_id
+    chat_id = message.chat_id
     await app.send_sticker(chat_id ,sticker=random.choice(saludos))
     response = (
         f"Bienvenido {username} a Nekobot. Para conocer los comandos escriba /help, "
