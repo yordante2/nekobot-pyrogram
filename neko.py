@@ -67,7 +67,7 @@ async def handle_message(client, message):
         return
 
     # Comando /reactive
-    if message.text.startswith("/reactive") and (str(user_id) == MAIN_ADMIN or username.lower() == MAIN_ADMIN.lower()):
+    if message.text and message.text.startswith("/reactive") and (str(user_id) == MAIN_ADMIN or username.lower() == MAIN_ADMIN.lower()):
         if bot_is_sleeping:
             bot_is_sleeping = False
 
@@ -90,7 +90,7 @@ async def handle_message(client, message):
         await message.reply("Actualmente estoy descansando, no recibo comandos.")
         return
 
-    if message.text.startswith("/sleep") and (str(user_id) == MAIN_ADMIN or username.lower() == MAIN_ADMIN.lower()):
+    if message.text and message.text.startswith("/sleep") and (str(user_id) == MAIN_ADMIN or username.lower() == MAIN_ADMIN.lower()):
         try:
             global sleep_duration
             sleep_duration = int(message.text.split(" ")[1])
