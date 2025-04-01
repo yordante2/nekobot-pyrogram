@@ -27,9 +27,13 @@ def compressfile(file_path, part_size):
             part_num += 1
     return parts
 
+
 async def handle_compress(client, message, username):
     reply_message = message.reply_to_message
-    os.mkdir('server')
+
+    # Crear la carpeta 'server' si no existe
+    if not os.path.exists('server'):
+        os.mkdir('server')
 
     if reply_message and reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
         await message.reply("No puedes comprimir este contenido debido a restricciones.", protect_content=True)
@@ -71,13 +75,17 @@ async def handle_compress(client, message, username):
             except Exception as e:
                 print(f"Error al enviar la parte {part}: {e}")
                 await message.reply(f"Error al enviar la parte {part}: {e}")
+        
+        # Enviar el mensaje final de "Esas son todas las partes"
+        await message.reply("Esas son todas las partes")
 
-        await client.delete_messages(chat_id=message.chat.id, message_ids=[progress_msg.id])
+        # Eliminar la carpeta 'server' y recrearla
+        shutil.rmtree('server')
+        os.mkdir('server')
     
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
         
-
 async def rename(client, message):
     reply_message = message.reply_to_message
 
