@@ -153,7 +153,7 @@ async def handle_message(client, message):
     # Procesar comandos activos
     active_cmd = os.getenv('ACTIVE_CMD', '').lower()
     admin_cmd = os.getenv('ADMIN_CMD', '').lower()
-    await process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id)
+    await process_command(client, message, active_cmd, admin_cmd, user_id, username, chat_id, app)
 
 async def notify_main_admin():
     if MAIN_ADMIN:
