@@ -39,35 +39,18 @@ def obtener_duracion_video(video_path):
         return 0
 
 # Función para comprimir el video
-def comprimir_video(original_video_path, compressed_video_path, thumbnail_name="miniatura.jpg"):
-    try:
-        # Comprimir el video con ffmpeg
-        ffmpeg_command = [
-            'ffmpeg', '-y', '-i', original_video_path,
-            '-s', "640x400",
-            '-crf', "28",
-            '-b:a', "80k",
-            '-r', "18",
-            '-preset', "veryfast",
-            '-c:v', "libx265",
-            compressed_video_path
-        ]
-
-        print(f"Comprimiendo video: {original_video_path}...")
-        subprocess.run(ffmpeg_command, check=True)
-
-        # Obtener la duración del video comprimido
-        compressed_duration = obtener_duracion_video(compressed_video_path)
-
-        # Generar miniatura
-        thumbnail_path = generate_thumbnail(compressed_video_path, thumbnail_name)
-
-        # Retornar información del video comprimido
-        return {
-            "compressed_video": compressed_video_path,
-            "thumbnail": thumbnail_path,
-            "duration": compressed_duration
-        }
+def comprimir_video(original_video_path, compressed_video_path):
+    ffmpeg_command = [
+        'ffmpeg', '-y', '-i', original_video_path,
+        '-s', "640x400",
+        '-crf', "28",
+        '-b:a', "80k",
+        '-r', "18",
+        '-preset', "veryfast",
+        '-c:v', "libx265",
+        compressed_video_path
+    ]
+    return subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
     except Exception as e:
         print(f"Error al comprimir el video: {e}")
         return {
