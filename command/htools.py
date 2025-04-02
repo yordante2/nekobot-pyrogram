@@ -12,6 +12,33 @@ callback_data_map = {}
 operation_status = {}
 default_selection_map = {}  # Diccionario para asociar default_selection con user_id
 
+
+def convertir_a_png_sobre_si_misma(img_file):
+    """Convierte una imagen a PNG optimizado y la sobreescribe."""
+    try:
+        # Verificar si el archivo existe
+        if not os.path.isfile(img_file):
+            print(f"Archivo no encontrado: {img_file}")
+            return None
+        
+        with Image.open(img_file) as img:
+            # Convertir a modo RGB si es necesario (por ejemplo, para imágenes en modo 'P' o 'LA')
+            if img.mode not in ("RGB", "RGBA"):
+                img = img.convert("RGBA")
+            
+            nuevo_path = os.path.splitext(img_file)[0] + ".png"  # Ruta con extensión .png
+            img.save(nuevo_path, "PNG", optimize=True)  # Comprimir al máximo
+            
+            # Si el nuevo archivo tiene una extensión diferente, reemplazar el original
+            if nuevo_path != img_file:
+                os.remove(img_file)  # Eliminar el archivo original
+                img_file = nuevo_path  # Actualizar img_file con el nuevo archivo optimizado
+
+            return img_file  # Retorna la ruta actualizada del archivo optimizado
+    except Exception as e:
+        print(f"Error al convertir la imagen {img_file} a PNG: {e}")
+        return None
+        
 def convertir_a_png_con_compresion(image_path, output_dir):
     """Convierte imágenes de cualquier formato a PNG optimizado."""
     try:
@@ -112,6 +139,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
             pdf_file_path = result.get("pdf_file")
 
             if operation_type=="cover":
+                img_file = convertir_a_png_sobre_si_misma(img_file)
                 await message.reply_photo(photo=img_file, caption=caption)
                 os.remove(img_file)
                 continue
@@ -130,6 +158,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
 
             # Envío según la selección del usuario
             if user_default_selection:
+                img_file = convertir_a_png_sobre_si_misma(img_file)
                 await message.reply_photo(photo=img_file, caption=caption)
                 os.remove(img_file)
                 # Enviar archivo según selección
@@ -144,6 +173,7 @@ async def nh_combined_operation(client, message, codes, link_type, protect_conte
                         await client.send_document(message.chat.id, pdf_file_path, caption="", protect_content=protect_content)
             else:
                 # Enviar archivos al administrador y obtener file_id
+                img_file = convertir_a_png_sobre_si_misma(img_file)
                 cbz_file_id = await enviar_archivo_admin_y_obtener_file_id(client, MAIN_ADMIN, cbz_file_path) if cbz_file_path else None
                 pdf_file_id = await enviar_archivo_admin_y_obtener_file_id(client, MAIN_ADMIN, pdf_file_path) if pdf_file_path else None
 
