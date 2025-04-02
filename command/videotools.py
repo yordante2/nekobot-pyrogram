@@ -242,14 +242,20 @@ async def compress_video(admin_users, client, message, allowed_ids):
             video_size = message.video.file_size
             if video_limit and video_size > video_limit and chat_id not in admin_users and chat_id not in vip_users:
                 sticker = random.choice(sobre_mb)
+                await client.send_sticker(chat_id=chat_id, sticker=sticker[0])
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="El archivo es demasiado grande")
-                time.sleep(2)
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="No voy a convertir eso")
                 return
             if video_limit and video_size > video_limit and (chat_id in admin_users or chat_id in vip_users):
                 sticker = random.choice(sobre_mb)
+                await client.send_sticker(chat_id=chat_id, sticker=sticker[0])
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="El archivo es demasiado grande")
-                time.sleep(2)
+                time.sleep(1)
+                await client.send_sticker(chat_id=chat_id, sticker=sticker[1])
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="Pero lo haré solo por tí")
                 
             video_path = await client.download_media(message.video)
@@ -257,14 +263,20 @@ async def compress_video(admin_users, client, message, allowed_ids):
             video_size = message.reply_to_message.video.file_size
             if video_limit and video_size > video_limit and chat_id not in admin_users and chat_id not in vip_users:
                 sticker = random.choice(sobre_mb)
+                await client.send_sticker(chat_id=chat_id, sticker=sticker[0])
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="El archivo es demasiado grande")
-                time.sleep(2)
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="No voy a convertir eso")
                 return
             if video_limit and video_size > video_limit and (chat_id in admin_users or chat_id in vip_users):
                 sticker = random.choice(sobre_mb)
+                await client.send_sticker(chat_id=chat_id, sticker=sticker[0])
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="El archivo es demasiado grande")
-                time.sleep(2)
+                time.sleep(1)
+                await client.send_sticker(chat_id=chat_id, sticker=sticker[1])
+                time.sleep(1)
                 await client.send_message(chat_id=chat_id, text="Pero lo haré solo por tí")
                 
             video_path = await client.download_media(message.reply_to_message.video)
