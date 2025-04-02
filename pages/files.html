@@ -8,23 +8,65 @@
     <link rel="icon" href="https://cdn.imgchest.com/files/49zc2glz9ey.png" type="image/png">
     <!-- Importar el archivo CSS -->
     <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        @media screen and (min-width: 768px) {
+            body {
+                font-size: 18px;
+            }
+            .tutorial {
+                display: flex;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            .tutorial img {
+                max-width: 50%;
+            }
+        }
+
+        @media screen and (max-width: 767px) {
+            .tutorial img {
+                display: block;
+                margin: 0 auto;
+                max-width: 90%;
+            }
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        p {
+            text-align: justify;
+        }
+    </style>
 </head>
 <body>
     <button class="mode-toggle" onclick="toggleMode()">Modo Claro</button>
     <h1>Tutorial de Archivos</h1>
 
     <div class="tutorial">
-        <h2>1. Renombrar Archivos</h2>
-        <p>
-            Escriba <code>/rename</code> en respuesta a un archivo e introduzca el nuevo nombre. El archivo será descargado y enviado con el nuevo nombre al chat.
-        </p>
         <img src="https://cdn.imgchest.com/files/4apc5qon9k4.png" alt="Renombrar Archivos">
-        
-        <h2>2. Comprimir Archivos</h2>
-        <p>
-            Escriba <code>/compress</code> en respuesta a un archivo para descargar el archivo y comprimirlo en partes. El volumen por defecto son partes de 10 Mb. Cada usuario puede cambiar el volumen de sus partes usando <code>/setsize</code>.
-        </p>
+        <div>
+            <h2>1. Renombrar Archivos</h2>
+            <p>
+                Escriba <code>/rename</code> en respuesta a un archivo e introduzca el nuevo nombre. El archivo será descargado y enviado con el nuevo nombre al chat.
+            </p>
+        </div>
+    </div>
+    
+    <div class="tutorial">
         <img src="https://cdn.imgchest.com/files/46acq8e9l97.png" alt="Comprimir Archivos">
+        <div>
+            <h2>2. Comprimir Archivos</h2>
+            <p>
+                Escriba <code>/compress</code> en respuesta a un archivo para descargar el archivo y comprimirlo en partes. El volumen por defecto son partes de 10 Mb. Cada usuario puede cambiar el volumen de sus partes usando <code>/setsize</code>.
+            </p>
+        </div>
     </div>
 
     <div class="espacio-final"></div>
