@@ -259,7 +259,7 @@ async def compress_video(admin_users, client, message, allowed_ids):
                 await client.send_message(chat_id=chat_id, text="Pero lo haré solo por tí")
                 
             video_path = await client.download_media(message.video)
-        elif mpar_seleccionado = random.choice(sobre_mb)essage.reply_to_message and message.reply_to_message.video:
+        elif message.reply_to_message and message.reply_to_message.video:
             video_size = message.reply_to_message.video.file_size
             if video_limit and video_size > video_limit and chat_id not in admin_users and chat_id not in vip_users:
                 sticker = random.choice(sobre_mb)
