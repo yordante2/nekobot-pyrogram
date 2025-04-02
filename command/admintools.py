@@ -24,7 +24,7 @@ async def handle_start(client, message):
     
 
     
-async def add_user(client, message, user_id, chat_id)):
+async def add_user(client, message, user_id, chat_id):
     new_user_id = int(message.text.split()[1])
     temp_users.append(new_user_id)
     allowed_users.append(new_user_id)
