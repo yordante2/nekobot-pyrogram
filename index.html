@@ -6,15 +6,8 @@
     <title>Neko Bot</title>
     <!-- Favicon -->
     <link rel="icon" href="https://cdn.imgchest.com/files/49zc2glz9ey.png" type="image/png">
-    <!-- CSS solo para la lista -->
-    <style>
-        #tutorial-list {
-            display: none; /* Ocultar inicialmente */
-        }
-        #tutorial-list.visible {
-            display: block; /* Mostrar cuando la clase 'visible' esté aplicada */
-        }
-    </style>
+    <!-- Importar tu archivo CSS -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="rectangulo">
@@ -25,7 +18,10 @@
         </ul>
     </div>
 
-    <!-- JavaScript solo para la lista -->
+    <!-- Importar tu archivo JavaScript -->
+    <script src="scripts.js"></script>
+
+    <!-- JavaScript específico para la lista -->
     <script>
         function toggleList() {
             const tutorialList = document.getElementById('tutorial-list');
