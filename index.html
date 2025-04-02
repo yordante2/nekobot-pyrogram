@@ -6,39 +6,27 @@
     <title>Neko Bot</title>
     <!-- Favicon -->
     <link rel="icon" href="https://cdn.imgchest.com/files/49zc2glz9ey.png" type="image/png">
-    <!-- Estilos en el HTML -->
+    <link rel="stylesheet" href="styles.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #000; /* Oscuro por defecto */
-            color: #fff; /* Texto blanco por defecto */
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        body.modo-claro {
-            background-color: #fff; /* Fondo blanco */
-            color: #000; /* Texto negro */
-        }
-
+        /* Rectángulo */
         .rectangulo {
             padding: 15px;
             margin: 10px;
             border: 1px solid #ccc;
             background-color: #333; /* Oscuro por defecto */
             border-radius: 5px;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.3s ease;
         }
 
+        /* Rectángulo en modo claro */
         body.modo-claro .rectangulo {
-            background-color: #f0f0f0; /* Fondo claro en modo claro */
-            color: #000; /* Texto negro en modo claro */
+            background-color: #f0f0f0; /* Claro en modo claro */
         }
 
+        /* Enlaces */
         a {
             text-decoration: none;
-            color: #ffffff; /* Blanco en modo oscuro */
+            color: #ffffff; /* Blanco por defecto en modo oscuro */
             transition: color 0.3s ease;
         }
 
@@ -50,6 +38,7 @@
             text-decoration: underline; /* Subrayado al pasar el cursor */
         }
 
+        /* Lista de tutoriales */
         #tutorial-list {
             display: none; /* Ocultar inicialmente */
             margin-top: 10px;
@@ -84,8 +73,8 @@
         </div>
     </div>
     <div class="espacio-final"></div>
-    
-    <!-- Importar JavaScript -->
+
+    <!-- JavaScript -->
     <script src="scripts.js"></script>
     <script>
         function toggleMode() {
