@@ -252,7 +252,16 @@ async def compress_video(admin_users, client, message, allowed_ids):
             video_path = await client.download_media(message.video)
         elif message.reply_to_message and message.reply_to_message.video:
             video_size = message.reply_to_message.video.file_size
-            await client.send_message(chat_id=chat_id, text=video_size)
+            if video_limit and video_size > video_limit and chat_id not in admin_users and chat_id not in vip_users:
+                await client.send_message(chat_id=chat_id, text="El archivo es demasiado grande")
+                time.sleep(2)
+                await client.send_message(chat_id=chat_id, text="No voy a convertir eso")
+                return
+            if video_limit and video_size > video_limit and (chat_id in admin_users or chat_id in vip_users):
+                await client.send_message(chat_id=chat_id, text="El archivo es demasiado grande")
+                time.sleep(2)
+                await client.send_message(chat_id=chat_id, text="Pero lo haré solo por tí")
+                
             video_path = await client.download_media(message.reply_to_message.video)
         else:
             await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró un video en el mensaje o respuesta asociada.", protect_content=protect_content)
