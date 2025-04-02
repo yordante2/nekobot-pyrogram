@@ -6,7 +6,6 @@
     <title>Neko Bot - Tutorial de Archivos</title>
     <!-- Favicon -->
     <link rel="icon" href="https://cdn.imgchest.com/files/49zc2glz9ey.png" type="image/png">
-    <!-- Importar el archivo CSS -->
     <link rel="stylesheet" href="../styles.css">
     <style>
         body {
@@ -14,19 +13,20 @@
             line-height: 1.6;
             margin: 0;
             padding: 0;
-            background-color: #000000; /* Fondo negro por defecto */
-            color: #ffffff; /* Texto blanco por defecto */
+            background-color: #000; /* Negro por defecto */
+            color: #fff; /* Blanco por defecto */
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         button.mode-toggle {
-            position: fixed; /* Fijo en la esquina superior derecha */
+            position: fixed; /* Fijo en la esquina */
             top: 10px;
             right: 10px;
-            font-size: 12px;
-            padding: 5px 10px;
-            background-color: #007BFF; /* Botón azul */
-            color: #ffffff; /* Texto del botón blanco */
+            width: auto; /* Ajusta el ancho del botón al contenido */
+            font-size: 10px; /* Botón pequeño */
+            padding: 4px 8px; /* Espaciado interno compacto */
+            background-color: #007BFF; /* Azul */
+            color: #fff; /* Texto blanco */
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -35,8 +35,7 @@
         }
 
         button.mode-toggle:active {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px); /* Animación de salto */
         }
 
         @media screen and (min-width: 768px) {
@@ -51,7 +50,6 @@
             }
             .tutorial img {
                 max-width: 60%;
-                flex-shrink: 0;
             }
         }
 
@@ -70,14 +68,6 @@
         h1 {
             text-align: center;
             margin-top: 50px;
-        }
-
-        h2 {
-            margin-top: 20px;
-        }
-
-        p {
-            text-align: justify;
         }
     </style>
 </head>
