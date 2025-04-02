@@ -6,3 +6,21 @@ saludos = [
     "CAACAgIAAxkBAAIDSWfsLm6zBLDjNuGtZf3DUvDvyeBRAAJbOgAC4KOCB8-HMMp7lR0XHgQ",
     "CAACAgIAAxkBAAIDTmfsLsKwyftIuhDk0_-btfnPWdcVAAJ3OgAC4KOCB5EZh-H5lFiCHgQ"
 ]
+
+sobre_mb_1 = ["CAACAgIAAxkBAAIDcGftQVVSkAcbDJzPGQiFhCbEor5hAAJyOgAC4KOCBxhs9qWc6ugeHgQ",
+            "CAACAgIAAxkBAAIDcWftQVn3DNhAVEIBKN1sVeu8BH1TAAJ6OgAC4KOCBz_GB07_2GQlHgQ",
+            "CAACAgIAAxkBAAIDcmftQV-6_YG2bXsbCaOG3qbUCl0bAAKHOgAC4KOCB_5GQrElj-RPHgQ",
+            "CAACAgIAAxkBAAIDdGftRFSBfT0yN3jcjUr3XFZR_mzoAAJzOgAC4KOCB0lq0bhAkfgwHgQ",
+            "CAACAgIAAxkBAAIDdmftRGYHid66ffHOAAH2JMHPRjgKZgAClDoAAuCjggdcV-SbLFQpoR4E",
+            "CAACAgIAAxkBAAIDeWftRIKPYxS-WLVBvc6XNhL9SmeTAAKdOgAC4KOCB15RXUDytE0VHgQ"
+]
+
+sobre_mb_2 = ["CAACAgIAAxkBAAIDjGftRbD1kqNtYPk5rN_1wtmx3g3UAANLAALgo4IHSThkw9LIz3QeBA",
+            "CAACAgIAAxkBAAIDi2ftRbAMOBsWQVSFfxJryMoiTB5jAAITSwAC4KOCB-MzZQMkBJlwHgQ",
+            "CAACAgIAAxkBAAIDkGftRbBhj3EHo0ABjmDJqf5rytdwAAJsOgAC4KOCBwQdUndPgkW7HgQ",
+            "CAACAgIAAxkBAAIDkWftRbAPSOrxlmezLHS-Fa-ovqLlAAJdOgAC4KOCB1ZzBdh1FW2fHgQ",
+            "CAACAgIAAxkBAAIDj2ftRbAGowoyh6Sn5zitFrgw2xP4AAJrOgAC4KOCB4xO6pdbj3kSHgQ",
+            "CAACAgIAAxkBAAIDjWftRbCx111hKQSWhvoHzLLDk2poAAKcOgAC4KOCBxAowS4zf2eKHgQ"
+             ]
+
+sobre_mb = list(zip(sobre_mb_1, sobre_mb_2))
