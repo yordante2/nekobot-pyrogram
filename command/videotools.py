@@ -237,7 +237,7 @@ async def compress_video(admin_users, client, message, allowed_ids):
     tareas_en_ejecucion[task_id] = {"cancel": False, "user_id": user_id}
     await client.send_message(chat_id=chat_id, text=f"🎥 Preparando la compresión del video...\n", protect_content=protect_content)
 
-        try:
+    try:
         if message.video or (message.document and message.document.mime_type.startswith("video/")):
             video_size = message.video.file_size if message.video else message.document.file_size
 
