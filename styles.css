@@ -57,3 +57,57 @@ a:hover {
 #tutorial-list.visible {
     display: block; /* Mostrar cuando tenga la clase visible */
 }
+
+/* Secciones */
+.left-section, .right-section {
+    flex: 1; /* Secciones con igual proporción */
+}
+
+.right-section {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.left-section {
+    margin-top: 20px;
+}
+
+img {
+    margin-top: 20px;
+    max-width: 100%; /* No excede el contenedor */
+    height: auto;
+    width: 300px; /* Ancho para pantallas pequeñas */
+    transition: width 0.3s; /* Transición para tamaño dinámico */
+}
+
+@media screen and (min-width: 768px) {
+    .main-container {
+        display: flex; /* Configuración en fila */
+        flex-direction: row; /* Orden horizontal */
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px; /* Espaciado entre columnas */
+    }
+
+    .left-section {
+        order: 1; /* Descripciones y tutoriales a la izquierda */
+        align-self: flex-start;
+    }
+
+    .right-section {
+        order: 2; /* H1 y foto a la derecha */
+        text-align: center;
+        align-self: flex-start;
+    }
+
+    img {
+        width: 200px; /* Imagen más pequeña en computadoras */
+    }
+}
+
+/* Diseño responsivo para móviles */
+@media screen and (max-width: 767px) {
+    img {
+        width: 100%; /* Imagen ajustada al ancho del contenedor */
+    }
+}
