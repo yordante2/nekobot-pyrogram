@@ -26,6 +26,8 @@ def compressfile(file_path, part_size):
                 part.write(part_data)
             parts.append(part_file)
             part_num += 1
+
+    os.remove(file_path)
     return parts
 
 async def handle_compress(client, message, username):
@@ -78,15 +80,18 @@ async def handle_compress(client, message, username):
         for part in parts:
             try:
                 await client.send_document(message.chat.id, part)
+                os.remove(part)
             except Exception as e:
                 print(f"Error al enviar la parte {part}: {e}")
                 await message.reply(f"Error al enviar la parte {part}: {e}")
+                os.remove(part)
         
         # Eliminar el mensaje de progreso
         await client.delete_messages(chat_id=message.chat.id, message_ids=[progress_msg.id])
 
         # Enviar el mensaje final de "Esas son todas las partes"
         await message.reply("Esas son todas las partes")
+        os.remove(file_path)
 
         # Eliminar la carpeta 'server' y recrearla
         shutil.rmtree('server')
