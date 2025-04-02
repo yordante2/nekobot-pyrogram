@@ -34,16 +34,38 @@ async def update_video_settings(client, message, allowed_ids):
 
     global video_settings
     try:
+        # Obtener los parámetros del comando
         command_params = message.text.split()[1:]
+        
+        # Validar que haya parámetros después del comando
+        if not command_params:
+            raise ValueError("No se proporcionaron parámetros para actualizar configuraciones.")
+
+        # Crear un diccionario con los parámetros
         params = dict(item.split('=') for item in command_params)
+
+        # Validar y actualizar configuraciones
         for key, value in params.items():
             if key in video_settings:
-                # Validación adicional
                 if key == 'resolution' and not re.match(r'^\d+x\d+$', value):
-                    raise ValueError("Resolución inválida. Usa formato WIDTHxHEIGHT.")
+                    raise ValueError("Resolución inválida. Usa el formato WIDTHxHEIGHT.")
+                elif key == 'crf' and not value.isdigit():
+                    raise ValueError("El parámetro 'crf' debe ser un número.")
+                elif key == 'audio_bitrate' and not re.match(r'^\d+k$', value):
+                    raise ValueError("Audio bitrate inválido. Usa un valor en kbps, como '80k'.")
+                elif key == 'fps' and not value.isdigit():
+                    raise ValueError("El parámetro 'fps' debe ser un número.")
+                elif key == 'preset' and value not in ['ultrafast', 'superfast', 'veryfast', 'faster', 'fast', 'medium', 'slow', 'slower', 'veryslow']:
+                    raise ValueError("Preset inválido. Usa uno de los valores válidos.")
+                elif key == 'codec' and value not in ['libx264', 'libx265', 'libvpx']:
+                    raise ValueError("Codec inválido. Usa 'libx264', 'libx265' o 'libvpx'.")
+                
                 video_settings[key] = value
-        configuracion_texto = "/calidad " + re.sub(r"[{},']", "", str(video_settings)).replace(":", "=").replace(",", " ")
+        
+        # Convertir el diccionario a texto para mostrar en el mensaje de respuesta
+        configuracion_texto = "/calidad " + " ".join(f"{k}={v}" for k, v in video_settings.items())
         await message.reply_text(f"⚙️ Configuraciones de video actualizadas:\n`{configuracion_texto}`", protect_content=protect_content)
+    
     except ValueError as ve:
         await message.reply_text(f"❌ Error de validación:\n{ve}", protect_content=protect_content)
     except Exception as e:
