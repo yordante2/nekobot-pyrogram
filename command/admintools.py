@@ -7,18 +7,21 @@ import random
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.help import handle_help_callback, handle_help
 
-# Manejo del comando /start con un botón inline
 async def handle_start(client, message):
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name or ""
+    name = f"{first_name} {last_name}".strip()  # Combina nombres y elimina espacios extra
     username = message.from_user.username or "Usuario"
-    chat_id = message.chat.id
-    name = f"{message.from_user.first_name}{message.from_user.last_name}"
-    
-    await client.send_sticker(chat_id ,sticker=random.choice(saludos))
+
+    await client.send_sticker(message.chat.id, sticker=random.choice(saludos))
     response = (
-        f"Bienvenido [{name}](https://t.me/{username}) a Nekobot. Para conocer los comandos escriba /help "
-        "o visite la [Página web](https://nakigeplayer.github.io/nekobot-pyrogram/)."
+        f"Bienvenido ([{name}](https://t.me/{username})) a Nekobot. "  # Enlace al perfil
+        "Para conocer los comandos escriba /help o visite la [página oficial](https://nakigeplayer.github.io/nekobot-pyrogram/)."  # Enlace funcional
     )
-    await message.reply(response)
+
+    # Evita la vista previa de enlaces en el mensaje
+    await message.reply(response, disable_web_page_preview=True)
+    
 
     
 async def add_user(client, message, user_id):
