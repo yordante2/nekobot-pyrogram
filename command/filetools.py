@@ -99,29 +99,60 @@ async def handle_compress(client, message, username):
 async def rename(client, message):
     reply_message = message.reply_to_message
 
-    # Verificar si el caption empieza con "Look Here" y el remitente es el bot
-    if reply_message and reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
-        await message.reply("No puedes renombrar este contenido debido a restricciones.", protect_content=True)
-        return
-
     if reply_message and reply_message.media:
         try:
+            # Obtenemos el nuevo nombre desde el comando del usuario
             new_name = message.text.split(' ', 1)[1]
-            await message.reply("Reenviando el archivo con un nuevo nombre...")
+            await message.reply("Reenviando la media con el nuevo nombre...")
 
-            # Reenviar el archivo sin descargarlo, especificando el nuevo nombre
-            if reply_message.document:
+            if reply_message.sticker:
+                await client.send_photo(
+                    chat_id=message.chat.id,
+                    photo=reply_message.sticker.file_id,
+                    file_name=new_name  # Asignar el nombre del archivo
+                )
+            elif reply_message.document:
+                # Para documentos
                 await client.send_document(
                     chat_id=message.chat.id,
-                    document=reply_message.document.file_id,  # Reutilizar file_id
-                    file_name=new_name  # Cambiar el nombre del archivo
+                    document=reply_message.document.file_id,
+                    file_name=new_name  # Asignar nuevo nombre al documento
+                )
+            elif reply_message.video:
+                # Para videos
+                await client.send_video(
+                    chat_id=message.chat.id,
+                    video=reply_message.video.file_id,
+                    caption=new_name  # Asignar el nuevo nombre como caption
+                )
+            elif reply_message.photo:
+                # Para fotos
+                await client.send_photo(
+                    chat_id=message.chat.id,
+                    photo=reply_message.photo.file_id,
+                    caption=new_name  # Usar el nuevo nombre como caption
+                )
+            elif reply_message.audio:
+                # Para audios
+                await client.send_audio(
+                    chat_id=message.chat.id,
+                    audio=reply_message.audio.file_id,
+                    title=new_name  # Asignar nuevo nombre como título
+                )
+            elif reply_message.voice:
+                # Para notas de voz
+                await client.send_voice(
+                    chat_id=message.chat.id,
+                    voice=reply_message.voice.file_id,
+                    caption=new_name  # Usar el nuevo nombre como caption
                 )
             else:
-                await message.reply("El tipo de archivo no es compatible para renombrar.")
+                # Si el tipo de media no está soportado
+                await message.reply("Este tipo de media aún no está soportado para renombrar.")
         except Exception as e:
             await message.reply(f'Error: {str(e)}')
     else:
-        await message.reply('Ejecute el comando respondiendo a un archivo')
+        await message.reply('Por favor responde a un mensaje que contenga media para renombrar.')
 
 
 async def set_size(client, message):
