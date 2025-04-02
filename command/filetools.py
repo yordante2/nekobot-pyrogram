@@ -29,7 +29,7 @@ def compressfile(file_path, part_size):
 
     os.remove(file_path)
     return parts
-
+    
 def compressfile_direct(file_path, part_size):
     parts = []
     part_size *= 1024 * 1024  # Convertir a bytes
@@ -40,15 +40,22 @@ def compressfile_direct(file_path, part_size):
             part_data = file.read(part_size)
             if not part_data:
                 break
-            # Si solo hay una parte, no añadir .001 al nombre
-            if part_num == 1 and len(part_data) < part_size:
-                archive_part_path = f"{file_path}.7z"
-            else:
-                archive_part_path = f"{file_path}.part{part_num:03d}.7z"
+
+            # Crear un archivo temporal para almacenar los datos del fragmento
+            temp_part_path = f"{file_path}.part{part_num:03d}"
+            with open(temp_part_path, 'wb') as temp_file:
+                temp_file.write(part_data)
+
+            # Crear el archivo comprimido .7z para la parte actual
+            archive_part_path = f"{temp_part_path}.7z"
             with py7zr.SevenZipFile(archive_part_path, 'w') as archive:
-                archive.write_data(part_data, f"part_{part_num:03d}")
+                archive.write(temp_part_path, os.path.basename(temp_part_path))
+
             parts.append(archive_part_path)
             part_num += 1
+
+            # Eliminar el archivo temporal una vez comprimido
+            os.remove(temp_part_path)
 
     os.remove(file_path)  # Opcional: Eliminar el archivo original
     return parts
