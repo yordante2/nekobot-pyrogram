@@ -81,6 +81,11 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/nh"):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                codes_limpiados = [re.sub(r"https://nhentai\.net|https://3hentai\.net|https://es.hentai\.com|/d/|/g/|/", "", code).strip() for code in codes]
+                if codes_limpiados != codes:
+                    codes = codes_limpiados
+                    await message.reply("Solo son necesarios los números pero ok")
+                
                 #global link_type
                 link_type = "nh"
                 operation_type = "download"
@@ -92,6 +97,11 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/3h"):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                codes_limpiados = [re.sub(r"https://nhentai\.net|https://3hentai\.net|https://es.hentai\.com|/d/|/g/|/", "", code).strip() for code in codes]
+                if codes_limpiados != codes:
+                    codes = codes_limpiados
+                    await message.reply("Solo son necesarios los números pero ok")
+                    
                 #global link_type
                 link_type = "3h"
                 operation_type = "download"
@@ -103,6 +113,11 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith(("/cover3h")):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                codes_limpiados = [re.sub(r"https://nhentai\.net|https://3hentai\.net|https://es.hentai\.com|/d/|/g/|/", "", code).strip() for code in codes]
+                if codes_limpiados != codes:
+                    codes = codes_limpiados
+                    await message.reply("Solo son necesarios los números pero ok")
+                    
                 #global link_type
                 link_type = "3h"
                 operation_type = "cover"
@@ -114,6 +129,11 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
             elif text.startswith("/covernh"):
                 parts = text.split(maxsplit=1)
                 codes = parts[1].split(',') if len(parts) > 1 and ',' in parts[1] else [parts[1]] if len(parts) > 1 else []
+                codes_limpiados = [re.sub(r"https://nhentai\.net|https://3hentai\.net|https://es.hentai\.com|/d/|/g/|/", "", code).strip() for code in codes]
+                if codes_limpiados != codes:
+                    codes = codes_limpiados
+                    await message.reply("Solo son necesarios los números pero ok")
+                    
                 #global link_type
                 link_type = "nh"
                 operation_type = "cover"
@@ -233,7 +253,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 codes = await summarize_lines(lines)
                 if codes:
                     codes_list = codes.split(", ")
-                    for i in range(0, len(codes_list), 25):
+                    for i in range(0, len(codes_list), 25):q
                         await message.reply(", ".join(codes_list[i:i+25]))
                 else:
                     await message.reply("No se encontraron códigos en el archivo.")
