@@ -18,8 +18,19 @@
 
         button.mode-toggle {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        button.mode-toggle:active {
+            transform: translateY(-10px); /* Hace que el botón salte */
         }
 
         @media screen and (min-width: 768px) {
@@ -33,7 +44,7 @@
                 margin-bottom: 40px;
             }
             .tutorial img {
-                max-width: 60%; /* Aumenta el tamaño de la imagen */
+                max-width: 60%;
                 flex-shrink: 0;
             }
         }
@@ -52,7 +63,7 @@
 
         h1 {
             text-align: center;
-            margin-top: 80px; /* Ajuste para evitar solapamiento con el botón */
+            margin-top: 50px;
         }
 
         h2 {
