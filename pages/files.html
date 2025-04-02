@@ -19,22 +19,24 @@
         }
 
         button.mode-toggle {
-            position: absolute; /* Botón absolutamente colocado */
-            top: 10px; /* Pegado a la esquina */
-            right: 10px; /* Pegado a la esquina */
-            font-size: 12px; /* Texto del botón */
-            padding: 8px 16px; /* Tamaño compacto */
+            position: fixed; /* Fijado a la esquina */
+            top: 10px;
+            right: 10px;
+            font-size: 12px; /* Tamaño del texto del botón */
+            padding: 8px 16px; /* Botón compacto */
             background-color: #007BFF; /* Azul */
             color: #fff; /* Texto blanco */
             border: none;
             border-radius: 4px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            width: auto; /* Ancho ajustado al contenido */
+            display: inline-block; /* Restringe el ancho al contenido */
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         button.mode-toggle:active {
-            transform: translateY(-3px); /* Animación de salto */
+            transform: translateY(-3px); /* Efecto de salto */
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
         }
 
