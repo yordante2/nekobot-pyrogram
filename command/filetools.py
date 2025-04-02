@@ -11,10 +11,20 @@ compression_size = 10
 
 def compressfile(file_path, part_size):
     parts = []
-    part_size *= 1024 * 1024  
+    part_size *= 1024 * 1024  # Convertir el tamaño de parte a bytes
     archive_path = f"{file_path}.7z"
+
+    # Crear el archivo comprimido
     with py7zr.SevenZipFile(archive_path, 'w') as archive:
         archive.write(file_path, os.path.basename(file_path))
+        os.remove(file_path)  # Eliminar el archivo original
+
+    # Comprobar el tamaño del archivo comprimido
+    archive_size = os.path.getsize(archive_path)
+    if archive_size < part_size:
+        return [archive_path]  # Retornar el archivo comprimido
+
+    # Dividir el archivo comprimido en partes si excede el tamaño de parte
     with open(archive_path, 'rb') as archive:
         part_num = 1
         while True:
@@ -27,8 +37,12 @@ def compressfile(file_path, part_size):
             parts.append(part_file)
             part_num += 1
 
-    os.remove(file_path)
+    os.remove(archive_path)  # Eliminar el archivo comprimido original
     return parts
+
+
+
+
 async def handle_compress(client, message, username):
     reply_message = message.reply_to_message
 
@@ -90,7 +104,7 @@ async def handle_compress(client, message, username):
 
         # Enviar el mensaje final de "Esas son todas las partes"
         await message.reply("Esas son todas las partes")
-        os.remove(file_path)
+        
 
         # Eliminar la carpeta 'server' y recrearla
         shutil.rmtree('server')
