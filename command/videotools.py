@@ -20,14 +20,6 @@ max_tareas = int(os.getenv('MAX_TASKS', '1'))
 tareas_en_ejecucion = {}
 cola_de_tareas = []
 
-# Convertir tamaño en formato legible
-def human_readable_size(size, decimal_places=2):
-    for unit in ['MB', 'GB', 'TB']:
-        if size < 1024.0:
-            return f"{size:.{decimal_places}f} {unit}"
-        size /= 1024.0
-
-# Actualizar configuraciones de video
 async def update_video_settings(client, message, allowed_ids):
     user_id = message.from_user.id
     protect_content = user_id not in allowed_ids
@@ -37,14 +29,21 @@ async def update_video_settings(client, message, allowed_ids):
         # Obtener los parámetros del comando
         command_params = message.text.split()[1:]
         
-        # Validar que haya parámetros después del comando
+        # Si no hay parámetros, devolver las configuraciones actuales en formato de comando
         if not command_params:
-            raise ValueError("No se proporcionaron parámetros para actualizar configuraciones.")
+            configuracion_actual = "/calidad " + " ".join(f"{k}={v}" for k, v in video_settings.items())
+            await message.reply_text(f"⚙️ Configuración actual:\n`{configuracion_actual}`", protect_content=protect_content)
+            return
+        
+        # Crear un diccionario con los parámetros, validando el formato clave=valor
+        params = {}
+        for item in command_params:
+            if "=" not in item or len(item.split("=")) != 2:
+                raise ValueError(f"Formato inválido para el parámetro: '{item}'. Usa clave=valor.")
+            key, value = item.split("=")
+            params[key] = value
 
-        # Crear un diccionario con los parámetros
-        params = dict(item.split('=') for item in command_params)
-
-        # Validar y actualizar configuraciones
+        # Validar y actualizar configuraciones solo para los parámetros proporcionados
         for key, value in params.items():
             if key in video_settings:
                 if key == 'resolution' and not re.match(r'^\d+x\d+$', value):
@@ -61,8 +60,8 @@ async def update_video_settings(client, message, allowed_ids):
                     raise ValueError("Codec inválido. Usa 'libx264', 'libx265' o 'libvpx'.")
                 
                 video_settings[key] = value
-        
-        # Convertir el diccionario a texto para mostrar en el mensaje de respuesta
+
+        # Convertir el diccionario actualizado a texto para mostrar como respuesta
         configuracion_texto = "/calidad " + " ".join(f"{k}={v}" for k, v in video_settings.items())
         await message.reply_text(f"⚙️ Configuraciones de video actualizadas:\n`{configuracion_texto}`", protect_content=protect_content)
     
