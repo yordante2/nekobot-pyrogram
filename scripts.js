@@ -26,3 +26,16 @@ function toggleMode() {
     });
     
 }
+
+
+function toggleMode() {
+            const body = document.body;
+            const button = document.querySelector('.mode-toggle');
+            body.classList.toggle('modo-claro');
+            button.textContent = body.classList.contains('modo-claro') ? 'Modo Oscuro' : 'Modo Claro';
+        }
+
+        function toggleList() {
+            const tutorialList = document.getElementById('tutorial-list');
+            tutorialList.classList.toggle('visible');
+        }
