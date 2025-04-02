@@ -1,34 +1,27 @@
+function toggleList() {
+    const tutorialList = document.getElementById('tutorial-list');
+    tutorialList.classList.toggle('visible');
+}
+
 function toggleMode() {
     const body = document.body;
     const rectangulos = document.querySelectorAll('.rectangulo');
     const links = document.querySelectorAll('a');
     const button = document.querySelector('.mode-toggle'); // Botón para alternar el texto
 
-    // Alterna la clase en el cuerpo
-    body.classList.toggle('modo-claro');
+    // Verificar si la clase 'modo-claro' está siendo aplicada
+    const isLightMode = body.classList.toggle('modo-claro');
 
     // Cambia dinámicamente las clases de los rectángulos
     rectangulos.forEach(rectangulo => {
-        if (body.classList.contains('modo-claro')) {
-            rectangulo.classList.add('modo-claro');
-        } else {
-            rectangulo.classList.remove('modo-claro');
-        }
+        rectangulo.classList.toggle('modo-claro', isLightMode);
     });
 
     // Cambia dinámicamente las clases de los enlaces
     links.forEach(link => {
-        if (body.classList.contains('modo-claro')) {
-            link.classList.add('modo-claro');
-        } else {
-            link.classList.remove('modo-claro');
-        }
+        link.classList.toggle('modo-claro', isLightMode);
     });
 
-    // Cambia el texto del botón
-    if (body.classList.contains('modo-claro')) {
-        button.textContent = 'Modo Oscuro'; // Texto cuando está en modo claro
-    } else {
-        button.textContent = 'Modo Claro'; // Texto cuando está en modo oscuro
-    }
+    // Cambiar el texto del botón basándose en el estado
+    button.textContent = isLightMode ? 'Modo Oscuro' : 'Modo Claro';
 }
