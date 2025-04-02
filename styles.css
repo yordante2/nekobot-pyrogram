@@ -71,6 +71,23 @@ a:hover {
 .left-section {
     margin-top: 20px;
 }
+.mode-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px; /* Esquina superior izquierda */
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.mode-toggle:hover {
+    background-color: #0056b3;
+}
 
 img {
     margin-top: 20px;
