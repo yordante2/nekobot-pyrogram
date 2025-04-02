@@ -6,22 +6,10 @@
     <title>Neko Bot</title>
     <!-- Favicon -->
     <link rel="icon" href="https://cdn.imgchest.com/files/49zc2glz9ey.png" type="image/png">
-    <!-- Estilos -->
+    <!-- CSS solo para la lista -->
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .rectangulo {
-            cursor: pointer;
-            background-color: #f0f0f0;
-            padding: 10px;
-            margin: 10px;
-            border: 1px solid #ccc;
-        }
         #tutorial-list {
-            display: none; /* Oculto por defecto */
+            display: none; /* Ocultar inicialmente */
         }
         #tutorial-list.visible {
             display: block; /* Mostrar cuando la clase 'visible' esté aplicada */
@@ -29,46 +17,19 @@
     </style>
 </head>
 <body>
-    <button class="mode-toggle" onclick="toggleMode()">Modo Claro</button>
-    <div class="main-container">
-        <div class="right-section">
-            <h1>Neko Bot</h1>
-            <img src="https://cdn.imgchest.com/files/49zc2glz9ey.png" alt="Imagen de Neko Bot">
-        </div>
-        <div class="left-section">
-            <div class="description">
-                <h2>Descripción</h2>
-                Neko Bot es un proyecto desarrollado por <a href="https://t.me/nakigeplayer" target="_blank">Naki</a> por interés y para uso personal.
-                El bot Neko es un bot.
-            </div>
-            <div class="rectangulo" onclick="toggleList()">
-                <h3>Tutoriales de Comando</h3>
-                <ul id="tutorial-list">
-                    <li><a href="/nekobot-pyrogram/pages/files.html" target="_blank">Tutorial de Archivos</a></li>
-                    <li><a href="/nekobot-pyrogram/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
-                </ul>
-            </div>
-        </div>
+    <div class="rectangulo">
+        <h3 onclick="toggleList()">Tutoriales de Comando</h3>
+        <ul id="tutorial-list">
+            <li><a href="/nekobot-pyrogram/pages/files.html" target="_blank">Tutorial de Archivos</a></li>
+            <li><a href="/nekobot-pyrogram/pages/tutorial_2x_comandos.html" target="_blank">Tutoriales de 2X Comandos</a></li>
+        </ul>
     </div>
-    <div class="espacio-final"></div>
 
-    <!-- JavaScript -->
+    <!-- JavaScript solo para la lista -->
     <script>
         function toggleList() {
             const tutorialList = document.getElementById('tutorial-list');
             tutorialList.classList.toggle('visible');
-        }
-
-        function toggleMode() {
-            const body = document.body;
-            const button = document.querySelector('.mode-toggle');
-            body.classList.toggle('modo-claro');
-
-            if (body.classList.contains('modo-claro')) {
-                button.textContent = 'Modo Oscuro';
-            } else {
-                button.textContent = 'Modo Claro';
-            }
         }
     </script>
 </body>
