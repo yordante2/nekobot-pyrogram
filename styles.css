@@ -2,15 +2,25 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
     background-color: #000; /* Oscuro por defecto */
     color: #fff; /* Texto blanco por defecto */
     transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between; /* Espaciado entre elementos */
+    padding: 10px;
+    flex-wrap: wrap;
 }
 
 body.modo-claro {
     background-color: #fff; /* Fondo blanco */
     color: #000; /* Texto negro */
+}
+
+.main-container {
+    flex-grow: 1; /* Ocupa el espacio restante */
+    display: flex; /* Agrega flexbox dentro si necesitas alineación interna */
+    flex-direction: column; /* Esto controla la disposición dentro del contenedor */
 }
 
 /* Estilos del rectángulo */
@@ -75,6 +85,7 @@ a:hover {
     position: absolute;
     top: 10px;
     left: 10px; /* Esquina superior izquierda */
+    margin-right: 20px;
     padding: 10px 20px;
     background-color: #007BFF;
     color: #FFFFFF;
