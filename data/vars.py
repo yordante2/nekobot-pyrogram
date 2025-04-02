@@ -7,6 +7,7 @@ admin_users = list(map(int, os.getenv('ADMINS').split(','))) if os.getenv('ADMIN
 users = list(map(int, os.getenv('USERS').split(','))) if os.getenv('USERS') else []
 vip_users = list(map(int, os.getenv('VIP_USERS', '').split(','))) if os.getenv('VIP_USERS') else []
 temp_users, temp_chats, ban_users = [], [], []
+video_limit = os.getenv('VIDEO_LIMIT')
 
 MAIN_ADMIN = os.getenv("MAIN_ADMIN")
 CODEWORD = os.getenv('CODEWORD', '')
