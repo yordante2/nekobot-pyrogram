@@ -18,20 +18,21 @@ def obtener_duracion_video(original_video_path):
         return float(total_duration.strip())
     except Exception as e:
         raise RuntimeError(f"Error al obtener la duración del video: {e}")
+import subprocess
 
-def comprimir_video(original_video_path, compressed_video_path):
+def comprimir_video(original_video_path, compressed_video_path, settings):
     ffmpeg_command = [
         'ffmpeg', '-y', '-i', original_video_path,
-        '-s', "640x400",
-        '-crf', "28",
-        '-b:a', "80k",
-        '-r', "18",
-        '-preset', "veryfast",
-        '-c:v', "libx265",
+        '-s', settings['resolution'],
+        '-crf', settings['crf'],
+        '-b:a', settings['audio_bitrate'],
+        '-r', settings['fps'],
+        '-preset', settings['preset'],
+        '-c:v', settings['codec'],
         compressed_video_path
     ]
     return subprocess.Popen(ffmpeg_command, stderr=subprocess.PIPE, text=True)
-
+    
 def calcular_progreso(output, total_duration):
     if "size=" in output and "time=" in output:
         match = re.search(r"size=\s*([\d]+).*time=([\d:.]+)", output)
