@@ -237,11 +237,11 @@ async def compress_video(admin_users, client, message, allowed_ids):
     try:
         if message.video:
             video_size = message.video.file_size
-            print(video_size)
+            await client.send_message(chat_id=chat_id, text=video_size)
             video_path = await client.download_media(message.video)
         elif message.reply_to_message and message.reply_to_message.video:
-            video_size = message.video.file_size
-            print(video_size)
+            video_size = message.reply_to_message.video.file_size
+            await client.send_message(chat_id=chat_id, text=video_size)
             video_path = await client.download_media(message.reply_to_message.video)
         else:
             await client.send_message(chat_id=chat_id, text=f"⚠️ No se encontró un video en el mensaje o respuesta asociada.", protect_content=protect_content)
