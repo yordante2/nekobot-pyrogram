@@ -15,7 +15,7 @@ async def handle_start(client, message):
 
     await client.send_sticker(message.chat.id, sticker=random.choice(saludos))
     response = (
-        f"Bienvenido ([{name}](https://t.me/{username})) a Nekobot. "  # Enlace al perfil
+        f"Bienvenido [{name}](https://t.me/{username}) a Nekobot. "  # Enlace al perfil
         "Para conocer los comandos escriba /help o visite la [página oficial](https://nakigeplayer.github.io/nekobot-pyrogram/)."  # Enlace funcional
     )
 
