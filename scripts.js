@@ -17,11 +17,12 @@ function toggleMode() {
         rectangulo.classList.toggle('modo-claro', isLightMode);
     });
 
-    // Cambia dinámicamente las clases de los enlaces
-    links.forEach(link => {
-        link.classList.toggle('modo-claro', isLightMode);
-    });
+    body.classList.toggle('modo-claro');
+    button.textContent = body.classList.contains('modo-claro') ? 'Modo Oscuro' : 'Modo Claro';
 
-    // Cambiar el texto del botón basándose en el estado
-    button.textContent = isLightMode ? 'Modo Oscuro' : 'Modo Claro';
+    // Alternar clase de los enlaces
+    links.forEach(link => {
+        link.classList.toggle('modo-claro', body.classList.contains('modo-claro'));
+    });
+    
 }
