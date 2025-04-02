@@ -238,7 +238,7 @@ async def compress_video(admin_users, client, message, allowed_ids):
     await client.send_message(chat_id=chat_id, text=f"🎥 Preparando la compresión del video...\n", protect_content=protect_content)
 
     try:
-        if message.video or message.document:
+        if message.video or (message.document and message.document.mime_type.startswith("video/")):
             video_size = message.video.file_size if message.video else message.document.file_size
 
             if video_limit and video_size > video_limit and chat_id not in admin_users and chat_id not in vip_users:
@@ -260,7 +260,7 @@ async def compress_video(admin_users, client, message, allowed_ids):
                 await client.send_message(chat_id=chat_id, text="Pero lo haré solo por tí")
 
             video_path = await client.download_media(message.video or message.document)
-        elif message.reply_to_message and (message.reply_to_message.video or message.reply_to_message.document):
+        elif message.reply_to_message and (message.reply_to_message.video or (message.reply_to_message.document and message.reply_to_message.document.mime_type.startswith("video/"))):
             if message.reply_to_message.video:
                 video_size = message.reply_to_message.video.file_size
             elif message.reply_to_message.document.mime_type.startswith("video/"):
