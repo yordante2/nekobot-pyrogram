@@ -29,37 +29,6 @@ def compressfile(file_path, part_size):
 
     os.remove(file_path)
     return parts
-    
-def compressfile_direct(file_path, part_size):
-    parts = []
-    part_size *= 1024 * 1024  # Convertir a bytes
-    part_num = 1
-
-    with open(file_path, 'rb') as file:
-        while True:
-            part_data = file.read(part_size)
-            if not part_data:
-                break
-
-            # Crear un archivo temporal para almacenar los datos del fragmento
-            temp_part_path = f"{file_path}.part{part_num:03d}"
-            with open(temp_part_path, 'wb') as temp_file:
-                temp_file.write(part_data)
-
-            # Crear el archivo comprimido .7z para la parte actual
-            archive_part_path = f"{temp_part_path}.7z"
-            with py7zr.SevenZipFile(archive_part_path, 'w') as archive:
-                archive.write(temp_part_path, os.path.basename(temp_part_path))
-
-            parts.append(archive_part_path)
-            part_num += 1
-
-            # Eliminar el archivo temporal una vez comprimido
-            os.remove(temp_part_path)
-
-    os.remove(file_path)  # Opcional: Eliminar el archivo original
-    return parts
-
 async def handle_compress(client, message, username):
     reply_message = message.reply_to_message
 
@@ -97,7 +66,7 @@ async def handle_compress(client, message, username):
         await client.edit_message_text(chat_id=message.chat.id, message_id=progress_msg.id, text="Comprimiendo el archivo...")
         
         sizd = user_comp.get(username, 10)
-        parts = compressfile_direct(file_path, sizd)
+        parts = compressfile(file_path, sizd)
         
         # Añadir la cantidad de partes al mensaje
         num_parts = len(parts)
