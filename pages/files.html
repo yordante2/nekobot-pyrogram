@@ -19,23 +19,23 @@
         }
 
         button.mode-toggle {
-            position: fixed; /* Fijo en la esquina */
-            top: 10px;
-            right: 10px;
-            width: auto; /* Ajusta el ancho del botón al contenido */
-            font-size: 10px; /* Botón pequeño */
-            padding: 4px 8px; /* Espaciado interno compacto */
+            position: fixed; /* Botón fijo en la esquina superior derecha */
+            top: 20px;
+            right: 20px;
+            font-size: 12px;
+            padding: 8px 16px;
             background-color: #007BFF; /* Azul */
             color: #fff; /* Texto blanco */
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         button.mode-toggle:active {
-            transform: translateY(-3px); /* Animación de salto */
+            transform: translateY(-3px); /* Efecto de "salto" */
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
         }
 
         @media screen and (min-width: 768px) {
