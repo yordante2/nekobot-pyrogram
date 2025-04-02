@@ -140,13 +140,44 @@ async def send_mail(client, message):
         await message.reply("Por favor, responde a un mensaje.", protect_content=True)
         return
     reply_message = message.reply_to_message
+
+    # Restricciones antes de procesar cualquier contenido
     if reply_message.caption and reply_message.caption.startswith("Look Here") and reply_message.from_user.is_self:
         await message.reply("No puedes enviar este contenido debido a restricciones.", protect_content=True)
         return
+
+    # Envío de mensajes de texto
+    if reply_message.text:
+        try:
+            msg = EmailMessage()
+            msg['Subject'] = 'Mensaje de texto'
+            msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
+            msg['To'] = email
+            msg.set_content(reply_message.text)
+
+            mail_server = os.getenv('MAIL_SERVER')
+            server_details = mail_server.split(':')
+            smtp_host = server_details[0]
+            smtp_port = int(server_details[1])
+            security_enabled = len(server_details) > 2 and server_details[2].lower() == 'tls'
+
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                if security_enabled:
+                    server.starttls()
+                server.login(os.getenv('MAILDIR'), os.getenv('MAILPASS'))
+                server.send_message(msg)
+
+            await message.reply("Mensaje de texto enviado correctamente.", protect_content=True)
+        except Exception as e:
+            await message.reply(f"Error al enviar el mensaje: {e}", protect_content=True)
+        return
+
     mail_mb = get_mail_limit(user_id)
     mail_delay = os.getenv('MAIL_DELAY')
-    if message.reply_to_message.document or message.reply_to_message.photo or message.reply_to_message.video or message.reply_to_message.sticker:
-        media = await client.download_media(message.reply_to_message, file_name='mailtemp/')
+
+    # Envío de archivos multimedia
+    if reply_message.document or reply_message.photo or reply_message.video or reply_message.sticker:
+        media = await client.download_media(reply_message, file_name='mailtemp/')
         if os.path.getsize(media) <= mail_mb * 1024 * 1024:
             try:
                 msg = EmailMessage()
@@ -174,7 +205,6 @@ async def send_mail(client, message):
             parts = compressfile(media, mail_mb)
             for part in parts:
                 try:
-                    # Definir mail_server y otros parámetros dentro del bucle
                     mail_server = os.getenv('MAIL_SERVER')
                     if not mail_server:
                         raise ValueError("MAIL_SERVER no está definido en las variables de entorno.")
@@ -187,17 +217,14 @@ async def send_mail(client, message):
                     smtp_port = int(server_details[1])
                     security_enabled = len(server_details) > 2 and server_details[2].lower() == 'tls'
 
-                    # Configurar el mensaje para cada parte
                     msg = EmailMessage()
                     msg['Subject'] = f"Parte {os.path.basename(part)}"
                     msg['From'] = f"Neko Bot <{os.getenv('MAILDIR')}>"
                     msg['To'] = email
 
-                    # Adjuntar la parte actual
                     with open(part, 'rb') as f:
                         msg.add_attachment(f.read(), maintype='application', subtype='octet-stream', filename=os.path.basename(part))
 
-                    # Enviar la parte actual
                     with smtplib.SMTP(smtp_host, smtp_port) as server:
                         if security_enabled:
                             server.starttls()
@@ -209,4 +236,3 @@ async def send_mail(client, message):
                     time.sleep(float(mail_delay) if mail_delay else 0)
                 except Exception as e:
                     await message.reply(f"Error al enviar la parte {os.path.basename(part)}: {e}", protect_content=True)
-                    
