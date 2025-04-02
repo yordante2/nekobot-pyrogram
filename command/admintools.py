@@ -6,6 +6,8 @@ from stickers import saludos
 import random 
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from command.help import handle_help_callback, handle_help
+from data.vars import api_id, api_hash, bot_token, admin_users, users, temp_users, vip_users, ban_users, MAIN_ADMIN, CODEWORD, BOT_IS_PUBLIC, PROTECT_CONTENT, allowed_ids, allowed_users
+
 
 async def handle_start(client, message):
     first_name = message.from_user.first_name
