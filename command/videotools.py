@@ -5,7 +5,7 @@ import re
 import subprocess
 import random
 from command.video_processor import procesar_video
-from data.vars import admin_users, vips_users, video_limit
+from data.vars import admin_users, vip_users, video_limit
 import time
 
 # Configuración inicial
