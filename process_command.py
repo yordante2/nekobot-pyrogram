@@ -253,7 +253,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 codes = await summarize_lines(lines)
                 if codes:
                     codes_list = codes.split(", ")
-                    for i in range(0, len(codes_list), 25):q
+                    for i in range(0, len(codes_list), 25):
                         await message.reply(", ".join(codes_list[i:i+25]))
                 else:
                     await message.reply("No se encontraron códigos en el archivo.")
