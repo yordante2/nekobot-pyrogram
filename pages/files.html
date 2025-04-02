@@ -19,11 +19,11 @@
         }
 
         button.mode-toggle {
-            position: fixed; /* Botón fijo en la esquina superior derecha */
-            top: 20px;
-            right: 20px;
-            font-size: 12px;
-            padding: 8px 16px;
+            position: absolute; /* Botón absolutamente colocado */
+            top: 10px; /* Pegado a la esquina */
+            right: 10px; /* Pegado a la esquina */
+            font-size: 12px; /* Texto del botón */
+            padding: 8px 16px; /* Tamaño compacto */
             background-color: #007BFF; /* Azul */
             color: #fff; /* Texto blanco */
             border: none;
@@ -34,7 +34,7 @@
         }
 
         button.mode-toggle:active {
-            transform: translateY(-3px); /* Efecto de "salto" */
+            transform: translateY(-3px); /* Animación de salto */
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
         }
 
