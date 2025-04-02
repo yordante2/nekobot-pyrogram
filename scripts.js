@@ -2,6 +2,7 @@ function toggleMode() {
     const body = document.body;
     const rectangulos = document.querySelectorAll('.rectangulo');
     const links = document.querySelectorAll('a');
+    const button = document.querySelector('.mode-toggle'); // Botón para alternar el texto
 
     // Alterna la clase en el cuerpo
     body.classList.toggle('modo-claro');
@@ -23,9 +24,11 @@ function toggleMode() {
             link.classList.remove('modo-claro');
         }
     });
-}
 
-function toggleList() {
-    const tutorialList = document.getElementById('tutorial-list');
-    tutorialList.classList.toggle('visible');
+    // Cambia el texto del botón
+    if (body.classList.contains('modo-claro')) {
+        button.textContent = 'Modo Oscuro'; // Texto cuando está en modo claro
+    } else {
+        button.textContent = 'Modo Claro'; // Texto cuando está en modo oscuro
+    }
 }
