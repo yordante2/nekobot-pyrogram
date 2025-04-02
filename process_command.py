@@ -175,7 +175,7 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(rename(client, message))
         return
 
-    if text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel", "/list")) or (message.video is not None):
+    if text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel", "/list")) or ((message.video is not None) or (message.document is not None)):
         if cmd("videotools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/convert"):
                 if message.reply_to_message and message.reply_to_message.media:
