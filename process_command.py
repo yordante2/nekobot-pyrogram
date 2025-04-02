@@ -175,10 +175,10 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 await asyncio.create_task(rename(client, message))
         return
 
-    if text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel", "/list")) or ((message.video is not None) or (message.document is not None)):
+    if text.startswith(("/convert", "/calidad", "/autoconvert", "/cancel", "/list")) or ((message.video is not None) or (message.document is not None or message.document.mime_type.startswith("video/"))):
         if cmd("videotools", user_id in admin_users, user_id in vip_users):
             if text.startswith("/convert"):
-                if message.reply_to_message and message.reply_to_message.media:
+                if message.reply_to_message and (message.reply_to_message.video or (message.reply_to_message.document and message.reply_to_message.document.mime_type.startswith("video/"))):
                     await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
 
             elif text.startswith("/autoconvert"):
@@ -218,16 +218,12 @@ async def process_command(client: Client, message: Message, active_cmd: str, adm
                 else:
                     await client.send_message(chat_id=chat_id, text="⚠️ No tienes permiso para usar este comando.")
         
-            elif auto and (message.video or message.document):
+            elif auto and (message.video or (message.document and message.document.mime_type.startswith("video/"))):
                 await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
                                               
             elif text.startswith("/list"):
                 await listar_tareas(client, message.chat.id, allowed_ids, message)
 
-            elif auto and (message.video or message.document):
-                await asyncio.create_task(compress_video(admin_users, client, message, allowed_ids))
-                
-        
     elif text.startswith("/imgchest"):
         if cmd("imgtools", user_id in admin_users, user_id in vip_users):
             if message.reply_to_message and (message.reply_to_message.photo or message.reply_to_message.document):
