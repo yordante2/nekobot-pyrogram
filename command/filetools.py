@@ -95,7 +95,7 @@ async def handle_compress(client, message, username):
     except Exception as e:
         await message.reply(f'Error: {str(e)}')
     
-        
+
 async def rename(client, message):
     reply_message = message.reply_to_message
 
@@ -106,18 +106,23 @@ async def rename(client, message):
 
     if reply_message and reply_message.media:
         try:
-            await message.reply("Descargando el archivo para renombrarlo...")
             new_name = message.text.split(' ', 1)[1]
-            file_path = await client.download_media(reply_message)
-            new_file_path = os.path.join(os.path.dirname(file_path), new_name)
-            os.rename(file_path, new_file_path)
-            await message.reply("Subiendo el archivo con nuevo nombre...")
-            await client.send_document(message.chat.id, new_file_path)
-            os.remove(new_file_path)
+            await message.reply("Reenviando el archivo con un nuevo nombre...")
+
+            # Reenviar el archivo sin descargarlo, especificando el nuevo nombre
+            if reply_message.document:
+                await client.send_document(
+                    chat_id=message.chat.id,
+                    document=reply_message.document.file_id,  # Reutilizar file_id
+                    file_name=new_name  # Cambiar el nombre del archivo
+                )
+            else:
+                await message.reply("El tipo de archivo no es compatible para renombrar.")
         except Exception as e:
             await message.reply(f'Error: {str(e)}')
     else:
         await message.reply('Ejecute el comando respondiendo a un archivo')
+
 
 async def set_size(client, message):
     try:
