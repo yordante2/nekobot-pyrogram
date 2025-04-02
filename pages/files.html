@@ -14,23 +14,29 @@
             line-height: 1.6;
             margin: 0;
             padding: 0;
+            background-color: #000000; /* Fondo negro por defecto */
+            color: #ffffff; /* Texto blanco por defecto */
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         button.mode-toggle {
-            position: absolute;
+            position: fixed; /* Fijo en la esquina superior derecha */
             top: 10px;
             right: 10px;
             font-size: 12px;
             padding: 5px 10px;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
+            background-color: #007BFF; /* Botón azul */
+            color: #ffffff; /* Texto del botón blanco */
+            border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         button.mode-toggle:active {
-            transform: translateY(-10px); /* Hace que el botón salte */
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
         }
 
         @media screen and (min-width: 768px) {
@@ -100,7 +106,5 @@
     </div>
 
     <div class="espacio-final"></div>
-    <!-- Importar archivo JavaScript -->
-    <script src="../scripts.js"></script>
 </body>
 </html>
