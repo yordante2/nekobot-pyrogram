@@ -233,7 +233,7 @@ async def compress_video(admin_users, client, message, allowed_ids):
             await client.send_message(chat_id=chat_id, text="⚠️ No se pudo obtener la duración del video.", protect_content=protect_content)
 
         # Procesar el video
-        file_name, description, chat_id, file_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion)
+        file_name, description, chat_id, file_path, original_video_path = await procesar_video(client, message, video_path, task_id, tareas_en_ejecucion, video_settings)
 
         # Enviar el video comprimido con la miniatura generada
         await client.send_video(
