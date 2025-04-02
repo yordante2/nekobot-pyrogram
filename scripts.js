@@ -1,41 +1,19 @@
-function toggleList() {
-    const tutorialList = document.getElementById('tutorial-list');
-    tutorialList.classList.toggle('visible');
-}
-
+// Alternar entre modo claro y oscuro
 function toggleMode() {
     const body = document.body;
-    const rectangulos = document.querySelectorAll('.rectangulo');
-    const links = document.querySelectorAll('a');
-    const button = document.querySelector('.mode-toggle'); // Botón para alternar el texto
+    const button = document.querySelector('.mode-toggle');
 
-    // Verificar si la clase 'modo-claro' está siendo aplicada
-    const isLightMode = body.classList.toggle('modo-claro');
-
-    // Cambia dinámicamente las clases de los rectángulos
-    rectangulos.forEach(rectangulo => {
-        rectangulo.classList.toggle('modo-claro', isLightMode);
-    });
-
+    // Alternar la clase de modo claro en el cuerpo
     body.classList.toggle('modo-claro');
-    button.textContent = body.classList.contains('modo-claro') ? 'Modo Oscuro' : 'Modo Claro';
 
-    // Alternar clase de los enlaces
-    links.forEach(link => {
-        link.classList.toggle('modo-claro', body.classList.contains('modo-claro'));
-    });
-    
+    // Cambiar el texto del botón dinámicamente
+    button.textContent = body.classList.contains('modo-claro') ? 'Modo Oscuro' : 'Modo Claro';
 }
 
+// Alternar la visibilidad de la lista
+function toggleList() {
+    const tutorialList = document.getElementById('tutorial-list');
 
-function toggleMode() {
-            const body = document.body;
-            const button = document.querySelector('.mode-toggle');
-            body.classList.toggle('modo-claro');
-            button.textContent = body.classList.contains('modo-claro') ? 'Modo Oscuro' : 'Modo Claro';
-        }
-
-        function toggleList() {
-            const tutorialList = document.getElementById('tutorial-list');
-            tutorialList.classList.toggle('visible');
-        }
+    // Alternar la clase "visible" en la lista
+    tutorialList.classList.toggle('visible');
+}
