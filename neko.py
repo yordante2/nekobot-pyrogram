@@ -6,9 +6,9 @@ from process_command import process_command
 from command.htools import manejar_opcion
 from command.help import handle_help_callback, handle_help
 import time  # Importación necesaria
-from stickers import saludos
+from data.stickers import saludos
 import random
-from data.vars import api_id, api_hash, bot_token, admin_users, users, temp_users, vip_users, ban_users, MAIN_ADMIN, CODEWORD, BOT_IS_PUBLIC, PROTECT_CONTENT, allowed_ids, allowed_users
+from data.vars import api_id, api_hash, bot_token, admin_users, users, temp_users, temp_chats, vip_users, ban_users, MAIN_ADMIN, CODEWORD, BOT_IS_PUBLIC, PROTECT_CONTENT, allowed_ids, allowed_users
 nest_asyncio.apply()
 
 app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
